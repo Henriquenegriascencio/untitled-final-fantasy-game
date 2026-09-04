@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Final Fantasy VI SNESb';
+  src: url('/ff6.ttf') format('truetype');
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
+
+@theme {
+  --font-sans: 'Final Fantasy VI SNESb', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: 'Final Fantasy VI SNESb', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: 'Final Fantasy VI SNESb', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  --font-start-title: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-start-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-start-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+body {
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  font-synthesis: none;
+  /* Prevent browser from making the font falsely bold or italic */
+}
+
+/* We also force the custom font to override font-weight visually to prevent blurriness */
+* {
+  font-synthesis: none !important;
+}
