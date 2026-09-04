@@ -1,4 +1,4 @@
-import { Weapon, MapTile, Item, EnemyType, EntityStats } from './types';
+import { Weapon, MapTile, Item, EnemyType, EntityStats, MapId } from './types';
 
 export const WEAPONS: Record<string, Weapon> = {
   espada_madeira: { id: 'w0', name: 'Espada de Madeira', type: 'espada', range: 1, damage: 5 },
@@ -11,8 +11,11 @@ export const WEAPONS: Record<string, Weapon> = {
 };
 
 export const ITEMS: Record<string, Item> = {
-  pocao: { id: 'i1', name: 'Pocao', heal: 50, count: 0, price: 10 },
-  hi_pocao: { id: 'i2', name: 'Hi-Pocao', heal: 150, count: 0, price: 30 },
+  pocao: { id: 'i1', name: 'Pocao', heal: 50, count: 0, price: 10, desc: 'Restaura 50 HP' },
+  hi_pocao: { id: 'i2', name: 'Hi-Pocao', heal: 150, count: 0, price: 30, desc: 'Restaura 150 HP' },
+  eter: { id: 'i3', name: 'Eter', heal: 0, mpHeal: 35, count: 0, price: 25, desc: 'Restaura 35 MP' },
+  elixir: { id: 'i4', name: 'Elixir', heal: 200, mpHeal: 60, count: 0, price: 75, desc: 'Restaura 200 HP e 60 MP' },
+  antidoto: { id: 'i5', name: 'Erva Antidoto', heal: 30, count: 0, price: 15, desc: 'Purifica e restaura 30 HP' },
 };
 
 export const INITIAL_PLAYER_STATS = {
@@ -42,7 +45,7 @@ export const MAPS = {
     "~~M..............................M~~~~~~",
     "~~MMMMM..........................MM~~~~~",
     "~~~~~~M...1.......................M~~~~~",
-    "~~~~~~MMMMMMMMMMMMMMMMMMMMM...M...M~~~~~",
+    "~~~~~~MMMMMMMMMMMMMMMMM.......M...M~~~~~",
     "~~~~~~~~~~~~~~~~~~~~~~M.......M...M~~~~~",
     "~~~~~MMMMMMMM~~~~~~~~~M...C...M...M~~~~~",
     "~~~~MM......MM~~~~~~~~M.......M...M~~~~~",
@@ -78,9 +81,9 @@ export const MAPS = {
   DUNGEON_FOGO: [
     "MMMMMMMMMMMMMMM",
     "M.............M",
-    "M.MMMMM.MMMMM.M",
+    "M.MMM...MMMMM.M",
     "M.M.........M.M",
-    "M.M.MMM.M.M.M.M",
+    "M.M.M...M.M.M.M",
     "M.M.M...@.M.M.M",
     "M.M.MMMMMMM.M.M",
     "M.M.........M.M",
@@ -93,9 +96,9 @@ export const MAPS = {
   DUNGEON_AGUA: [
     "MMMMMMMMMMMMMMM",
     "M.............M",
-    "M.~~~~~~~~~~~.M",
+    "M.~~~~.~~~~~~.M",
     "M.~.........~.M",
-    "M.~.~~~~~~~.~.M",
+    "M.~.~~.~~~~.~.M",
     "M.~.~..@..~.~.M",
     "M.~.~~~~~~~.~.M",
     "M.~.........~.M",
@@ -136,14 +139,154 @@ export const MAPS = {
   ].map(row => row.split('') as MapTile[]),
 };
 
-export const ENEMY_TEMPLATES: Record<EnemyType, { emoji: string, stats: EntityStats, weapon: Weapon, gold: number }> = {
-  slime: { emoji: '🦠', stats: { hp: 30, maxHp: 30, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 5, int: 2, def: 2, mov: 2, vel: 5 }, weapon: WEAPONS.espada_madeira, gold: 5 },
-  goblin: { emoji: '👺', stats: { hp: 45, maxHp: 45, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 8, int: 2, def: 4, mov: 3, vel: 8 }, weapon: WEAPONS.arco, gold: 10 },
-  orc: { emoji: '👹', stats: { hp: 80, maxHp: 80, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 15, int: 2, def: 8, mov: 2, vel: 6 }, weapon: WEAPONS.espada, gold: 25 },
-  elemental: { emoji: '☄️', stats: { hp: 60, maxHp: 60, mp: 50, maxMp: 50, sp: 0, maxSp: 100, for: 5, int: 15, def: 5, mov: 3, vel: 12 }, weapon: WEAPONS.cajado, gold: 30 },
-  boss: { emoji: '🐉', stats: { hp: 300, maxHp: 300, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 25, int: 20, def: 18, mov: 2, vel: 15 }, weapon: WEAPONS.cajado_anciao, gold: 500 }
+export type DropTableEntry = {
+  itemId: string;
+  name: string;
+  chance: number; // 0.0 to 1.0
+};
+
+export type EnemyTemplate = {
+  name: string;
+  emoji: string;
+  stats: EntityStats;
+  weapon: Weapon;
+  gold: number;
+  baseGold: number;
+  baseExp: number;
+  drops: DropTableEntry[];
+};
+
+export const ENEMY_TEMPLATES: Record<EnemyType, EnemyTemplate> = {
+  slime: {
+    name: 'Slime Verde',
+    emoji: '🦠',
+    stats: { hp: 30, maxHp: 30, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 5, int: 2, def: 2, mov: 2, vel: 5 },
+    weapon: WEAPONS.espada_madeira,
+    gold: 8,
+    baseGold: 8,
+    baseExp: 35,
+    drops: [
+      { itemId: 'pocao', name: 'Pocao', chance: 0.45 },
+      { itemId: 'antidoto', name: 'Erva Antidoto', chance: 0.20 },
+    ]
+  },
+  goblin: {
+    name: 'Goblin Salteador',
+    emoji: '👺',
+    stats: { hp: 45, maxHp: 45, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 8, int: 2, def: 4, mov: 3, vel: 8 },
+    weapon: WEAPONS.arco,
+    gold: 18,
+    baseGold: 18,
+    baseExp: 55,
+    drops: [
+      { itemId: 'pocao', name: 'Pocao', chance: 0.35 },
+      { itemId: 'hi_pocao', name: 'Hi-Pocao', chance: 0.20 },
+      { itemId: 'eter', name: 'Eter', chance: 0.15 },
+    ]
+  },
+  orc: {
+    name: 'Orc Guerreiro',
+    emoji: '👹',
+    stats: { hp: 80, maxHp: 80, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 15, int: 2, def: 8, mov: 2, vel: 6 },
+    weapon: WEAPONS.espada,
+    gold: 40,
+    baseGold: 40,
+    baseExp: 100,
+    drops: [
+      { itemId: 'hi_pocao', name: 'Hi-Pocao', chance: 0.35 },
+      { itemId: 'eter', name: 'Eter', chance: 0.25 },
+      { itemId: 'elixir', name: 'Elixir', chance: 0.08 },
+    ]
+  },
+  elemental: {
+    name: 'Elemental Arcano',
+    emoji: '☄️',
+    stats: { hp: 60, maxHp: 60, mp: 50, maxMp: 50, sp: 0, maxSp: 100, for: 5, int: 15, def: 5, mov: 3, vel: 12 },
+    weapon: WEAPONS.cajado,
+    gold: 55,
+    baseGold: 55,
+    baseExp: 135,
+    drops: [
+      { itemId: 'eter', name: 'Eter', chance: 0.40 },
+      { itemId: 'hi_pocao', name: 'Hi-Pocao', chance: 0.25 },
+      { itemId: 'elixir', name: 'Elixir', chance: 0.15 },
+    ]
+  },
+  boss: {
+    name: 'Dragao Anciao',
+    emoji: '🐉',
+    stats: { hp: 300, maxHp: 300, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 25, int: 20, def: 18, mov: 2, vel: 15 },
+    weapon: WEAPONS.cajado_anciao,
+    gold: 750,
+    baseGold: 750,
+    baseExp: 650,
+    drops: [
+      { itemId: 'elixir', name: 'Elixir', chance: 1.0 },
+      { itemId: 'hi_pocao', name: 'Hi-Pocao', chance: 1.0 },
+      { itemId: 'eter', name: 'Eter', chance: 0.8 },
+    ]
+  }
+};
+
+export const AREA_MODIFIERS: Record<MapId, {
+  name: string;
+  expMult: number;
+  goldMult: number;
+  minEnemies: number;
+  maxEnemies: number;
+  allowedTypes: EnemyType[];
+}> = {
+  OVERWORLD: {
+    name: 'Planicies de Eldoria',
+    expMult: 1.0,
+    goldMult: 1.0,
+    minEnemies: 1,
+    maxEnemies: 3,
+    allowedTypes: ['slime', 'goblin']
+  },
+  DUNGEON_FOGO: {
+    name: 'Caverna Vulcanica',
+    expMult: 1.35,
+    goldMult: 1.3,
+    minEnemies: 2,
+    maxEnemies: 4,
+    allowedTypes: ['goblin', 'orc', 'elemental']
+  },
+  DUNGEON_AGUA: {
+    name: 'Abismo Submarino',
+    expMult: 1.35,
+    goldMult: 1.3,
+    minEnemies: 2,
+    maxEnemies: 4,
+    allowedTypes: ['slime', 'goblin', 'elemental']
+  },
+  DUNGEON_AR: {
+    name: 'Torre dos Ventos',
+    expMult: 1.5,
+    goldMult: 1.4,
+    minEnemies: 2,
+    maxEnemies: 4,
+    allowedTypes: ['goblin', 'elemental', 'orc']
+  },
+  DUNGEON_TERRA: {
+    name: 'Labirinto de Pedra',
+    expMult: 1.5,
+    goldMult: 1.4,
+    minEnemies: 2,
+    maxEnemies: 4,
+    allowedTypes: ['orc', 'elemental']
+  }
 };
 
 export const BOSS = {
-  id: 'boss', type: 'boss' as EnemyType, x: 21, y: 36, emoji: '🐉', stats: { hp: 300, maxHp: 300, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 25, int: 20, def: 18, mov: 2, vel: 15 }, weapon: WEAPONS.cajado_anciao, goldReward: 1000
+  id: 'boss',
+  name: 'Dragao Anciao',
+  type: 'boss' as EnemyType,
+  x: 21,
+  y: 36,
+  emoji: '🐉',
+  stats: { hp: 300, maxHp: 300, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 25, int: 20, def: 18, mov: 2, vel: 15 },
+  weapon: WEAPONS.cajado_anciao,
+  goldReward: 1000,
+  expReward: 800
 };

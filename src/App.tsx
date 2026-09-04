@@ -6,11 +6,20 @@ import { Exploration } from './components/Exploration';
 import { Combat } from './components/Combat';
 import { Shop } from './components/Shop';
 import { CharacterCreation } from './components/CharacterCreation';
+import { WorldMenu } from './components/WorldMenu';
+import { TitleSettingsModal } from './components/TitleSettingsModal';
+import { TitleScreen } from './components/TitleScreen';
+import { soundFX } from './utils/audio';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('START_MENU');
   const stepsSinceEncounter = useRef(0);
   const [saveMessage, setSaveMessage] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isTitleSettingsOpen, setIsTitleSettingsOpen] = useState(false);
+  const [hasSave, setHasSave] = useState(() => !!localStorage.getItem('eldoria_save'));
+  const [totalSteps, setTotalSteps] = useState(48392);
+  const [playTimeSeconds, setPlayTimeSeconds] = useState(1108); // Starts at 18:28 like the classic reference or ticks up
 
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -24,11 +33,25 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Timer tick for playtime
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPlayTimeSeconds(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const saveGame = () => {
-    const data = { player, mapId, overworldPos, artifacts };
+    const data = { player, mapId, overworldPos, artifacts, totalSteps, playTimeSeconds };
     localStorage.setItem('eldoria_save', JSON.stringify(data));
+    setHasSave(true);
     setSaveMessage('Jogo Salvo com Sucesso! ⭐');
     setTimeout(() => setSaveMessage(''), 3000);
+  };
+
+  const handleDeleteSave = () => {
+    localStorage.removeItem('eldoria_save');
+    setHasSave(false);
   };
 
   const loadGame = () => {
@@ -39,6 +62,8 @@ export default function App() {
       setMapId(parsed.mapId);
       setOverworldPos(parsed.overworldPos);
       setArtifacts(parsed.artifacts);
+      if (parsed.totalSteps !== undefined) setTotalSteps(parsed.totalSteps);
+      if (parsed.playTimeSeconds !== undefined) setPlayTimeSeconds(parsed.playTimeSeconds);
       spawnForMap(parsed.mapId);
       setGameState('EXPLORATION');
     }
@@ -104,7 +129,7 @@ export default function App() {
   };
 
   const handleMove = (dx: number, dy: number) => {
-    if (gameState !== 'EXPLORATION') return;
+    if (gameState !== 'EXPLORATION' || isMenuOpen) return;
     
     setPlayer(prev => {
       const newX = prev.x + dx;
@@ -117,6 +142,9 @@ export default function App() {
       
       // Walls / Water blocking
       if (tile === 'M' || tile === '~') return prev;
+
+      // Track successful step
+      setTotalSteps(s => s + 1);
 
       if (tile === 'S') {
          saveGame();
@@ -296,87 +324,20 @@ export default function App() {
       
       {gameState === 'START_MENU' && (
         <motion.div key="start" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0">
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: '#aee4cc' }}>
-          
-          <svg className="absolute bottom-0 w-full min-w-[1000px] h-auto object-cover pointer-events-none" style={{ maxHeight: '85vh' }} viewBox="0 0 1000 600" preserveAspectRatio="xMidYMax slice">
-            {/* Water */}
-            <rect x="0" y="480" width="1000" height="120" fill="#25c68f" /> 
-            <rect x="0" y="485" width="1000" height="3" fill="#1ea677" /> 
-            <rect x="0" y="495" width="1000" height="3" fill="#1ea677" /> 
-            <rect x="0" y="510" width="1000" height="3" fill="#1ea677" /> 
-            
-            {/* Castle */}
-            <path d="M 230 480 L 230 450 L 235 450 L 235 460 L 240 460 L 240 430 L 245 430 L 245 460 L 250 460 L 250 450 L 255 450 L 255 480 Z" fill="#25c68f" />
-            <path d="M 260 480 L 260 465 L 265 465 L 265 480 Z" fill="#25c68f" />
-            <path d="M 241 420 L 244 420 L 244 430 L 241 430 Z" fill="#25c68f" />
-            
-            {/* Mountain / Cliff Silhouette */}
-            <path d="M 450 600 L 500 520 L 520 515 L 560 490 L 590 495 L 620 460 L 650 455 L 680 430 L 700 425 L 720 400 L 760 395 L 800 380 L 830 385 L 850 350 L 880 345 L 920 310 L 950 310 L 1000 280 L 1000 600 Z" fill="#000000" />
-            
-            {/* Characters on Cliff */}
-            {/* Char 1 (Warrior) */}
-            <path d="M 695 395 L 695 365 L 700 360 L 705 365 L 705 395 Z" fill="#000000" />
-            <path d="M 690 380 L 680 385 L 685 395 L 690 395 Z" fill="#000000" />
-            <path d="M 700 375 L 710 380 L 705 395 Z" fill="#000000" />
-            
-            {/* Char 2 (Mage) */}
-            <path d="M 725 388 L 720 370 L 730 360 L 735 370 L 735 388 Z" fill="#000000" />
-            <path d="M 735 375 L 745 385 L 740 390 Z" fill="#000000" />
+          <TitleScreen
+            hasSave={hasSave}
+            onNewGame={handleStart}
+            onLoadGame={loadGame}
+            onOpenOptions={() => setIsTitleSettingsOpen(true)}
+          />
 
-            {/* Char 3 (Fighter) */}
-            <path d="M 755 383 L 750 365 L 760 360 L 765 365 L 765 383 Z" fill="#000000" />
-            
-            {/* Char 4 (Archer) */}
-            <path d="M 785 375 L 780 355 L 790 350 L 795 355 L 795 375 Z" fill="#000000" />
-            <path d="M 795 360 L 805 355 L 800 370 Z" fill="#000000" />
-
-            {/* Birds */}
-            <path d="M 780 220 Q 785 215 790 220 Q 795 215 800 220" fill="none" stroke="#000" strokeWidth="2.5" />
-            <path d="M 800 190 Q 805 185 810 190 Q 815 185 820 190" fill="none" stroke="#000" strokeWidth="2" />
-            <path d="M 760 170 Q 765 165 770 170 Q 775 165 780 170" fill="none" stroke="#000" strokeWidth="2.5" />
-            <path d="M 820 160 Q 825 155 830 160 Q 835 155 840 160" fill="none" stroke="#000" strokeWidth="2" />
-            <path d="M 810 130 Q 815 125 820 130 Q 825 125 830 130" fill="none" stroke="#000" strokeWidth="1.5" />
-            <path d="M 840 110 Q 845 105 850 110 Q 855 105 860 110" fill="none" stroke="#000" strokeWidth="1.5" />
-          </svg>
-
-          {/* Title Text */}
-          <div className="absolute top-[30%] w-full flex justify-center items-center flex-col pointer-events-none">
-            <div className="relative">
-              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] font-black italic tracking-widest text-[#44519f] font-start-title drop-shadow-[4px_4px_0_rgba(0,0,0,1)] lg:drop-shadow-[8px_8px_0_rgba(0,0,0,1)]" style={{ WebkitTextStroke: '2px white' }}>
-                ELEMENTAL
-              </h1>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] font-black italic tracking-widest text-[#44519f] font-start-title -mt-4 md:-mt-8 ml-8 sm:ml-12 drop-shadow-[4px_4px_0_rgba(0,0,0,1)] lg:drop-shadow-[8px_8px_0_rgba(0,0,0,1)]" style={{ WebkitTextStroke: '2px white' }}>
-                FANTASY<span className="text-lg md:text-2xl tracking-normal text-white drop-shadow-none ml-2 inline-block -translate-y-6 md:-translate-y-12" style={{ WebkitTextStroke: '0px' }}>™</span>
-              </h1>
-            </div>
-          </div>
-
-          {/* Subtitle / Button */}
-          <div className="absolute top-[70%] w-full flex justify-center z-10">
-            <button 
-              onClick={handleStart}
-              className="px-6 py-3 md:px-8 md:py-4 text-black font-black text-xl md:text-3xl uppercase tracking-widest hover:text-white hover:bg-black transition-colors rounded border-4 border-transparent hover:border-white shadow-[0_0_15px_rgba(255,255,255,0)] hover:shadow-[0_0_15px_rgba(255,255,255,0.5)] animate-pulse hover:animate-none font-start-mono"
-            >
-              Novo Jogo
-            </button>
-            {localStorage.getItem('eldoria_save') && (
-              <button 
-                onClick={loadGame}
-                className="px-6 py-3 md:px-8 md:py-4 text-slate-800 font-black text-xl md:text-3xl uppercase tracking-widest hover:text-white hover:bg-black transition-colors rounded border-4 border-transparent hover:border-white shadow-[0_0_15px_rgba(255,255,255,0)] hover:shadow-[0_0_15px_rgba(255,255,255,0.5)] font-start-mono"
-              >
-                Continuar
-              </button>
-            )}
-          </div>
-
-          {/* Copyright Texts */}
-          <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8 text-black font-start-mono font-bold text-sm md:text-xl leading-tight">
-            TM & © 2024<br/>AI STUDIO
-          </div>
-          <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 text-white font-start-mono font-bold text-sm md:text-xl leading-tight text-right drop-shadow-[2px_2px_0_rgba(0,0,0,1)]">
-            © 2024<br/>DEVELOPER
-          </div>
-        </div>
+          {/* Title Settings Modal */}
+          <TitleSettingsModal
+            isOpen={isTitleSettingsOpen}
+            onClose={() => setIsTitleSettingsOpen(false)}
+            hasSave={hasSave}
+            onDeleteSave={handleDeleteSave}
+          />
         </motion.div>
       )}
       {gameState === 'CHARACTER_CREATION' && (
@@ -426,7 +387,25 @@ export default function App() {
            onMove={handleMove} 
            onInteract={() => {}}
            onEquipWeapon={handleEquipWeapon}
+           isMenuOpen={isMenuOpen}
+           onToggleMenu={() => setIsMenuOpen(prev => !prev)}
          />
+         {isMenuOpen && (
+           <WorldMenu 
+             player={player}
+             playTimeSeconds={playTimeSeconds}
+             totalSteps={totalSteps}
+             onClose={() => setIsMenuOpen(false)}
+             onSave={saveGame}
+             onUpdateParty={(updatedParty, updatedItems) => {
+               setPlayer(prev => ({
+                 ...prev,
+                 party: updatedParty,
+                 inventory: { ...prev.inventory, items: updatedItems }
+               }));
+             }}
+           />
+         )}
         </motion.div>
       )}
 

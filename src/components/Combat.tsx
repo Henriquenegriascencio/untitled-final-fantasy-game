@@ -27,10 +27,21 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   const [sceneryItems, setSceneryItems] = useState<{x: number, y: number, emoji: string}[]>([]);
   const [actionText, setActionText] = useState<{text: string, id: number} | null>(null);
   const [activeUnitId, setActiveUnitId] = useState<string>('');
-  const [rotZ, setRotZ] = useState(45);
+  const [isTurnTransitioning, setIsTurnTransitioning] = useState(false);
+  const [nextUpcomingUnitId, setNextUpcomingUnitId] = useState<string | null>(null);
+  const turnTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [is3D, setIs3D] = useState(false);
+  const [rotZ, setRotZ] = useState(0);
   const [zoom, setZoom] = useState(1);
-  const rotX = 60;
   const [envScenery, setEnvScenery] = useState<{x:number, y:number, emoji:string}[]>([]);
+
+  const handleToggle3D = () => {
+    setIs3D(prev => {
+      const next = !prev;
+      setRotZ(next ? 45 : 0);
+      return next;
+    });
+  };
     const [selectedAction, setSelectedAction] = useState<'MOVE' | 'ATTACK' | 'MAGIC' | 'ITEM' | 'SKILL' | null>(null);
   const [actionMenu, setActionMenu] = useState<'MAIN' | 'SKILLS' | 'MAGIC'>('MAIN');
   const [selectedSubItem, setSelectedSubItem] = useState<string | null>(null);
@@ -150,7 +161,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
         for(let j = -2; j <= GRID_SIZE + 1; j++) {
             if (i >= 0 && i < GRID_SIZE && j >= 0 && j < GRID_SIZE) continue;
             if (Math.random() > 0.8) {
-                sItems.push({ x: i * 56, y: j * 56, emoji });
+                sItems.push({ x: i, y: j, emoji });
             }
         }
     }
@@ -166,8 +177,16 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
         envItems.push({ x: ex, y: ey, emoji: envEmojis[Math.floor(Math.random() * envEmojis.length)] });
     }
     setEnvScenery(envItems);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (turnTimeoutRef.current) {
+        clearTimeout(turnTimeoutRef.current);
+      }
+    };
   }, []);
 
   const showActionText = (msg: string) => {
@@ -177,40 +196,63 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   };
 
   const activeUnit = units.find(u => u.id === activeUnitId);
+  const nextUpcomingUnit = units.find(u => u.id === nextUpcomingUnitId);
+
+  const getNextAliveUnit = (queue: string[], currentUnits: CombatUnit[], currentActiveId: string): CombatUnit | null => {
+    if (queue.length === 0) return null;
+    const currentIndex = queue.indexOf(currentActiveId);
+    const startIdx = currentIndex >= 0 ? currentIndex : 0;
+    for (let i = 1; i <= queue.length; i++) {
+      const idx = (startIdx + i) % queue.length;
+      const candidateId = queue[idx];
+      const unit = currentUnits.find(u => u.id === candidateId && u.stats.hp > 0);
+      if (unit) return unit;
+    }
+    return null;
+  };
 
   const nextTurn = () => {
+    if (isTurnTransitioning) return;
+
     setSelectedAction(null);
     setActionMenu('MAIN');
     setSelectedSubItem(null);
-    
-    setUnits(prev => {
-      const newUnits = prev.map(u => {
+
+    // Calculate who is the next unit to act
+    const nextUnit = getNextAliveUnit(turnQueue, units, activeUnitId);
+    if (!nextUnit) return;
+
+    // Start 1-second transition interval and highlight next unit with glow
+    setIsTurnTransitioning(true);
+    setNextUpcomingUnitId(nextUnit.id);
+
+    const displayName = nextUnit.isPlayer 
+      ? (nextUnit.name || nextUnit.heroClass || 'Herói') 
+      : (nextUnit.name || 'Inimigo');
+    showActionText(`Próximo a atacar: ${nextUnit.emoji} ${displayName}`);
+
+    if (turnTimeoutRef.current) {
+      clearTimeout(turnTimeoutRef.current);
+    }
+
+    turnTimeoutRef.current = setTimeout(() => {
+      setUnits(prev => prev.map(u => {
         if (u.id === activeUnitId) {
           return { ...u, hasMoved: false, hasActed: false }; // reset state
         }
         return u;
-      });
-      return newUnits;
-    });
+      }));
 
-    setTurnQueue(prev => {
-      const newQueue = [...prev.slice(1), prev[0]];
-      
-      // Skip dead units
-      let nextId = newQueue[0];
-      let iterations = 0;
-      while (iterations < newQueue.length) {
-        const u = units.find(unit => unit.id === nextId);
-        if (u && u.stats.hp > 0) break;
-        newQueue.push(newQueue.shift()!);
-        nextId = newQueue[0];
-        iterations++;
-      }
-      
-      setActiveUnitId(nextId);
-      setSelectedAction(null);
-      return newQueue;
-    });
+      setTurnQueue(prev => {
+        const idx = prev.indexOf(nextUnit.id);
+        if (idx === -1) return prev;
+        return [...prev.slice(idx), ...prev.slice(0, idx)];
+      });
+
+      setActiveUnitId(nextUnit.id);
+      setNextUpcomingUnitId(null);
+      setIsTurnTransitioning(false);
+    }, 1000); // 1-second interval with glow indicator
   };
 
   const getDistance = (x1: number, y1: number, x2: number, y2: number) => {
@@ -218,7 +260,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   };
 
   const handleCellClick = (x: number, y: number) => {
-    if (!activeUnit || !activeUnit.isPlayer) return;
+    if (isTurnTransitioning || !activeUnit || !activeUnit.isPlayer) return;
 
     if (selectedAction === 'MOVE' && !activeUnit.hasMoved) {
       const dist = getDistance(activeUnit.x, activeUnit.y, x, y);
@@ -382,7 +424,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
 
   // AI Turn Simple implementation
   useEffect(() => {
-    if (activeUnit && !activeUnit.isPlayer && activeUnit.stats.hp > 0) {
+    if (!isTurnTransitioning && activeUnit && !activeUnit.isPlayer && activeUnit.stats.hp > 0) {
        const aiTurn = async () => {
           await new Promise(r => setTimeout(r, 1000)); // AI thinking delay
           
@@ -491,71 +533,191 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
       const effects = visualEffects.filter(v => v.unitId === unit.id);
       const isHit = effects.some(v => v.type === 'hit');
       const isBuff = effects.some(v => v.type === 'heal' || v.type === 'magic');
-      
+      const isActive = unit.id === activeUnitId;
+      const isNextUpcoming = unit.id === nextUpcomingUnitId;
+      const hpPercent = Math.max(0, Math.min(100, (unit.stats.hp / unit.stats.maxHp) * 100));
+
       return (
-        <motion.div 
+        <div 
           key={unit.id}
-          className={`absolute w-[56px] h-[56px] pointer-events-none flex items-center justify-center ${isHit ? 'animate-pulse' : ''}`}
-          initial={false}
-          animate={{ 
+          className={`absolute w-[56px] h-[56px] pointer-events-none flex items-center justify-center transition-all duration-300 ease-out z-30 ${isHit ? 'animate-pulse' : ''}`}
+          style={{ 
             left: 8 + unit.x * 56, 
             top: 8 + unit.y * 56,
-            z: elev * 16
+            transformStyle: is3D ? 'preserve-3d' : 'flat',
+            transform: is3D ? `translateZ(${elev * 16 + 6}px)` : 'none'
           }}
-          transition={{ type: 'spring', stiffness: 120, damping: 15 }}
-          style={{ transformStyle: 'preserve-3d', zIndex: 50 }}
         >
-            <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-               <div 
-                  className="relative flex flex-col items-center justify-center transition-transform duration-500" 
-                  style={{ transformStyle: 'preserve-3d', transform: `translateZ(20px) rotateZ(${-rotZ}deg) rotateX(${-rotX}deg)` }}
-               >
-                  {isBuff && <div className="absolute inset-0 bg-yellow-400/50 blur-md rounded-full animate-ping" />}
-                  {isHit && <div className="absolute inset-0 bg-red-500/80 blur-md rounded-full animate-ping" />}
-                  
-                  <div className="text-5xl drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)]" style={{ transform: 'translateY(-10px)' }}>
-                     {unit.emoji}
-                  </div>
-                  
-                  {/* Status Bar */}
-                  <div className="absolute -top-6 w-12 h-2 bg-slate-900 border border-slate-700 z-50 rounded-full overflow-hidden shadow-black shadow-sm">
-                     <motion.div className="h-full bg-red-500" initial={false} animate={{ width: `${Math.max(0, (unit.stats.hp / unit.stats.maxHp) * 100)}%` }} transition={{ duration: 0.3 }} />
-                  </div>
-                  
-                  {/* Level */}
-                  {unit.isPlayer && <div className="absolute -top-10 text-[10px] text-white font-black drop-shadow-md bg-blue-900/80 px-2 py-0.5 border border-blue-400/50 rounded-full">Lvl {unit.level || 1}</div>}
-                  
-                  {/* Debuffs */}
-                  {unit.debuffs && unit.debuffs.length > 0 && (
-                     <div className="absolute -top-14 flex gap-1 z-50">
-                        {unit.debuffs.map((d, i) => (
-                          <span key={i} className="text-sm drop-shadow-md bg-black/80 rounded-full w-5 h-5 flex items-center justify-center border border-slate-600">
-                            {d.type === 'burn' ? '🔥' : d.type === 'poison' ? '🧪' : '🧊'}
-                          </span>
-                        ))}
-                     </div>
-                  )}
-               </div>
+          {/* Radiant Aura / Glow for Next Upcoming Attacker */}
+          {isNextUpcoming && (
+            <>
+              <div 
+                className="absolute -inset-8 rounded-full bg-yellow-400/40 animate-ping pointer-events-none" 
+                style={{
+                  transformStyle: is3D ? 'preserve-3d' : 'flat',
+                  transform: is3D ? 'translateZ(1px)' : 'none'
+                }}
+              />
+              <div 
+                className="absolute -inset-5 rounded-full bg-gradient-to-r from-amber-400/60 via-yellow-300/80 to-amber-500/60 blur-md animate-pulse pointer-events-none" 
+                style={{
+                  transformStyle: is3D ? 'preserve-3d' : 'flat',
+                  transform: is3D ? 'translateZ(2px)' : 'none'
+                }}
+              />
+            </>
+          )}
+
+          {/* Base Floor Token / Ring (Matches combat action menu style) */}
+          <div 
+            className={`absolute w-12 h-12 rounded-full border-[3px] transition-all flex items-center justify-center shadow-[inset_0_0_0_1px_#000] ${
+              isNextUpcoming
+                ? 'border-slate-100 ring-4 ring-yellow-400 shadow-[inset_0_0_0_2px_#000,0_0_25px_rgba(250,204,21,1)] scale-110 animate-bounce'
+                : isActive 
+                  ? 'border-slate-200 ring-2 ring-yellow-400 shadow-[inset_0_0_0_2px_#000,0_0_15px_rgba(250,204,21,0.8)] animate-pulse' 
+                  : unit.isPlayer 
+                    ? 'border-slate-300 shadow-[inset_0_0_0_1px_#000,0_0_10px_rgba(59,130,246,0.8)]' 
+                    : 'border-red-400 shadow-[inset_0_0_0_1px_#000,0_0_10px_rgba(239,68,68,0.8)]'
+            }`}
+            style={{
+              background: unit.isPlayer || isNextUpcoming || isActive
+                ? 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)'
+                : 'linear-gradient(to bottom, #7f1d1d 0%, #000000 100%)',
+              transformStyle: is3D ? 'preserve-3d' : 'flat',
+              transform: is3D ? 'translateZ(2px)' : 'none'
+            }}
+          >
+            {/* Next upcoming attacker banner in FF6 Battle Menu style */}
+            {isNextUpcoming && (
+              <div 
+                className="absolute -top-12 z-50 flex flex-col items-center pointer-events-none animate-bounce"
+                style={{
+                  transformStyle: is3D ? 'preserve-3d' : 'flat',
+                  transform: is3D ? 'translateZ(26px)' : 'none'
+                }}
+              >
+                <div 
+                  className="rounded border-[2px] md:border-[3px] border-slate-100 px-2 py-0.5 shadow-[inset_0_0_0_1px_#000,0_4px_8px_rgba(0,0,0,0.9)] font-mono uppercase font-black text-xs whitespace-nowrap flex items-center gap-1.5"
+                  style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+                >
+                  <span className="text-yellow-400 text-xs">►</span>
+                  <span className="text-white text-[10px] md:text-xs tracking-wider">PROXIMO A ATACAR</span>
+                  <span className="text-yellow-400 text-xs">◄</span>
+                </div>
+                <span className="text-yellow-400 text-xs font-black leading-none -mt-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">▼</span>
+              </div>
+            )}
+
+            {/* Active unit turn indicator in FF6 Battle Menu style */}
+            {isActive && !isNextUpcoming && (
+              <div 
+                className="absolute -top-9 z-40 flex flex-col items-center pointer-events-none"
+                style={{
+                  transformStyle: is3D ? 'preserve-3d' : 'flat',
+                  transform: is3D ? 'translateZ(22px)' : 'none'
+                }}
+              >
+                <div 
+                  className="rounded border-[2px] border-slate-200 px-1.5 py-0.5 shadow-[inset_0_0_0_1px_#000,0_3px_6px_rgba(0,0,0,0.9)] font-mono uppercase font-black text-[10px] text-white tracking-wider whitespace-nowrap flex items-center gap-1"
+                  style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+                >
+                  <span className="text-yellow-400 text-xs">►</span>
+                  <span>TURNO</span>
+                </div>
+                <span className="text-white text-[10px] leading-none -mt-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">▼</span>
+              </div>
+            )}
+          </div>
+
+          {/* Character Avatar Icon (Always upright, clear, and visible) */}
+          <div 
+            className={`relative text-4xl select-none filter flex items-center justify-center transition-all ${
+              isNextUpcoming 
+                ? 'scale-125 drop-shadow-[0_0_25px_rgba(250,204,21,1)]' 
+                : 'drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)]'
+            } z-10`}
+            style={{
+              transformStyle: is3D ? 'preserve-3d' : 'flat',
+              transform: is3D ? 'translateZ(10px)' : 'none'
+            }}
+          >
+            {isBuff && <div className="absolute inset-0 bg-yellow-400/50 blur-md rounded-full animate-ping" />}
+            {isHit && <div className="absolute inset-0 bg-red-500/80 blur-md rounded-full animate-ping" />}
+            {isNextUpcoming && (
+              <span className="absolute text-2xl -top-2 -right-2 animate-spin text-yellow-200 drop-shadow-[0_0_10px_rgba(250,204,21,1)]">✨</span>
+            )}
+            {unit.emoji}
+          </div>
+
+          {/* Status Bar (HP) */}
+          <div 
+            className="absolute -top-4 w-12 h-2.5 bg-slate-950 border border-slate-700 z-40 rounded-full overflow-hidden shadow-black shadow-md"
+            style={{
+              transformStyle: is3D ? 'preserve-3d' : 'flat',
+              transform: is3D ? 'translateZ(14px)' : 'none'
+            }}
+          >
+            <div 
+              className={`h-full transition-all duration-300 ${
+                hpPercent > 50 ? 'bg-green-500' : hpPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'
+              }`} 
+              style={{ width: `${hpPercent}%` }} 
+            />
+          </div>
+
+          {/* Level Badge */}
+          {unit.isPlayer && (
+            <div 
+              className="absolute -top-8 text-[9px] text-white font-black bg-blue-900/90 px-1.5 py-0.5 border border-blue-400/70 rounded-full z-40 shadow whitespace-nowrap"
+              style={{
+                transformStyle: is3D ? 'preserve-3d' : 'flat',
+                transform: is3D ? 'translateZ(16px)' : 'none'
+              }}
+            >
+              Nv.{unit.level || 1}
             </div>
-        </motion.div>
+          )}
+
+          {/* Debuffs */}
+          {unit.debuffs && unit.debuffs.length > 0 && (
+            <div 
+              className="absolute -top-12 flex gap-0.5 z-40"
+              style={{
+                transformStyle: is3D ? 'preserve-3d' : 'flat',
+                transform: is3D ? 'translateZ(18px)' : 'none'
+              }}
+            >
+              {unit.debuffs.map((d, i) => (
+                <span key={i} className="text-xs bg-black/90 rounded-full w-4 h-4 flex items-center justify-center border border-slate-600 shadow">
+                  {d.type === 'burn' ? '🔥' : d.type === 'poison' ? '🧪' : '🧊'}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       );
     });
   };
 
   const renderScenery = () => {
-    const allScenery = [...sceneryItems, ...envScenery];
+    const allScenery = is3D ? [...sceneryItems, ...envScenery] : sceneryItems;
     return allScenery.map((item, idx) => {
       const isEnv = idx >= sceneryItems.length;
       const elev = isEnv ? 0 : (elevations[item.y]?.[item.x] || 0);
       return (
-        <div key={`scenery-${idx}`} className="absolute w-[56px] h-[56px] pointer-events-none flex items-center justify-center" style={{ left: 8 + item.x * 56, top: 8 + item.y * 56, transformStyle: 'preserve-3d', transform: `translateZ(${elev * 16}px)` }}>
-            <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-               <div className="relative flex items-center justify-center transition-transform duration-500" style={{ transformStyle: 'preserve-3d', transform: `translateZ(20px) rotateZ(${-rotZ}deg) rotateX(${-rotX}deg)` }}>
-                  <div className={`${isEnv ? 'text-6xl' : 'text-5xl'} drop-shadow-[0_8px_8px_rgba(0,0,0,0.8)]`} style={{ transform: 'translateY(-10px)' }}>
-                      {item.emoji}
-                  </div>
-               </div>
-            </div>
+        <div 
+          key={`scenery-${idx}`} 
+          className="absolute w-[56px] h-[56px] pointer-events-none flex items-center justify-center" 
+          style={{ 
+            left: 8 + item.x * 56, 
+            top: 8 + item.y * 56, 
+            transformStyle: is3D ? 'preserve-3d' : 'flat', 
+            transform: is3D ? `translateZ(${elev * 16 + 4}px)` : 'none' 
+          }}
+        >
+          <div className={`${isEnv ? 'text-5xl opacity-80' : 'text-4xl'} select-none filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.6)]`}>
+            {item.emoji}
+          </div>
         </div>
       );
     });
@@ -564,28 +726,27 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   const renderEffects = () => {
     return visualEffects.map(eff => {
       const targetElev = elevations[eff.y]?.[eff.x] || 0;
-      const targetZ = targetElev * 16 + 8;
+      const targetZ = targetElev * 16 + 24;
       
       if (eff.type === 'hit') {
         return (
           <motion.div
             key={eff.id}
-            initial={{ y: 0, opacity: 1, scale: 0.5 }}
-            animate={{ y: -60, opacity: 0, scale: 1.5 }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            initial={{ y: 0, opacity: 1, scale: 0.8 }}
+            animate={{ y: -45, opacity: 0, scale: 1.4 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="absolute pointer-events-none flex items-center justify-center z-[100]"
             style={{
               left: 8 + eff.x * 56,
               top: 8 + eff.y * 56,
               width: 56, height: 56,
-              transformStyle: 'preserve-3d'
+              transformStyle: is3D ? 'preserve-3d' : 'flat',
+              transform: is3D ? `translateZ(${targetZ}px)` : 'none'
             }}
           >
-             <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-                <div className="relative text-5xl font-black text-white transition-transform duration-500" style={{ transformStyle: 'preserve-3d', transform: `translateZ(${targetZ+40}px) rotateZ(${-rotZ}deg) rotateX(${-rotX}deg)`, WebkitTextStroke: '2px black', filter: 'drop-shadow(0 0 8px rgba(255,255,255,1))' }}>
-                  {eff.value}
-                </div>
-             </div>
+            <div className="relative text-4xl font-black text-red-500 select-none drop-shadow-[0_2px_8px_rgba(0,0,0,1)]" style={{ WebkitTextStroke: '1.5px black' }}>
+              {eff.value}
+            </div>
           </motion.div>
         );
       }
@@ -594,16 +755,18 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
         return (
           <motion.div
             key={eff.id}
-            initial={{ left: 8 + eff.startX * 56, top: 8 + eff.startY * 56, scale: 0.5 }}
-            animate={{ left: 8 + eff.x * 56, top: 8 + eff.y * 56, scale: 1.5 }}
-            transition={{ duration: 0.3, type: "spring" }}
+            initial={{ left: 8 + eff.startX * 56, top: 8 + eff.startY * 56, scale: 0.8 }}
+            animate={{ left: 8 + eff.x * 56, top: 8 + eff.y * 56, scale: 1.3 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
             className="absolute pointer-events-none flex items-center justify-center z-[100]"
-            style={{ width: 56, height: 56, transformStyle: 'preserve-3d' }}
+            style={{ 
+              width: 56, height: 56, 
+              transformStyle: is3D ? 'preserve-3d' : 'flat',
+              transform: is3D ? `translateZ(${targetZ}px)` : 'none'
+            }}
           >
-            <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-               <div className="relative text-6xl transition-transform duration-500 drop-shadow-[0_0_15px_rgba(255,255,255,1)]" style={{ transformStyle: 'preserve-3d', transform: `translateZ(${targetZ+20}px) rotateZ(${-rotZ}deg) rotateX(${-rotX}deg)` }}>
-                  {eff.emoji || '⚔️'}
-               </div>
+            <div className="text-5xl select-none filter drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]">
+              {eff.emoji || '⚔️'}
             </div>
           </motion.div>
         );
@@ -616,43 +779,52 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           style={{ 
              left: 8 + eff.x * 56, top: 8 + eff.y * 56, 
              width: 56, height: 56, 
-             transformStyle: 'preserve-3d'
+             transformStyle: is3D ? 'preserve-3d' : 'flat',
+             transform: is3D ? `translateZ(${targetZ}px)` : 'none'
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-             <div className="relative flex items-center justify-center transition-transform duration-500" style={{ transformStyle: 'preserve-3d', transform: `translateZ(${targetZ + 30}px) rotateZ(${-rotZ}deg) rotateX(${-rotX}deg)` }}>
-                 {eff.type === 'magic' && <span className="animate-spin text-blue-300 drop-shadow-[0_0_20px_rgba(0,0,255,1)] text-6xl">✨</span>}
-                 {eff.type === 'heal' && <span className="animate-bounce text-green-400 drop-shadow-[0_0_20px_rgba(0,255,0,1)] text-6xl">💚</span>}
-                 {eff.type === 'damageNumber' && <span className="text-red-500 font-black text-5xl drop-shadow-[0_4px_4px_rgba(0,0,0,1)] animate-bounce">-{eff.amount}</span>}
-             </div>
-          </div>
+          {eff.type === 'magic' && <span className="animate-spin text-blue-300 drop-shadow-[0_0_20px_rgba(0,0,255,1)] text-5xl">✨</span>}
+          {eff.type === 'heal' && <span className="animate-bounce text-green-400 drop-shadow-[0_0_20px_rgba(0,255,0,1)] text-5xl">💚</span>}
         </div>
       );
     });
   };
 
   const renderGrid = () => {
+    const nextUpcomingUnit = units.find(u => u.id === nextUpcomingUnitId);
     const cells = [];
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const elev = elevations[y]?.[x] || 0;
         const unit = units.find(u => u.x === x && u.y === y && u.stats.hp > 0);
-        let cellClass = `relative w-[56px] h-[56px] min-w-[56px] min-h-[56px] flex-shrink-0 border ${theme.tileBorder} ${theme.tileBg} flex items-center justify-center text-3xl cursor-pointer transition-colors`;
+        const isActiveUnitTile = activeUnit && activeUnit.x === x && activeUnit.y === y;
+        const isNextUpcomingTile = nextUpcomingUnit && nextUpcomingUnit.x === x && nextUpcomingUnit.y === y;
         
+        let cellClass = `relative w-[56px] h-[56px] min-w-[56px] min-h-[56px] flex-shrink-0 border ${theme.tileBorder} ${theme.tileBg} flex items-center justify-center text-3xl cursor-pointer transition-all duration-150`;
+        
+        // Next upcoming unit tile highlight with golden radiant glow
+        if (isNextUpcomingTile) {
+          cellClass += " ring-4 ring-yellow-300 bg-yellow-400/30 shadow-[inset_0_0_18px_rgba(250,204,21,0.8)] animate-pulse";
+        }
+        // Active Unit Tile Outline
+        else if (isActiveUnitTile) {
+          cellClass += " ring-2 ring-yellow-400/80 shadow-[inset_0_0_8px_rgba(250,204,21,0.4)]";
+        }
+
         // Highlight logic
         if (selectedAction === 'MOVE' && activeUnit) {
            const dist = getDistance(activeUnit.x, activeUnit.y, x, y);
            if (dist > 0 && dist <= activeUnit.stats.mov && !unit) {
-               cellClass += " bg-blue-500/30 hover:bg-blue-400/50 shadow-[inset_0_0_10px_rgba(59,130,246,0.5)]";
+               cellClass += " bg-blue-500/40 hover:bg-blue-400/60 shadow-[inset_0_0_12px_rgba(59,130,246,0.8)] ring-2 ring-blue-300";
            } else {
                cellClass += " hover:brightness-125";
            }
         }
         else if ((selectedAction === 'ATTACK' || selectedAction === 'MAGIC') && activeUnit) {
            const dist = getDistance(activeUnit.x, activeUnit.y, x, y);
-           const range = selectedAction === 'ATTACK' ? activeUnit.weapon.range : 3; // Magic range is 3
+           const range = selectedAction === 'ATTACK' ? activeUnit.weapon.range : 3;
            if (dist > 0 && dist <= range && unit && !unit.isPlayer) {
-               cellClass += " bg-red-500/30 hover:bg-red-400/50 shadow-[inset_0_0_10px_rgba(239,68,68,0.5)]";
+               cellClass += " bg-red-500/40 hover:bg-red-400/60 shadow-[inset_0_0_12px_rgba(239,68,68,0.8)] ring-2 ring-red-400 animate-pulse";
            } else {
                cellClass += " hover:brightness-125";
            }
@@ -665,15 +837,25 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             key={`${x}-${y}`} 
             className={cellClass}
             onClick={() => handleCellClick(x, y)}
-            style={{ transformStyle: 'preserve-3d', transform: `translateZ(${elev * 16}px)` }}
+            style={{ 
+              transformStyle: is3D ? 'preserve-3d' : 'flat', 
+              transform: is3D ? `translateZ(${elev * 16}px)` : 'none' 
+            }}
           >
-            {elev > 0 && (
+            {/* In 3D mode, render elevation steps */}
+            {is3D && elev > 0 && (
               <>
                  <div className="absolute top-full left-0 w-full bg-slate-800 border-x border-b border-slate-900 origin-top" style={{ height: `${elev * 16}px`, transform: 'rotateX(-90deg)' }} />
                  <div className="absolute top-0 right-full h-full bg-slate-700 border-y border-l border-slate-900 origin-right" style={{ width: `${elev * 16}px`, transform: 'rotateY(-90deg)' }} />
               </>
             )}
-            
+
+            {/* In 2D mode, indicate elevation subtly if elevated */}
+            {!is3D && elev > 0 && (
+              <span className="absolute bottom-0.5 right-1 text-[9px] font-bold text-slate-300/60 select-none pointer-events-none">
+                +{elev}
+              </span>
+            )}
           </div>
         );
       }
@@ -685,7 +867,49 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     <div className="absolute inset-0 bg-slate-950 z-50 flex flex-col font-sans text-slate-200 transition-colors duration-1000 overflow-hidden">
       {/* 3D Battlefield Area */}
       <div className="flex-1 relative flex justify-center items-center bg-black/90 overflow-hidden">
-          {/* Logs */}
+        {/* Turn Order Queue Ribbon (FF6 Action Menu Style) */}
+        <div 
+          className="absolute top-3 left-3 z-50 flex items-center gap-1.5 p-1.5 md:p-2 rounded-lg border-[3px] md:border-[4px] border-slate-200 shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] max-w-[55vw] md:max-w-[65vw] overflow-x-auto custom-scrollbar font-mono uppercase font-black select-none"
+          style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+        >
+          <div className="flex items-center gap-1 text-xs md:text-sm text-yellow-400 mr-1 tracking-wider whitespace-nowrap">
+            <span>►</span>
+            <span style={{ fontSize: '28px', lineHeight: '9px' }}>ORDEM:</span>
+          </div>
+          {turnQueue.slice(0, 7).map((id, index) => {
+            const u = units.find(unit => unit.id === id);
+            if (!u || u.stats.hp <= 0) return null;
+            const isCurrent = u.id === activeUnitId;
+            const isNext = u.id === nextUpcomingUnitId;
+            return (
+              <div 
+                key={`queue-${u.id}-${index}`}
+                className={`relative flex items-center justify-center rounded transition-all duration-300 flex-shrink-0 shadow-[inset_0_0_0_1px_#000] ${
+                  isNext 
+                    ? 'w-10 h-10 border-[2px] border-yellow-300 bg-blue-700/60 ring-2 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,1)] scale-110 z-10 animate-pulse'
+                    : isCurrent
+                      ? 'w-9 h-9 border-[2px] border-white bg-blue-500/50 shadow-[0_0_10px_rgba(255,255,255,0.8)]'
+                      : 'w-8 h-8 border border-blue-900 bg-black/60 opacity-60 hover:opacity-100'
+                }`}
+                title={`${u.name || u.heroClass || 'Unidade'} (HP: ${u.stats.hp}/${u.stats.maxHp})`}
+              >
+                <span className="text-xl select-none">{u.emoji}</span>
+                {isNext && (
+                  <span className="absolute -bottom-2.5 text-[8px] font-black bg-yellow-400 text-black px-1 rounded-sm border border-black shadow whitespace-nowrap">
+                    PROXIMO
+                  </span>
+                )}
+                {isCurrent && !isNext && (
+                  <span className="absolute -bottom-2.5 text-[8px] font-black bg-white text-black px-1 rounded-sm border border-black shadow whitespace-nowrap">
+                    TURNO
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Logs */}
           {actionText && (
           <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
              <div className="rounded-lg border-[4px] border-slate-200 text-white text-2xl md:text-3xl p-4 shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] backdrop-blur-md animate-fade-in-down font-black uppercase tracking-widest" style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}>
@@ -694,42 +918,104 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           </div>
         )}
 
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-    <button onClick={() => setZoom(z => Math.max(0.4, z - 0.2))} className="w-12 h-12 bg-black/50 hover:bg-black/80 text-white rounded-full font-black text-3xl border-2 border-slate-500 shadow-lg backdrop-blur-sm transition-all hover:scale-110 flex items-center justify-center">-</button>
-    <button onClick={() => setZoom(z => Math.min(2.5, z + 0.2))} className="w-12 h-12 bg-black/50 hover:bg-black/80 text-white rounded-full font-black text-3xl border-2 border-slate-500 shadow-lg backdrop-blur-sm transition-all hover:scale-110 flex items-center justify-center">+</button>
-    <button onClick={() => setRotZ(z => z - 90)} className="w-12 h-12 bg-black/50 hover:bg-black/80 text-white rounded-full font-black text-2xl border-2 border-slate-500 shadow-lg backdrop-blur-sm transition-all hover:scale-110 flex items-center justify-center">↺</button>
-    <button onClick={() => setRotZ(z => z + 90)} className="w-12 h-12 bg-black/50 hover:bg-black/80 text-white rounded-full font-black text-2xl border-2 border-slate-500 shadow-lg backdrop-blur-sm transition-all hover:scale-110 flex items-center justify-center">↻</button>
-  </div>
-  
-  <div 
-    className="relative w-full h-full flex justify-center items-center select-none"
-    style={{ perspective: '1200px', transform: `scale(${zoom})`, transformOrigin: 'center' }}
-  >
-  
-  <div 
-    className={`relative p-2 rounded-xl shadow-[0_50px_100px_rgba(0,0,0,0.9)] inline-grid grid-cols-8 gap-0 border-4 border-slate-700/80 backdrop-blur-sm ${theme.wrapperBg} transition-transform duration-700 ease-in-out`}
-    style={{ 
-       transformStyle: 'preserve-3d', 
-       minWidth: '464px', minHeight: '464px',
-       transform: `rotateX(${rotX}deg) rotateZ(${rotZ}deg)`
-    }}
-  >
-    {/* Base Platform for Environment */}
-    <div 
-       className="absolute pointer-events-none rounded-[40px] border-[16px] border-[#3a4f33]/80 bg-[#2d3a28]/60 shadow-[inset_0_0_100px_rgba(0,0,0,0.8)] backdrop-blur-sm"
-       style={{ 
-         left: -800, right: -800, top: -800, bottom: -800, 
-         transform: 'translateZ(-10px)',
-         transformStyle: 'preserve-3d'
-       }}
-    />
-  
-            {renderScenery()}
-            {renderGrid()}
-            {renderUnits()}
-            {renderEffects()}
+        {/* Camera and View Controls (FF6 Action Menu Style) */}
+        <div 
+          className="absolute top-3 right-3 z-50 flex items-center gap-2 p-1.5 md:p-2 rounded-lg border-[3px] md:border-[4px] border-slate-200 shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] font-mono uppercase font-black"
+          style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+        >
+          {/* Mode Switch: 2D Reto vs 3D Isométrico */}
+          <button 
+            onClick={handleToggle3D} 
+            className={`px-2.5 py-1 rounded font-mono font-black text-xs transition-all border-[2px] flex items-center gap-1 shadow-[inset_0_0_0_1px_#000] hover:brightness-110 active:scale-95 ${
+              is3D 
+                ? 'bg-amber-600 text-white border-amber-300' 
+                : 'bg-blue-600 text-white border-blue-300'
+            }`}
+            title={is3D ? "Mudar para 2D Tático (Deitado e Reto)" : "Mudar para 3D Isométrico"}
+          >
+            <span style={{ fontSize: '23px', lineHeight: '24px' }}>{is3D ? '3D ISO' : '2D RETO'}</span>
+          </button>
+
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded border border-blue-900">
+            <button 
+              onClick={() => setZoom(z => Math.max(0.5, parseFloat((z - 0.15).toFixed(2))))} 
+              className="w-7 h-7 bg-blue-900/80 hover:bg-white/20 active:scale-95 text-white rounded border border-slate-300 shadow-[inset_0_0_0_1px_#000] font-black text-lg flex items-center justify-center transition-colors"
+              title="Diminuir Zoom (-)"
+            >
+              -
+            </button>
+            <button 
+              onClick={() => setZoom(1)} 
+              className="px-1.5 font-mono font-bold text-slate-200 hover:text-white"
+              style={{ fontSize: '23px', lineHeight: '30px' }}
+              title="Clique para Redefinir para 100%"
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <button 
+              onClick={() => setZoom(z => Math.min(2.2, parseFloat((z + 0.15).toFixed(2))))} 
+              className="w-7 h-7 bg-blue-900/80 hover:bg-white/20 active:scale-95 text-white rounded border border-slate-300 shadow-[inset_0_0_0_1px_#000] font-black text-lg flex items-center justify-center transition-colors"
+              title="Aumentar Zoom (+)"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Rotation Controls */}
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setRotZ(z => z - 45)} 
+              className="w-7 h-7 bg-blue-900/80 hover:bg-white/20 active:scale-95 text-white rounded border border-slate-300 shadow-[inset_0_0_0_1px_#000] font-black text-sm flex items-center justify-center transition-colors"
+              title="Girar Câmera para a Esquerda"
+            >
+              ↺
+            </button>
+            <button 
+              onClick={() => setRotZ(z => z + 45)} 
+              className="w-7 h-7 bg-blue-900/80 hover:bg-white/20 active:scale-95 text-white rounded border border-slate-300 shadow-[inset_0_0_0_1px_#000] font-black text-sm flex items-center justify-center transition-colors"
+              title="Girar Câmera para a Direita"
+            >
+              ↻
+            </button>
           </div>
         </div>
+        
+        <div 
+          className="relative w-full h-full flex justify-center items-center select-none overflow-hidden"
+          style={{ 
+            perspective: is3D ? '1200px' : 'none', 
+            transform: `scale(${zoom})`, 
+            transformOrigin: 'center' 
+          }}
+        >
+        
+        <div 
+          className={`relative p-2 rounded-xl shadow-[0_30px_80px_rgba(0,0,0,0.9)] inline-grid grid-cols-8 gap-0 border-4 border-slate-700/90 ${theme.wrapperBg} transition-transform duration-500 ease-out`}
+          style={{ 
+             transformStyle: is3D ? 'preserve-3d' : 'flat', 
+             minWidth: '464px', minHeight: '464px',
+             transform: is3D ? `rotateX(55deg) rotateZ(${rotZ}deg)` : `rotateZ(${rotZ}deg)`
+          }}
+        >
+          {/* Base Platform for Environment in 3D */}
+          {is3D && (
+            <div 
+               className="absolute pointer-events-none rounded-[40px] border-[16px] border-[#3a4f33]/80 bg-[#2d3a28]/80 shadow-[inset_0_0_100px_rgba(0,0,0,0.9)]"
+               style={{ 
+                 left: -800, right: -800, top: -800, bottom: -800, 
+                 transform: 'translateZ(-10px)',
+                 transformStyle: 'preserve-3d'
+               }}
+            />
+          )}
+        
+          {renderScenery()}
+          {renderGrid()}
+          {renderUnits()}
+          {renderEffects()}
+        </div>
+      </div>
       </div>
 
       {victoryData && (
@@ -766,7 +1052,29 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             className="w-1/3 md:w-1/4 rounded-lg border-[4px] border-slate-200 p-2 md:p-4 flex flex-col shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] overflow-y-auto custom-scrollbar"
             style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
           >
-             {activeUnit?.isPlayer ? (
+             {isTurnTransitioning ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-2 font-mono uppercase font-black">
+                    <div className="flex items-center gap-1 text-yellow-400 text-base md:text-2xl animate-pulse tracking-wider">
+                       <span>►</span>
+                       <span>PREPARANDO TURNO</span>
+                       <span>◄</span>
+                    </div>
+                    {nextUpcomingUnit ? (
+                       <div className="text-white text-sm md:text-lg mt-1 tracking-wide flex items-center justify-center gap-2">
+                          <span className="text-2xl select-none">{nextUpcomingUnit.emoji}</span>
+                          <span className="truncate max-w-[140px] md:max-w-[200px]">{nextUpcomingUnit.name || nextUpcomingUnit.heroClass || (nextUpcomingUnit.isPlayer ? 'Herói' : 'Inimigo')}</span>
+                       </div>
+                    ) : (
+                       <span className="text-xs md:text-sm text-slate-300 mt-1">Próximo Combatente...</span>
+                    )}
+                    <span className="text-[10px] md:text-xs text-yellow-300/80 mt-1 tracking-widest">
+                       AGUARDE O TURNO
+                    </span>
+                    <div className="w-full h-2.5 bg-black border border-slate-300 rounded-sm mt-2 overflow-hidden shadow-[inset_0_0_0_1px_#000]">
+                       <div className="h-full bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500 animate-pulse w-full" />
+                    </div>
+                </div>
+             ) : activeUnit?.isPlayer ? (
                 actionMenu === 'MAIN' ? (
                    <div className="flex flex-col gap-1 h-full text-2xl md:text-4xl">
                        <button className="flex items-center text-left hover:bg-white/20 p-1 rounded disabled:opacity-50 text-white" onClick={() => setSelectedAction('MOVE')} disabled={activeUnit.hasMoved}>
@@ -792,7 +1100,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                        }} disabled={activeUnit.hasActed}>
                            <span className="w-8">{selectedAction === 'ITEM' ? '►' : ''}</span> Item
                        </button>
-                       <button className="mt-auto flex items-center text-left hover:bg-white/20 p-1 rounded disabled:opacity-50 text-white" onClick={nextTurn}><span className="w-8"></span> Fim Turno</button>
+                       <button className="mt-auto flex items-center text-left hover:bg-white/20 p-1 rounded disabled:opacity-50 text-white" onClick={nextTurn} disabled={isTurnTransitioning}><span className="w-8"></span> Fim Turno</button>
                    </div>
                 ) : actionMenu === 'SKILLS' ? (
                    <div className="flex flex-col gap-1 h-full text-xl md:text-3xl">
@@ -829,7 +1137,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
 </div>
                 ) : (
                    <div className="flex flex-col gap-1 h-full text-xl md:text-3xl">
-                       <button className="text-yellow-400 mb-2 hover:text-white text-left" onClick={() => setActionMenu('MAIN')}>← VOLTAR</button>
+                       <button className="text-yellow-400 mb-2 hover:text-white text-left" onClick={() => setActionMenu('MAIN')}>VOLTAR</button>
                        {(activeUnit as any).magics?.map((magic: string) => (
                            <button key={magic} className="flex items-center text-left hover:bg-white/20 p-1 rounded disabled:opacity-50 text-white" onClick={() => { setSelectedSubItem(magic); setSelectedAction('MAGIC'); }} disabled={activeUnit.stats.mp < 10}>
                                <span className="w-6">{selectedSubItem === magic ? '►' : ''}</span> {magic} (10 MP)
@@ -850,9 +1158,12 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
           >
              <div className="flex flex-col gap-1 md:gap-2 h-full justify-around text-xl md:text-3xl">
-                {units.filter(u => u.isPlayer).map(player => (
+                {units.filter(u => u.isPlayer).map((player, index) => (
                     <div key={player.id} className={`flex items-center tracking-widest ${activeUnit?.id === player.id ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]' : 'text-slate-100'}`}>
-                        <div className="w-40 md:w-64 truncate flex items-center gap-2">
+                        <div 
+                           className="w-40 md:w-64 truncate flex items-center gap-2"
+                           style={index === 0 ? { fontSize: '30px', textAlign: 'justify' } : undefined}
+                        >
                            <span className="text-2xl hidden md:inline-block">{player.emoji}</span>
                            {player.name || player.heroClass || 'Heroi'}
                         </div>

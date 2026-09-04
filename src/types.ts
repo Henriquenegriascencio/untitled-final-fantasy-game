@@ -29,12 +29,16 @@ export type Weapon = {
   aoe?: boolean; // area of effect (for staff)
 };
 
+export type EncounterType = 'NORMAL' | 'AMBUSH' | 'PREEMPTIVE';
+
 export type Item = {
   id: string;
   name: string;
   heal: number;
+  mpHeal?: number;
   count: number;
   price: number;
+  desc?: string;
 };
 
 export type Hero = {
@@ -62,6 +66,7 @@ export type EnemyType = 'slime' | 'goblin' | 'orc' | 'elemental' | 'boss';
 
 export type Enemy = {
   id: string;
+  name?: string;
   x: number;
   y: number;
   type: EnemyType;
@@ -69,10 +74,12 @@ export type Enemy = {
   weapon: Weapon;
   emoji: string;
   goldReward: number;
+  expReward?: number;
 };
 
 export type CombatUnit = {
   id: string;
+  name?: string;
   isPlayer: boolean;
   x: number;
   y: number;
@@ -84,6 +91,9 @@ export type CombatUnit = {
   heroClass?: HeroClass;
   level?: number;
   debuffs?: { type: string, duration: number }[];
+  expReward?: number;
+  goldReward?: number;
+  enemyType?: EnemyType;
 };
 
 export type MapTile = '.' | 'M' | '~' | 'C' | '1' | '2' | '3' | '4' | 'F' | '<' | '@'; 

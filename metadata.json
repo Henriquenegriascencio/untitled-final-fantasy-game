@@ -1,5 +1,5 @@
 {
-  "name": "Elemental RPG",
+  "name": "Elemental Fantasy",
   "description": "Um RPG 2D com exploração e combate tático baseado em turnos.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

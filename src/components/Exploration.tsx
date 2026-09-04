@@ -10,9 +10,21 @@ type ExplorationProps = {
   onMove: (dx: number, dy: number) => void;
   onInteract: () => void;
   onEquipWeapon: (wType: string) => void;
+  isMenuOpen?: boolean;
+  onToggleMenu?: () => void;
 };
 
-export const Exploration: React.FC<ExplorationProps> = ({ mapId, player, enemies, artifacts, onMove, onInteract, onEquipWeapon }) => {
+export const Exploration: React.FC<ExplorationProps> = ({ 
+  mapId, 
+  player, 
+  enemies, 
+  artifacts, 
+  onMove, 
+  onInteract, 
+  onEquipWeapon,
+  isMenuOpen = false,
+  onToggleMenu,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRenderPos = useRef({ x: player.x, y: player.y });
 
@@ -20,6 +32,18 @@ export const Exploration: React.FC<ExplorationProps> = ({ mapId, player, enemies
   const lastMoveTime = useRef(0);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle Menu with M or Escape
+      if (e.key === 'm' || e.key === 'M') {
+        if (onToggleMenu) {
+          e.preventDefault();
+          onToggleMenu();
+          return;
+        }
+      }
+
+      // If menu is open, pause exploration movement
+      if (isMenuOpen) return;
+
       const now = Date.now();
       if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && now - lastMoveTime.current < 150) return;
       let moved = false;
@@ -53,7 +77,7 @@ export const Exploration: React.FC<ExplorationProps> = ({ mapId, player, enemies
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onMove, onInteract]);
+  }, [onMove, onInteract, isMenuOpen, onToggleMenu]);
 
   // Render loop
   useEffect(() => {
@@ -169,21 +193,44 @@ export const Exploration: React.FC<ExplorationProps> = ({ mapId, player, enemies
         />
         
         {/* Simple HUD Overlay */}
-        <div className="absolute top-4 left-4 flex gap-2">
-            {['Fogo', 'Agua', 'Ar', 'Terra'].map(art => (
-              <span key={art} className={`px-3 py-1 rounded-full text-sm font-bold shadow-md transition-colors ${player.artifacts.includes(art) ? 'bg-yellow-400 text-yellow-950 shadow-yellow-400/50' : 'bg-slate-800 text-slate-500'}`}>
+        <div className="absolute top-4 left-4 flex gap-2.5">
+            {['Fogo', 'Agua', 'Ar', 'Terra'].map((art, index) => (
+              <span 
+                key={art} 
+                style={index === 0 ? { fontSize: '20px' } : undefined}
+                className={`px-4 py-1.5 rounded-full text-base md:text-lg font-black tracking-wide shadow-lg transition-colors ${player.artifacts.includes(art) ? 'bg-yellow-400 text-yellow-950 shadow-yellow-400/60 ring-2 ring-yellow-300' : 'bg-slate-900/90 text-slate-400 border border-slate-700'}`}
+              >
                 {art}
               </span>
             ))}
         </div>
-        <div className="absolute top-4 right-4 bg-slate-900/80 p-2 px-4 rounded-lg border border-slate-700 text-white font-bold flex gap-4">
-            <span>{mapId === 'OVERWORLD' ? 'Mundo de Eldoria' : 'Masmorra'}</span>
-            <span className="text-yellow-400">{player.gold} G</span>
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+            <button
+              id="hud_open_menu_btn"
+              onClick={onToggleMenu}
+              className="px-4 py-2 bg-gradient-to-b from-blue-700 via-blue-900 to-[#050b33] hover:from-blue-600 hover:to-blue-800 text-white font-black text-lg md:text-xl rounded-xl border-2 border-[#d8d8d8] shadow-[inset_0_0_0_1px_#000028,0_4px_12px_rgba(0,0,0,0.8)] flex items-center gap-2 cursor-pointer transition-all active:scale-95 uppercase tracking-wider select-none hover:shadow-[0_0_15px_rgba(56,189,248,0.5)]"
+              title="Abrir Menu do Jogo (Tecla M)"
+            >
+              <span className="text-xl">👉</span>
+              <span className="drop-shadow-[1px_1px_0_#000]">MENU [M]</span>
+            </button>
+            <div className="bg-slate-900/90 py-2 px-5 rounded-xl border border-slate-700 text-white font-extrabold text-lg md:text-xl flex items-center gap-5 shadow-xl backdrop-blur-sm">
+                <span 
+                  className="text-slate-100"
+                  style={{ fontSize: '30px', lineHeight: '10px' }}
+                >
+                  {mapId === 'OVERWORLD' ? 'Mundo de Eldoria' : 'Masmorra'}
+                </span>
+                <span className="text-yellow-400 font-black">{player.gold} G</span>
+            </div>
         </div>
-        <div className="absolute bottom-4 left-4 bg-slate-900/80 p-2 px-4 rounded-lg border border-slate-700 text-white text-sm">
+        <div 
+          className="absolute bottom-4 left-4 bg-slate-900/90 py-2.5 px-5 rounded-xl border border-slate-700 text-white text-base md:text-lg font-bold shadow-xl backdrop-blur-sm"
+          style={{ fontSize: '17px' }}
+        >
             Use WASD para mover. Cidades (🏠), Masmorras (🚪).
         </div>
-        <div className="absolute bottom-4 right-4 bg-slate-900/80 p-2 px-4 rounded-lg border border-slate-700 text-white text-sm">
+        <div className="absolute bottom-4 right-4 bg-slate-900/90 py-2.5 px-5 rounded-xl border border-slate-700 text-white text-base md:text-lg font-bold shadow-xl backdrop-blur-sm">
             Dica: Lute e upe de nível antes de ir para as masmorras.
         </div>
     </div>

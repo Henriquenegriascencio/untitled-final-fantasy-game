@@ -168,7 +168,12 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
             
             <div className="w-full flex flex-col gap-6 px-4">
               <div className="flex flex-col gap-4">
-                <label className="text-amber-400 uppercase tracking-widest text-2xl">Nome (Max 8)</label>
+                <label 
+                  className="text-amber-400 uppercase tracking-widest text-[31px] leading-[20px]"
+                  style={{ fontSize: '31px', lineHeight: '20px' }}
+                >
+                  Nome (Max 8)
+                </label>
                 <input 
                   type="text" 
                   value={currentName}
