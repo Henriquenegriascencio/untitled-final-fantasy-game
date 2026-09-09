@@ -1,0 +1,3 @@
+apenas um jogo inspirado ou bootleg ou cópia sei la de final fantasy
+músicas e efeitos sonoros tudo da square enix
+não me processem D:
