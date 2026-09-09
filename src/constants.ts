@@ -159,7 +159,7 @@ export type EnemyTemplate = {
 export const ENEMY_TEMPLATES: Record<EnemyType, EnemyTemplate> = {
   slime: {
     name: 'Slime Verde',
-    emoji: '🦠',
+    emoji: '',
     stats: { hp: 30, maxHp: 30, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 5, int: 2, def: 2, mov: 2, vel: 5 },
     weapon: WEAPONS.espada_madeira,
     gold: 8,
@@ -172,7 +172,7 @@ export const ENEMY_TEMPLATES: Record<EnemyType, EnemyTemplate> = {
   },
   goblin: {
     name: 'Goblin Salteador',
-    emoji: '👺',
+    emoji: '',
     stats: { hp: 45, maxHp: 45, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 8, int: 2, def: 4, mov: 3, vel: 8 },
     weapon: WEAPONS.arco,
     gold: 18,
@@ -186,7 +186,7 @@ export const ENEMY_TEMPLATES: Record<EnemyType, EnemyTemplate> = {
   },
   orc: {
     name: 'Orc Guerreiro',
-    emoji: '👹',
+    emoji: '',
     stats: { hp: 80, maxHp: 80, mp: 0, maxMp: 0, sp: 0, maxSp: 100, for: 15, int: 2, def: 8, mov: 2, vel: 6 },
     weapon: WEAPONS.espada,
     gold: 40,
@@ -200,7 +200,7 @@ export const ENEMY_TEMPLATES: Record<EnemyType, EnemyTemplate> = {
   },
   elemental: {
     name: 'Elemental Arcano',
-    emoji: '☄️',
+    emoji: '',
     stats: { hp: 60, maxHp: 60, mp: 50, maxMp: 50, sp: 0, maxSp: 100, for: 5, int: 15, def: 5, mov: 3, vel: 12 },
     weapon: WEAPONS.cajado,
     gold: 55,
@@ -214,7 +214,7 @@ export const ENEMY_TEMPLATES: Record<EnemyType, EnemyTemplate> = {
   },
   boss: {
     name: 'Dragao Anciao',
-    emoji: '🐉',
+    emoji: '',
     stats: { hp: 300, maxHp: 300, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 25, int: 20, def: 18, mov: 2, vel: 15 },
     weapon: WEAPONS.cajado_anciao,
     gold: 750,
@@ -284,7 +284,7 @@ export const BOSS = {
   type: 'boss' as EnemyType,
   x: 21,
   y: 36,
-  emoji: '🐉',
+  emoji: '',
   stats: { hp: 300, maxHp: 300, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 25, int: 20, def: 18, mov: 2, vel: 15 },
   weapon: WEAPONS.cajado_anciao,
   goldReward: 1000,

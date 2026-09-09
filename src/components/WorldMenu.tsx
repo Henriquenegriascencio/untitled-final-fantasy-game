@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Player, Hero, Item, HeroClass } from '../types';
 import { HeroPortrait } from './HeroPortrait';
-import { soundFX } from '../utils/audio';
+import { soundFX, bgm } from '../utils/audio';
 
 type MenuCommand = 'Item' | 'Skills' | 'Equip' | 'Relic' | 'Status' | 'Config' | 'Save';
 
@@ -69,6 +69,8 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
   const [selectedItemIndex, setSelectedItemIndex] = useState<number>(0);
   const [useTargetPrompt, setUseTargetPrompt] = useState<boolean>(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [bgmActive, setBgmActive] = useState<boolean>(bgm.enabled);
+  const [sfxActive, setSfxActive] = useState<boolean>(soundFX.enabled);
 
   // Default party fallback if player started before creation or has empty party
   const party: Hero[] = player.party && player.party.length > 0 ? player.party : [
@@ -80,7 +82,6 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
       exp: 4200,
       stats: { hp: 485, maxHp: 615, mp: 154, maxMp: 158, sp: 0, maxSp: 100, for: 28, int: 22, def: 24, mov: 4, vel: 14 },
       weapon: { id: 'w1', name: 'Espada Longa', type: 'espada', range: 1, damage: 25 },
-      emoji: '⚔️',
       magics: ['Cura', 'Nevasca']
     },
     {
@@ -91,7 +92,6 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
       exp: 4800,
       stats: { hp: 658, maxHp: 684, mp: 161, maxMp: 161, sp: 0, maxSp: 100, for: 24, int: 16, def: 18, mov: 4, vel: 20 },
       weapon: { id: 'w2', name: 'Arco Curto', type: 'arco', range: 4, damage: 22 },
-      emoji: '🏹',
       magics: ['Rajada', 'Veneno']
     },
     {
@@ -102,7 +102,6 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
       exp: 4750,
       stats: { hp: 569, maxHp: 685, mp: 149, maxMp: 160, sp: 0, maxSp: 100, for: 26, int: 20, def: 22, mov: 4, vel: 16 },
       weapon: { id: 'w3', name: 'Chave Inglesa', type: 'ferramenta', range: 1, damage: 24 },
-      emoji: '⚙️',
       magics: ['Auto-Crossbow', 'Flash']
     },
     {
@@ -113,7 +112,6 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
       exp: 3100,
       stats: { hp: 452, maxHp: 452, mp: 116, maxMp: 116, sp: 0, maxSp: 100, for: 32, int: 12, def: 26, mov: 4, vel: 12 },
       weapon: { id: 'w4', name: 'Katana Ancestral', type: 'espada', range: 1, damage: 30 },
-      emoji: '🥊',
       magics: ['Presa do Dragao', 'Concentracao']
     }
   ];
@@ -187,7 +185,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
     if (cmd === 'Save') {
       soundFX.playSave();
       onSave();
-      setFeedbackMessage('Jogo Salvo com Sucesso! ⭐');
+      setFeedbackMessage('Jogo Salvo com Sucesso!');
       setTimeout(() => setFeedbackMessage(null), 2500);
       return;
     }
@@ -226,7 +224,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
 
     onUpdateParty(updatedParty, updatedItems);
     setUseTargetPrompt(false);
-    setFeedbackMessage(`+${item.heal} HP em ${target.name}! ✨`);
+    setFeedbackMessage(`+${item.heal} HP em ${target.name}!`);
     setTimeout(() => setFeedbackMessage(null), 2000);
   };
 
@@ -262,7 +260,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
     });
 
     onUpdateParty(updatedParty, player.inventory.items);
-    setFeedbackMessage(`${caster.name} curou ${healAmount} HP em ${target.name}! 💚`);
+    setFeedbackMessage(`${caster.name} curou ${healAmount} HP em ${target.name}!`);
     setTimeout(() => setFeedbackMessage(null), 2500);
   };
 
@@ -489,7 +487,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
             }}
             className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-yellow-400 rounded border border-slate-500 uppercase tracking-wider font-black transition-colors"
           >
-            ✕ Fechar
+            FECHAR [ESC]
           </button>
         </div>
 
@@ -511,17 +509,17 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                 }}
                 className="text-yellow-400 hover:text-white text-left font-mono font-black text-2xl md:text-3xl flex items-center gap-2 cursor-pointer transition-colors"
               >
-                <span>←</span>
+                <span>◄</span>
                 <span>VOLTAR [ESC]</span>
               </button>
 
               <div className="text-white text-2xl md:text-3xl font-black uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
-                {subView === 'Item' && '🎒 ITENS'}
-                {subView === 'Skills' && '✨ HABILIDADES & MAGIAS'}
-                {subView === 'Equip' && '🛡️ EQUIPAMENTO'}
-                {subView === 'Relic' && '💎 RELIQUIAS ELEMENTAIS'}
-                {subView === 'Status' && '📊 STATUS DA EQUIPE'}
-                {subView === 'Config' && '⚙️ CONFIGURACOES'}
+                {subView === 'Item' && 'ITENS'}
+                {subView === 'Skills' && 'HABILIDADES & MAGIAS'}
+                {subView === 'Equip' && 'EQUIPAMENTO'}
+                {subView === 'Relic' && 'RELIQUIAS ELEMENTAIS'}
+                {subView === 'Status' && 'STATUS DA EQUIPE'}
+                {subView === 'Config' && 'CONFIGURACOES'}
               </div>
             </div>
 
@@ -562,7 +560,6 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                           <span className="w-8 text-yellow-400 font-black">
                             {useTargetPrompt && selectedItemIndex === idx ? '►' : ''}
                           </span>
-                          <span className="text-2xl">🧪</span>
                           <span>{it.name}</span>
                           <span className="text-base md:text-xl text-green-400 ml-2">
                             (+{it.heal} HP)
@@ -661,7 +658,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                       { name: 'Cura', cost: 10, desc: 'Restaura HP de um aliado', canCast: true },
                       { name: 'Fogo', cost: 15, desc: 'Ataque elemental de chamas', canCast: false },
                       { name: 'Nevasca', cost: 18, desc: 'Explosao de gelo cortante', canCast: false },
-                      { name: 'Trovão', cost: 20, desc: 'Raio de alto impacto', canCast: false },
+                      { name: 'Trovao', cost: 20, desc: 'Raio de alto impacto', canCast: false },
                     ].map((sp) => (
                       <div
                         key={sp.name}
@@ -758,10 +755,10 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4 flex-1">
                   {[
-                    { id: 'Fogo', emoji: '🔥', dungeon: 'Masmorra do Fogo', desc: 'Concede poder igneo devastador.' },
-                    { id: 'Agua', emoji: '💧', dungeon: 'Masmorra da Agua', desc: 'Restaura a pureza dos rios e fontes.' },
-                    { id: 'Ar', emoji: '🌪️', dungeon: 'Masmorra do Ar', desc: 'Controla as correntes e ventos celestes.' },
-                    { id: 'Terra', emoji: '🪨', dungeon: 'Masmorra da Terra', desc: 'Estabiliza montanhas e abismos.' },
+                    { id: 'Fogo', badge: '[FOGO]', dungeon: 'Masmorra do Fogo', desc: 'Concede poder igneo devastador.' },
+                    { id: 'Agua', badge: '[AGUA]', dungeon: 'Masmorra da Agua', desc: 'Restaura a pureza dos rios e fontes.' },
+                    { id: 'Ar', badge: '[AR]', dungeon: 'Masmorra do Ar', desc: 'Controla as correntes e ventos celestes.' },
+                    { id: 'Terra', badge: '[TERRA]', dungeon: 'Masmorra da Terra', desc: 'Estabiliza montanhas e abismos.' },
                   ].map((art) => {
                     const owned = player.artifacts.includes(art.id);
                     return (
@@ -774,7 +771,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                         }`}
                         style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
                       >
-                        <span className="text-5xl">{art.emoji}</span>
+                        <span className="text-xl md:text-2xl font-black text-amber-300 font-mono tracking-wider">{art.badge}</span>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <span className="text-white font-black text-xl md:text-3xl">ARTEFATO DE {art.id}</span>
@@ -785,7 +782,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                                   : 'bg-black/80 text-slate-400 border-slate-600'
                               }`}
                             >
-                              {owned ? '✓ COLETADO' : 'PENDENTE'}
+                              {owned ? 'OBTIDO' : 'PENDENTE'}
                             </span>
                           </div>
                           <div className="text-sm md:text-base text-cyan-300 mt-1">Local: {art.dungeon}</div>
@@ -881,21 +878,46 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
                   style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
                 >
                   <div>
+                    <div className="text-white font-black text-xl md:text-2xl">MUSICA DE FUNDO (BGM)</div>
+                    <div className="text-xs md:text-sm text-slate-300 font-normal">Trilhas de Prologo, Overworld, Batalha e Vitoria</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const next = bgm.toggle();
+                      setBgmActive(next);
+                      if (soundFX.enabled) soundFX.playSelect();
+                    }}
+                    className={`px-6 py-2 rounded font-black text-base md:text-xl uppercase border-2 shadow-[inset_0_0_0_1px_#000] cursor-pointer active:scale-95 transition-all ${
+                      bgmActive 
+                        ? 'bg-green-600 text-white border-green-300 shadow-[0_0_10px_rgba(34,197,94,0.8)]' 
+                        : 'bg-red-800 text-slate-300 border-red-500'
+                    }`}
+                  >
+                    {bgmActive ? 'LIGADO' : 'MUDO'}
+                  </button>
+                </div>
+
+                <div 
+                  className="rounded-lg border-[3px] border-slate-200 p-4 shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] flex justify-between items-center"
+                  style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+                >
+                  <div>
                     <div className="text-white font-black text-xl md:text-2xl">EFEITOS SONOROS 16-BIT</div>
                     <div className="text-xs md:text-sm text-slate-300 font-normal">Sons de menu e batalha estilo SNES</div>
                   </div>
                   <button
                     onClick={() => {
                       soundFX.enabled = !soundFX.enabled;
+                      setSfxActive(soundFX.enabled);
                       if (soundFX.enabled) soundFX.playSelect();
                     }}
                     className={`px-6 py-2 rounded font-black text-base md:text-xl uppercase border-2 shadow-[inset_0_0_0_1px_#000] cursor-pointer active:scale-95 transition-all ${
-                      soundFX.enabled 
+                      sfxActive 
                         ? 'bg-green-600 text-white border-green-300 shadow-[0_0_10px_rgba(34,197,94,0.8)]' 
                         : 'bg-red-800 text-slate-300 border-red-500'
                     }`}
                   >
-                    {soundFX.enabled ? 'LIGADO' : 'MUDO'}
+                    {sfxActive ? 'LIGADO' : 'MUDO'}
                   </button>
                 </div>
 

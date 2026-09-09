@@ -1,18 +1,20 @@
 import React from 'react';
-import { HeroClass } from '../types';
+import { HeroClass, EnemyType } from '../types';
 
-interface HeroPortraitProps {
+export interface HeroPortraitProps {
   heroClass?: HeroClass;
   emoji?: string;
   name?: string;
   className?: string;
+  hideBadge?: boolean;
 }
 
 export const HeroPortrait: React.FC<HeroPortraitProps> = ({
   heroClass = 'Cavalheiro',
-  emoji = '⚔️',
+  emoji = '',
   name = '',
   className = '',
+  hideBadge = false,
 }) => {
   // Renders a high-detail SNES-style bust portrait tailored to the character class
   const renderClassArt = () => {
@@ -181,15 +183,217 @@ export const HeroPortrait: React.FC<HeroPortraitProps> = ({
     }
   };
 
+  const hasSize = className && (className.includes('w-') || className.includes('size-'));
+  const sizeClass = hasSize ? '' : 'w-16 h-16 md:w-20 md:h-20';
+
   return (
     <div
-      className={`relative w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-lg overflow-hidden border-[2px] border-[#d1d5db] shadow-[inset_0_0_0_1px_#000,0_2px_4px_rgba(0,0,0,0.8)] bg-[#020617] ${className}`}
+      className={`relative shrink-0 rounded-lg overflow-hidden border-[2px] border-[#d1d5db] shadow-[inset_0_0_0_1px_#000,0_2px_4px_rgba(0,0,0,0.8)] bg-[#020617] ${sizeClass} ${className}`}
     >
       {renderClassArt()}
       {/* Mini class badge */}
-      <span className="absolute bottom-0 right-0 text-xs md:text-sm bg-black/70 px-1 rounded-tl leading-none">
-        {emoji}
+      {!hideBadge && (
+        <span className="absolute bottom-0 right-0 text-xs md:text-sm bg-black/70 px-1 rounded-tl leading-none">
+          {emoji}
+        </span>
+      )}
+    </div>
+  );
+};
+
+export interface EnemyPortraitProps {
+  enemyType?: EnemyType | string;
+  emoji?: string;
+  className?: string;
+}
+
+export const EnemyPortrait: React.FC<EnemyPortraitProps> = ({
+  enemyType = 'slime',
+  emoji = '',
+  className = '',
+}) => {
+  const renderEnemyArt = () => {
+    switch (enemyType) {
+      case 'slime':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#064e3b" />
+            <ellipse cx="32" cy="54" rx="26" ry="7" fill="#047857" />
+            <path d="M 12 48 Q 10 26 28 14 Q 32 10 36 14 Q 54 26 52 48 Q 44 56 32 56 Q 20 56 12 48 Z" fill="#10b981" />
+            <path d="M 16 48 Q 20 30 32 20 Q 44 30 48 48 Q 40 53 32 53 Q 24 53 16 48 Z" fill="#34d399" />
+            <ellipse cx="24" cy="24" rx="5" ry="3" fill="#ecfdf5" transform="rotate(-30 24 24)" />
+            <circle cx="21" cy="32" r="2" fill="#ecfdf5" />
+            <ellipse cx="26" cy="38" rx="4" ry="4" fill="#0f172a" />
+            <circle cx="25" cy="37" r="1.5" fill="#ffffff" />
+            <ellipse cx="38" cy="38" rx="4" ry="4" fill="#0f172a" />
+            <circle cx="37" cy="37" r="1.5" fill="#ffffff" />
+            <path d="M 30 46 Q 32 48 34 46" stroke="#064e3b" strokeWidth="2" fill="none" />
+          </svg>
+        );
+
+      case 'goblin':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#14532d" />
+            <polygon points="6,30 20,24 18,38" fill="#4ade80" stroke="#15803d" strokeWidth="1" />
+            <polygon points="58,30 44,24 46,38" fill="#4ade80" stroke="#15803d" strokeWidth="1" />
+            <polygon points="10,31 19,27 18,35" fill="#f43f5e" />
+            <polygon points="54,31 45,27 46,35" fill="#f43f5e" />
+            <ellipse cx="32" cy="34" rx="16" ry="18" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+            <path d="M 16 26 Q 32 10 48 26 L 46 20 Q 32 4 18 20 Z" fill="#78350f" />
+            <polygon points="32,4 40,2 48,16" fill="#78350f" />
+            <ellipse cx="25" cy="32" rx="3.5" ry="3" fill="#facc15" />
+            <circle cx="26" cy="32" r="1.5" fill="#78350f" />
+            <ellipse cx="39" cy="32" rx="3.5" ry="3" fill="#facc15" />
+            <circle cx="38" cy="32" r="1.5" fill="#78350f" />
+            <polygon points="32,30 29,40 33,40" fill="#16a34a" />
+            <path d="M 24 46 Q 32 52 40 46" stroke="#0f172a" strokeWidth="2" fill="#7f1d1d" />
+            <polygon points="26,45 28,48 30,45" fill="#ffffff" />
+            <polygon points="34,45 36,48 38,45" fill="#ffffff" />
+          </svg>
+        );
+
+      case 'orc':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#3b0764" />
+            <path d="M 12 28 Q 16 8 32 8 Q 48 8 52 28 L 52 34 L 12 34 Z" fill="#475569" stroke="#0f172a" strokeWidth="1.5" />
+            <path d="M 14 26 Q 4 20 6 12 Q 12 18 16 22" fill="#cbd5e1" stroke="#334155" strokeWidth="1" />
+            <path d="M 50 26 Q 60 20 58 12 Q 52 18 48 22" fill="#cbd5e1" stroke="#334155" strokeWidth="1" />
+            <rect x="22" y="16" width="20" height="4" fill="#94a3b8" />
+            <path d="M 16 32 Q 14 50 32 54 Q 50 50 48 32 Z" fill="#65a30d" stroke="#365314" strokeWidth="1.5" />
+            <ellipse cx="24" cy="36" rx="3.5" ry="2" fill="#ef4444" />
+            <circle cx="24" cy="36" r="1" fill="#fee2e2" />
+            <ellipse cx="40" cy="36" rx="3.5" ry="2" fill="#ef4444" />
+            <circle cx="40" cy="36" r="1" fill="#fee2e2" />
+            <path d="M 21 33 L 28 34" stroke="#1c1917" strokeWidth="2" />
+            <path d="M 36 34 L 43 33" stroke="#1c1917" strokeWidth="2" />
+            <path d="M 22 50 L 25 40 L 28 50" fill="#f8fafc" stroke="#365314" strokeWidth="1" />
+            <path d="M 42 50 L 39 40 L 36 50" fill="#f8fafc" stroke="#365314" strokeWidth="1" />
+            <path d="M 26 48 Q 32 50 38 48" stroke="#1c1917" strokeWidth="2" fill="#450a0a" />
+          </svg>
+        );
+
+      case 'elemental':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#450a0a" />
+            <circle cx="32" cy="32" r="28" fill="#f97316" opacity="0.3" />
+            <circle cx="32" cy="32" r="22" fill="#ea580c" opacity="0.4" />
+            <polygon points="12,18 16,10 20,20" fill="#fde047" />
+            <polygon points="46,14 52,8 50,22" fill="#fde047" />
+            <polygon points="10,44 18,52 14,38" fill="#fde047" />
+            <polygon points="50,46 54,38 46,52" fill="#fde047" />
+            <circle cx="32" cy="32" r="16" fill="#fbbf24" stroke="#f59e0b" strokeWidth="2" />
+            <circle cx="32" cy="32" r="10" fill="#ffffff" />
+            <ellipse cx="26" cy="30" rx="3" ry="2" fill="#7f1d1d" />
+            <circle cx="26" cy="30" r="1" fill="#ffffff" />
+            <ellipse cx="38" cy="30" rx="3" ry="2" fill="#7f1d1d" />
+            <circle cx="38" cy="30" r="1" fill="#ffffff" />
+            <path d="M 28 38 Q 32 40 36 38" stroke="#7f1d1d" strokeWidth="2" fill="none" />
+          </svg>
+        );
+
+      case 'boss':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#18181b" />
+            <circle cx="32" cy="32" r="28" fill="#dc2626" opacity="0.25" />
+            <path d="M 20 20 Q 8 6 10 2 Q 18 8 26 14" fill="#ca8a04" stroke="#78350f" strokeWidth="1.5" />
+            <path d="M 44 20 Q 56 6 54 2 Q 46 8 38 14" fill="#ca8a04" stroke="#78350f" strokeWidth="1.5" />
+            <path d="M 18 16 Q 32 10 46 16 L 50 36 Q 44 56 32 60 Q 20 56 14 36 Z" fill="#991b1b" stroke="#450a0a" strokeWidth="2" />
+            <path d="M 32 12 L 32 44" stroke="#facc15" strokeWidth="2" strokeDasharray="3 2" />
+            <polygon points="20,28 28,30 22,34" fill="#facc15" stroke="#78350f" strokeWidth="1" />
+            <line x1="24" y1="28" x2="24" y2="34" stroke="#000" strokeWidth="1.5" />
+            <polygon points="44,28 36,30 42,34" fill="#facc15" stroke="#78350f" strokeWidth="1" />
+            <line x1="40" y1="28" x2="40" y2="34" stroke="#000" strokeWidth="1.5" />
+            <circle cx="28" cy="48" r="2" fill="#450a0a" />
+            <circle cx="36" cy="48" r="2" fill="#450a0a" />
+            <path d="M 22 52 Q 32 56 42 52" stroke="#450a0a" strokeWidth="2" fill="none" />
+            <polygon points="26,52 28,56 30,52" fill="#fff" />
+            <polygon points="34,52 36,56 38,52" fill="#fff" />
+          </svg>
+        );
+
+      default:
+        return (
+          <div className="w-full h-full flex items-center justify-center text-3xl bg-slate-900">
+            {emoji}
+          </div>
+        );
+    }
+  };
+
+  const hasSize = className && (className.includes('w-') || className.includes('size-'));
+  const sizeClass = hasSize ? '' : 'w-16 h-16 md:w-20 md:h-20';
+
+  return (
+    <div
+      className={`relative shrink-0 rounded-lg overflow-hidden border-[2px] border-red-400 shadow-[inset_0_0_0_1px_#000,0_2px_4px_rgba(0,0,0,0.8)] bg-[#020617] ${sizeClass} ${className}`}
+    >
+      {renderEnemyArt()}
+    </div>
+  );
+};
+
+export interface UnitAvatarProps {
+  unit?: {
+    isPlayer?: boolean;
+    heroClass?: HeroClass;
+    enemyType?: EnemyType | string;
+    type?: EnemyType | string;
+    emoji?: string;
+    name?: string;
+  };
+  heroClass?: HeroClass;
+  enemyType?: EnemyType | string;
+  emoji?: string;
+  isPlayer?: boolean;
+  className?: string;
+  hideBadge?: boolean;
+}
+
+export const UnitAvatar: React.FC<UnitAvatarProps> = ({
+  unit,
+  heroClass,
+  enemyType,
+  emoji,
+  isPlayer,
+  className = '',
+  hideBadge = true,
+}) => {
+  const actualIsPlayer = isPlayer ?? unit?.isPlayer ?? (!!heroClass || !!unit?.heroClass);
+  const actualClass = heroClass ?? unit?.heroClass;
+  const actualEnemyType = enemyType ?? unit?.enemyType ?? (unit as any)?.type;
+  const actualEmoji = emoji ?? unit?.emoji ?? '';
+
+  if (actualIsPlayer && actualClass) {
+    return (
+      <HeroPortrait
+        heroClass={actualClass}
+        emoji={actualEmoji}
+        hideBadge={hideBadge}
+        className={className}
+      />
+    );
+  }
+
+  if (!actualIsPlayer && actualEnemyType) {
+    return (
+      <EnemyPortrait
+        enemyType={actualEnemyType}
+        emoji={actualEmoji}
+        className={className}
+      />
+    );
+  }
+
+  return (
+    <div className={`flex items-center justify-center shrink-0 bg-slate-900 border border-slate-700 ${className}`}>
+      <span className="text-xs font-mono font-bold text-yellow-400 select-none">
+        {unit?.name?.slice(0, 3)?.toUpperCase() || 'UNT'}
       </span>
     </div>
   );
 };
+

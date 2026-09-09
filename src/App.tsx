@@ -9,7 +9,7 @@ import { CharacterCreation } from './components/CharacterCreation';
 import { WorldMenu } from './components/WorldMenu';
 import { TitleSettingsModal } from './components/TitleSettingsModal';
 import { TitleScreen } from './components/TitleScreen';
-import { soundFX } from './utils/audio';
+import { soundFX, bgm } from './utils/audio';
 
 export default function App() {
   const [gameState, setGameState] = useState<GameState>('START_MENU');
@@ -45,7 +45,8 @@ export default function App() {
     const data = { player, mapId, overworldPos, artifacts, totalSteps, playTimeSeconds };
     localStorage.setItem('eldoria_save', JSON.stringify(data));
     setHasSave(true);
-    setSaveMessage('Jogo Salvo com Sucesso! ⭐');
+    soundFX.playSave();
+    setSaveMessage('Jogo Salvo com Sucesso!');
     setTimeout(() => setSaveMessage(''), 3000);
   };
 
@@ -84,6 +85,35 @@ export default function App() {
   const [artifacts, setArtifacts] = useState<{id: string, x: number, y: number, emoji: string, mapId: MapId}[]>([]);
   const [combatEnemies, setCombatEnemies] = useState<Enemy[]>([]);
 
+  // Background Music (BGM) playback based on GameState
+  useEffect(() => {
+    switch (gameState) {
+      case 'START_MENU':
+      case 'CHARACTER_CREATION':
+      case 'STORY_CRAWL':
+        bgm.playPrologue();
+        break;
+      case 'EXPLORATION':
+      case 'SHOP':
+        bgm.playOverworld();
+        break;
+      case 'ENCOUNTER_TRANSITION':
+      case 'COMBAT':
+        if (combatEnemies.some(e => e.id === 'boss' || e.type === 'boss')) {
+          bgm.playBoss();
+        } else {
+          bgm.playBattle();
+        }
+        break;
+      case 'VICTORY':
+        bgm.playVictory();
+        break;
+      case 'GAME_OVER':
+        bgm.stop();
+        break;
+    }
+  }, [gameState, combatEnemies]);
+
   // Spawn logic based on map
   const spawnForMap = (mId: MapId) => {
     let newEnemies: Enemy[] = [];
@@ -109,10 +139,10 @@ export default function App() {
     
     // Set Artifacts locations
     setArtifacts([
-      { id: 'Fogo', mapId: 'DUNGEON_FOGO', x: 7, y: 5, emoji: '🔥' },
-      { id: 'Agua', mapId: 'DUNGEON_AGUA', x: 7, y: 5, emoji: '💧' },
-      { id: 'Ar', mapId: 'DUNGEON_AR', x: 7, y: 5, emoji: '🌪️' },
-      { id: 'Terra', mapId: 'DUNGEON_TERRA', x: 13, y: 3, emoji: '🪨' }
+      { id: 'Fogo', mapId: 'DUNGEON_FOGO', x: 7, y: 5, emoji: '' },
+      { id: 'Agua', mapId: 'DUNGEON_AGUA', x: 7, y: 5, emoji: '' },
+      { id: 'Ar', mapId: 'DUNGEON_AR', x: 7, y: 5, emoji: '' },
+      { id: 'Terra', mapId: 'DUNGEON_TERRA', x: 13, y: 3, emoji: '' }
     ]);
     
     spawnForMap('OVERWORLD');
@@ -221,6 +251,7 @@ export default function App() {
       // Auto-pickup artifacts
       const foundArtifact = artifacts.find(a => a.mapId === mapId && a.x === newX && a.y === newY);
       if (foundArtifact) {
+         soundFX.playLevelUp();
          setPlayer(curr => ({ ...curr, artifacts: [...curr.artifacts, foundArtifact.id] }));
          setArtifacts(curr => curr.filter(a => a.id !== foundArtifact.id));
       }
@@ -238,6 +269,7 @@ export default function App() {
      if (combatEnemies.find(e => e.id === 'boss')) {
         setGameState('VICTORY');
      } else {
+        let anyLeveledUp = false;
         setPlayer(prev => {
            const updatedParty = prev.party.map(hero => {
               let newExp = hero.exp + expGain;
@@ -248,6 +280,7 @@ export default function App() {
               while (newExp >= newLevel * 100) {
                  newExp -= newLevel * 100;
                  newLevel++;
+                 anyLeveledUp = true;
                  // Stat growth
                  newStats.maxHp += 15;
                  newStats.maxMp += 10;
@@ -264,6 +297,10 @@ export default function App() {
                  stats: { ...newStats, hp: Math.min(newStats.maxHp, newStats.hp + 20) } // Heal slightly after battle
               };
            });
+
+           if (anyLeveledUp) {
+              soundFX.playLevelUp();
+           }
 
            return {
               ...prev,

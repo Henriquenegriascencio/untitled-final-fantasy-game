@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { soundFX } from '../utils/audio';
+import { soundFX, bgm } from '../utils/audio';
 
 interface TitleSettingsModalProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [sfxEnabled, setSfxEnabled] = useState(soundFX.enabled);
+  const [bgmEnabled, setBgmEnabled] = useState(bgm.enabled);
   const [textSpeed, setTextSpeed] = useState<'normal' | 'fast' | 'instant'>(() => {
     return (localStorage.getItem('eldoria_text_speed') as any) || 'normal';
   });
@@ -78,6 +79,12 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
   const handleToggleSound = () => {
     soundFX.enabled = !sfxEnabled;
     setSfxEnabled(!sfxEnabled);
+    soundFX.playSelect();
+  };
+
+  const handleToggleBgm = () => {
+    const next = bgm.toggle();
+    setBgmEnabled(next);
     soundFX.playSelect();
   };
 
@@ -329,37 +336,68 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                 </div>
               )}
 
-              {/* Option 2: ÁUDIO / SOM */}
+              {/* Option 2: AUDIO / SOM */}
               {activeOption === 'AUDIO' && (
-                <div className="flex flex-col h-full justify-between">
-                  <div>
-                    <div className="border-b border-slate-500 pb-1 mb-3 text-yellow-400 text-base md:text-xl">
-                      EFEITOS SONOROS 16-BIT
+                <div className="flex flex-col h-full justify-between overflow-y-auto custom-scrollbar">
+                  <div className="flex flex-col gap-5">
+                    {/* BGM section */}
+                    <div>
+                      <div className="border-b border-slate-500 pb-1 mb-2 text-yellow-400 text-base md:text-xl">
+                        TRILHA SONORA (BGM)
+                      </div>
+                      <p className="text-slate-300 text-sm md:text-base leading-snug mb-3">
+                        Musicas originais de Prologo, Overworld, Batalha e Vitoria.
+                      </p>
+                      <div className="flex flex-col gap-1 text-base sm:text-lg md:text-xl">
+                        <button
+                          onClick={() => {
+                            if (!bgmEnabled) handleToggleBgm();
+                          }}
+                          className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
+                        >
+                          <span className="w-8 text-yellow-400">{bgmEnabled ? '►' : ''}</span> LIGADO (MUSICA ATIVA)
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (bgmEnabled) handleToggleBgm();
+                          }}
+                          className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
+                        >
+                          <span className="w-8 text-yellow-400">{!bgmEnabled ? '►' : ''}</span> MUDO (DESATIVADA)
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-slate-300 text-[19px] leading-[14px] mb-4">
-                      Sintetizador de efeitos sonoros classicos estilo SNES de confirmacao, dano e menus.
-                    </p>
-                    <div className="flex flex-col gap-1 text-lg sm:text-xl md:text-2xl">
-                      <button
-                        onClick={() => {
-                          if (!sfxEnabled) handleToggleSound();
-                        }}
-                        className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
-                      >
-                        <span className="w-8 text-yellow-400">{sfxEnabled ? '►' : ''}</span> LIGADO (SOM ATIVADO)
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (sfxEnabled) handleToggleSound();
-                        }}
-                        className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
-                      >
-                        <span className="w-8 text-yellow-400">{!sfxEnabled ? '►' : ''}</span> MUDO (DESATIVADO)
-                      </button>
+
+                    {/* SFX section */}
+                    <div>
+                      <div className="border-b border-slate-500 pb-1 mb-2 text-yellow-400 text-base md:text-xl">
+                        EFEITOS SONOROS 16-BIT
+                      </div>
+                      <p className="text-slate-300 text-sm md:text-base leading-snug mb-3">
+                        Sons de menus, confirmacao, dano e golpes estilo SNES.
+                      </p>
+                      <div className="flex flex-col gap-1 text-base sm:text-lg md:text-xl">
+                        <button
+                          onClick={() => {
+                            if (!sfxEnabled) handleToggleSound();
+                          }}
+                          className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
+                        >
+                          <span className="w-8 text-yellow-400">{sfxEnabled ? '►' : ''}</span> LIGADO (EFEITOS ATIVOS)
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (sfxEnabled) handleToggleSound();
+                          }}
+                          className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
+                        >
+                          <span className="w-8 text-yellow-400">{!sfxEnabled ? '►' : ''}</span> MUDO (DESATIVADO)
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-xs text-slate-400 border-t border-slate-700 pt-2">
-                    STATUS ATUAL: {sfxEnabled ? 'AUDIO ATIVO' : 'SILENCIOSO'}
+                  <div className="text-xs text-slate-400 border-t border-slate-700 pt-2 mt-4">
+                    STATUS ATUAL: BGM {bgmEnabled ? 'ATIVO' : 'MUDO'} | SFX {sfxEnabled ? 'ATIVO' : 'MUDO'}
                   </div>
                 </div>
               )}
@@ -427,7 +465,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                     </div>
                   </div>
                   <div className="text-xs text-slate-400 border-t border-slate-700 pt-2">
-                    MODO ATUAL: {difficulty === 'normal' ? 'CLÁSSICO' : 'DESAFIO (HARD)'}
+                    MODO ATUAL: {difficulty === 'normal' ? 'CLASSICO' : 'DESAFIO (HARD)'}
                   </div>
                 </div>
               )}

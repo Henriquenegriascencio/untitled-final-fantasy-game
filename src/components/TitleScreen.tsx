@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { soundFX } from '../utils/audio';
+import { soundFX, bgm } from '../utils/audio';
 
 interface TitleScreenProps {
   hasSave: boolean;
@@ -19,12 +19,17 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const [selectedIndex, setSelectedIndex] = useState<number>(hasSave ? 0 : 1);
   const [isExtrasOpen, setIsExtrasOpen] = useState<boolean>(false);
   const [noSaveAlert, setNoSaveAlert] = useState<boolean>(false);
+  const [bgmActive, setBgmActive] = useState<boolean>(bgm.enabled);
+
+  useEffect(() => {
+    bgm.playPrologue();
+  }, []);
 
   const menuItems = [
     { id: 'load', label: 'Carregar Jogo', action: 'load' },
     { id: 'new', label: 'Novo Jogo', action: 'new' },
     { id: 'extras', label: 'Extras', action: 'extras' },
-    { id: 'options', label: 'Configurações', action: 'options' },
+    { id: 'options', label: 'Configuracoes', action: 'options' },
   ];
 
   const handleSelect = (index: number) => {
@@ -82,10 +87,22 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         backgroundImage: 'radial-gradient(circle at 50% 45%, #ffffff 0%, #ececef 65%, #dddee2 100%)',
       }}
     >
-      {/* Top Bar / Watermark (as seen in the reference) */}
+      {/* Top Bar / Watermark & Audio Toggle */}
       <div className="w-full px-6 pt-3 flex justify-end items-center z-10">
-        <div className="text-slate-600 font-serif text-xs md:text-sm font-semibold tracking-wide drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-        </div>
+        <button
+          onClick={() => {
+            const next = bgm.toggle();
+            setBgmActive(next);
+            if (soundFX.enabled) soundFX.playSelect();
+          }}
+          className="flex items-center gap-2 px-3 py-1 rounded bg-black/40 hover:bg-black/60 border border-slate-400/50 text-xs font-mono text-slate-100 cursor-pointer transition-all active:scale-95 shadow-sm"
+          title="Alternar musica de fundo"
+        >
+          <span>BGM:</span>
+          <span className={bgmActive ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
+            {bgmActive ? 'LIGADO' : 'MUDO'}
+          </span>
+        </button>
       </div>
 
       {/* Center Section: Iconic FF6 Logo & Silhouette */}
@@ -214,7 +231,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           </div>
         </div>
 
-        {/* Menu Options (Carregar Jogo, Novo Jogo, Extras, Opções) */}
+        {/* Menu Options (Carregar Jogo, Novo Jogo, Extras, Opcoes) */}
         <div 
           id="ff6_title_menu" 
           className="mt-6 md:mt-8 flex flex-col items-start gap-1 md:gap-1.5 min-w-[240px] md:min-w-[280px]"
@@ -343,28 +360,28 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   <span>VOLTAR [ESC]</span>
                 </button>
                 <div className="text-xl md:text-2xl font-black tracking-widest text-white drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
-                  EXTRAS &amp; BESTIARIO
+                  EXTRAS E BESTIARIO
                 </div>
               </div>
 
               {/* Extras Content */}
               <div className="flex flex-col gap-4 max-h-[65vh] overflow-y-auto custom-scrollbar pr-1">
-                {/* 1. Bestiário */}
+                {/* 1. Bestiario */}
                 <div className="rounded-lg border-[3px] border-slate-300 p-4 bg-black/60 shadow-[inset_0_0_0_1px_#000]">
                   <div className="text-yellow-400 text-lg md:text-xl mb-3 flex items-center gap-2 border-b border-slate-700 pb-1">
-                    <span>👾</span>
+                    <span></span>
                     <span>BESTIARIO DE CRIATURAS DE ELDORIA</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
                     {[
-                      { name: 'Goblin Saqueador', emoji: '👺', hp: 35, weak: 'Fogo', drop: '15 GP', loc: 'Planícies Iniciais' },
-                      { name: 'Lobo Selvagem', emoji: '🐺', hp: 50, weak: 'Fogo', drop: '25 GP', loc: 'Bosques do Oeste' },
-                      { name: 'Esqueleto Guerreiro', emoji: '💀', hp: 80, weak: 'Cura / Fogo', drop: '45 GP', loc: 'Catacumbas' },
-                      { name: 'Golem de Granito', emoji: '🗿', hp: 160, weak: 'Trovão', drop: '80 GP', loc: 'Picos Rochosos' },
-                      { name: 'Dragão Ancião Supremo', emoji: '🐉', hp: 500, weak: 'Gelo / Vento', drop: '500 GP', loc: 'Dungeon Final' },
+                      { name: 'Goblin Saqueador', tag: '[LV 03]', loc: 'Planicies Iniciais', hp: '35', drop: 'Adaga Velha', weak: 'Fogo' },
+                      { name: 'Lobo Selvagem', tag: '[LV 05]', loc: 'Bosques do Oeste', hp: '50', drop: 'Pele de Lobo', weak: 'Gelo' },
+                      { name: 'Esqueleto Guerreiro', tag: '[LV 08]', loc: 'Catacumbas', hp: '80', drop: 'Osso Raro', weak: 'Luz' },
+                      { name: 'Golem de Granito', tag: '[LV 12]', loc: 'Picos Rochosos', hp: '160', drop: 'Nucleo de Pedra', weak: 'Trovao' },
+                      { name: 'Dragao Anciao Supremo', tag: '[CHEFE]', loc: 'Dungeon Final', hp: '500', drop: 'Escama Lendaria', weak: 'Gelo' },
                     ].map((m) => (
                       <div key={m.name} className="p-2.5 bg-blue-950/70 rounded border border-blue-800 flex items-center gap-3">
-                        <span className="text-3xl">{m.emoji}</span>
+                        <span className="text-amber-300 font-mono font-bold text-sm tracking-wider">{m.tag}</span>
                         <div className="flex-1">
                           <div className="text-white font-black text-sm">{m.name}</div>
                           <div className="text-slate-300 text-xs">HP: <span className="text-green-400">{m.hp}</span> | Drop: <span className="text-yellow-400">{m.drop}</span></div>
@@ -378,24 +395,30 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 {/* 2. Os Quatro Artefatos Elementais */}
                 <div className="rounded-lg border-[3px] border-slate-300 p-4 bg-black/60 shadow-[inset_0_0_0_1px_#000]">
                   <div className="text-yellow-400 text-lg md:text-xl mb-2 flex items-center gap-2 border-b border-slate-700 pb-1">
-                    <span>💎</span>
+                    <span></span>
                     <span>AS RELIQUIAS ELEMENTAIS ANTIGAS</span>
                   </div>
-                  <p className="text-slate-300 text-xs md:text-sm normal-case mb-2 font-normal">
+                  <p 
+                    className="text-slate-300 normal-case mb-2 font-normal"
+                    style={{ fontSize: '19px' }}
+                  >
                     Reuna os quatro cristais sagrados para enfraquecer a barreira magica que protege a camara do Dragao Anciao:
                   </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-xs">
-                    <div className="p-2 bg-red-950/60 rounded border border-red-700">🔥 FOGO<br/><span className="text-slate-400">Poder de Chamas</span></div>
-                    <div className="p-2 bg-blue-950/60 rounded border border-blue-700">💧 AGUA<br/><span className="text-slate-400">Pureza dos Rios</span></div>
-                    <div className="p-2 bg-emerald-950/60 rounded border border-emerald-700">🌍 TERRA<br/><span className="text-slate-400">Forca da Rocha</span></div>
-                    <div className="p-2 bg-cyan-950/60 rounded border border-cyan-700">🌪️ VENTO<br/><span className="text-slate-400">Furia dos Ceus</span></div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+                    <div className="p-2 bg-red-950/60 rounded border border-red-700" style={{ fontSize: '14px' }}>[FOGO]<br/><span className="text-slate-400">Poder de Chamas</span></div>
+                    <div className="p-2 bg-blue-950/60 rounded border border-blue-700" style={{ fontSize: '14px' }}>[AGUA]<br/><span className="text-slate-400">Pureza dos Rios</span></div>
+                    <div className="p-2 bg-emerald-950/60 rounded border border-emerald-700" style={{ fontSize: '14px' }}>[TERRA]<br/><span className="text-slate-400">Forca da Rocha</span></div>
+                    <div className="p-2 bg-cyan-950/60 rounded border border-cyan-700" style={{ fontSize: '14px' }}>[VENTO]<br/><span className="text-slate-400">Furia dos Ceus</span></div>
                   </div>
                 </div>
 
-                {/* 3. Créditos & Inspiração */}
+                {/* 3. Creditos & Inspiracao */}
                 <div className="rounded-lg border-[3px] border-slate-300 p-4 bg-black/60 shadow-[inset_0_0_0_1px_#000]">
-                  <div className="text-yellow-400 text-base md:text-lg mb-1">⭐ TRIBUTO E INSPIRACAO</div>
-                  <p className="text-slate-300 text-xs normal-case leading-relaxed font-normal">
+                  <div className="text-yellow-400 mb-1" style={{ fontSize: '20px' }}> TRIBUTO E INSPIRACAO</div>
+                  <p 
+                    className="text-slate-300 normal-case font-normal"
+                    style={{ fontSize: '25px', lineHeight: '15.5px' }}
+                  >
                     Tributo aos classicos JRPGs da era de ouro do Super Nintendo Entertainment System (1994). Arte inspirada no lendario ilustrador Yoshitaka Amano e nas obras primas da Squaresoft.
                   </p>
                 </div>
