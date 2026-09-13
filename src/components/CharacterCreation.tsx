@@ -6,36 +6,54 @@ type CharacterCreationProps = {
   onComplete: (party: Hero[]) => void;
 };
 
-const CLASS_INFO: Record<HeroClass, { emoji: string, weapon: Weapon, stats: any }> = {
-  Cavalheiro: {
+const CLASS_INFO: Record<string, { emoji: string, weapon: Weapon, stats: any, desc: string, role: string, startingMagics: string[] }> = {
+  'Guerreiro': {
     emoji: '',
-    weapon: { id: 'w_sword', name: 'Espada Longa', type: 'espada', range: 1, damage: 15 },
-    stats: { hp: 120, maxHp: 120, mp: 20, maxMp: 20, sp: 0, maxSp: 100, for: 15, int: 5, def: 12, mov: 3, vel: 5 }
+    desc: 'O tanque do grupo. Possui altissima defesa, usa armaduras pesadas e armas de combate com alto dano fisico.',
+    role: 'Tanque e Dano Fisico',
+    weapon: { id: 'w_sword_warr', name: 'Espada de Ferro', type: 'espada', range: 1, damage: 24 },
+    stats: { hp: 140, maxHp: 140, mp: 10, maxMp: 10, sp: 0, maxSp: 100, batPwr: 32, def: 24, magDef: 12, mBlock: 8, vel: 8, vigor: 26, magPwr: 6, mov: 3, for: 26, int: 6 },
+    startingMagics: []
   },
-  Mago: {
+  'Ladrao': {
     emoji: '',
-    weapon: { id: 'w_staff', name: 'Cajado de Aprendiz', type: 'cajado', range: 3, damage: 8, aoe: true },
-    stats: { hp: 60, maxHp: 60, mp: 100, maxMp: 100, sp: 0, maxSp: 100, for: 3, int: 18, def: 4, mov: 3, vel: 6 }
+    desc: 'Extremamente rapido e com a mais alta taxa de fuga em batalhas. Torna-se peca-chave estrategica.',
+    role: 'Agilidade e Alta Fuga',
+    weapon: { id: 'w_dagger_thief', name: 'Adaga de Cobre', type: 'espada', range: 1, damage: 18 },
+    stats: { hp: 85, maxHp: 85, mp: 25, maxMp: 25, sp: 0, maxSp: 100, batPwr: 22, def: 12, magDef: 14, mBlock: 16, vel: 18, vigor: 16, magPwr: 10, mov: 4, for: 16, int: 10 },
+    startingMagics: []
   },
-  Alquimista: {
+  'Monge': {
     emoji: '',
-    weapon: { id: 'w_flask', name: 'Frasco Quimico', type: 'ferramenta', range: 2, damage: 10 },
-    stats: { hp: 80, maxHp: 80, mp: 80, maxMp: 80, sp: 0, maxSp: 100, for: 6, int: 14, def: 8, mov: 3, vel: 7 }
+    desc: 'Lutador desarmado. Causa alto dano com os punhos (quanto menos armas e armaduras pesadas usar, mais forte fica).',
+    role: 'Artes Marciais e Dano Desarmado',
+    weapon: { id: 'w_fist_monk', name: 'Punhos Vazios', type: 'punho', range: 1, damage: 26 },
+    stats: { hp: 110, maxHp: 110, mp: 30, maxMp: 30, sp: 0, maxSp: 100, batPwr: 30, def: 16, magDef: 12, mBlock: 12, vel: 14, vigor: 25, magPwr: 8, mov: 4, for: 25, int: 8 },
+    startingMagics: []
   },
-  Arqueiro: {
+  'Mago Branco': {
     emoji: '',
-    weapon: { id: 'w_bow', name: 'Arco Curto', type: 'arco', range: 4, damage: 12 },
-    stats: { hp: 75, maxHp: 75, mp: 30, maxMp: 30, sp: 0, maxSp: 100, for: 12, int: 6, def: 6, mov: 4, vel: 9 }
+    desc: 'O curador do grupo. Especialista em magias de restauracao de HP, cura de condicoes e barreiras protetoras.',
+    role: 'Cura e Suporte Sagrado',
+    weapon: { id: 'w_staff_white', name: 'Maca de Carvalho', type: 'cajado', range: 2, damage: 12 },
+    stats: { hp: 70, maxHp: 70, mp: 90, maxMp: 90, sp: 0, maxSp: 100, batPwr: 12, def: 8, magDef: 24, mBlock: 22, vel: 9, vigor: 8, magPwr: 26, mov: 3, for: 8, int: 26 },
+    startingMagics: ['Cura', 'Antidoto Magico']
   },
-  Lutador: {
+  'Mago Negro': {
     emoji: '',
-    weapon: { id: 'w_fist', name: 'Luvas de Couro', type: 'punho', range: 1, damage: 10 },
-    stats: { hp: 100, maxHp: 100, mp: 40, maxMp: 40, sp: 0, maxSp: 100, for: 14, int: 4, def: 10, mov: 5, vel: 12 }
+    desc: 'O especialista em dano magico elemental (Fogo, Gelo, Trovao) e maleficios arcanos para debilitar inimigos.',
+    role: 'Dano Magico Elemental',
+    weapon: { id: 'w_staff_black', name: 'Cajado Arcano', type: 'cajado', range: 3, damage: 10, aoe: true },
+    stats: { hp: 60, maxHp: 60, mp: 110, maxMp: 110, sp: 0, maxSp: 100, batPwr: 10, def: 6, magDef: 26, mBlock: 24, vel: 10, vigor: 6, magPwr: 30, mov: 3, for: 6, int: 30 },
+    startingMagics: ['Fogo', 'Gelo', 'Trovao']
   },
-  Inventor: {
+  'Mago Vermelho': {
     emoji: '',
-    weapon: { id: 'w_wrench', name: 'Chave Inglesa', type: 'ferramenta', range: 1, damage: 14 },
-    stats: { hp: 90, maxHp: 90, mp: 50, maxMp: 50, sp: 0, maxSp: 100, for: 10, int: 12, def: 10, mov: 4, vel: 6 }
+    desc: 'Pau para toda obra. Consegue usar armas razoaveis, armaduras intermediarias e aprende tanto magias brancas quanto negras.',
+    role: 'Versatil Hibrido',
+    weapon: { id: 'w_rapier_red', name: 'Florete de Aco', type: 'espada', range: 1, damage: 20 },
+    stats: { hp: 90, maxHp: 90, mp: 65, maxMp: 65, sp: 0, maxSp: 100, batPwr: 22, def: 15, magDef: 18, mBlock: 16, vel: 11, vigor: 18, magPwr: 20, mov: 3, for: 18, int: 20 },
+    startingMagics: ['Fogo', 'Cura']
   }
 };
 
@@ -50,12 +68,21 @@ const FFWindow = ({ children, className = '' }: { children: React.ReactNode, cla
   </div>
 );
 
+// Sanitiza texto para manter estritamente caracteres ASCII sem acento
+const cleanAscii = (str: string): string => {
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9 ]/g, '')
+    .toUpperCase();
+};
+
 export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete }) => {
   const [party, setParty] = useState<(Hero | null)[]>([null, null, null, null]);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   
   const [currentName, setCurrentName] = useState('');
-  const [currentClass, setCurrentClass] = useState<HeroClass>('Cavalheiro');
+  const [currentClass, setCurrentClass] = useState<HeroClass>('Guerreiro');
 
   const isClassTaken = (cls: HeroClass) => {
     return party.some((h, i) => h && h.heroClass === cls && i !== editingSlot);
@@ -66,35 +93,41 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
     for (const c of all) {
       if (!isClassTaken(c)) return c;
     }
-    return 'Cavalheiro';
+    return 'Guerreiro';
   };
 
   const handleSlotClick = (index: number) => {
     setEditingSlot(index);
-    if (party[index]) {
-      setCurrentName(party[index]!.name);
-      setCurrentClass(party[index]!.heroClass);
+    const existing = party[index];
+    if (existing) {
+      setCurrentName(existing.name);
+      setCurrentClass(existing.heroClass);
     } else {
+      const autoClass = getFirstAvailableClass();
       setCurrentName('');
-      setCurrentClass(getFirstAvailableClass());
+      setCurrentClass(autoClass);
     }
+  };
+
+  const handleClassChange = (cls: HeroClass) => {
+    setCurrentClass(cls);
   };
 
   const handleSaveHero = () => {
     if (editingSlot === null) return;
-    if (!currentName.trim()) return;
+    const cleanName = currentName.trim() || `Heroi ${editingSlot + 1}`;
 
-    const info = CLASS_INFO[currentClass];
+    const info = CLASS_INFO[currentClass] || CLASS_INFO['Guerreiro'];
     const newHero: Hero = {
-      id: `hero_${Date.now()}_${editingSlot}`,
-      name: currentName.substring(0, 8), // FF1 style short names
+      id: party[editingSlot]?.id || `hero_${Date.now()}_${editingSlot}`,
+      name: cleanName,
       heroClass: currentClass,
       level: 1,
       exp: 0,
       stats: { ...info.stats },
       weapon: { ...info.weapon },
       emoji: info.emoji,
-      magics: ['Fogo', 'Cura']
+      magics: [...(info.startingMagics || [])]
     };
 
     const newParty = [...party];
@@ -111,15 +144,13 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
   };
 
   const allFilled = party.every(h => h !== null);
+  const filledCount = party.filter(h => h !== null).length;
+  const previewName = currentName.trim() || (editingSlot !== null ? `Heroi ${editingSlot + 1}` : 'Heroi');
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-2 md:p-4 font-mono select-none z-50 overflow-hidden">
-      <h1 className="text-white text-2xl md:text-4xl font-black uppercase tracking-widest mb-2 md:mb-4 text-center drop-shadow-[4px_4px_0_rgba(0,0,0,1)]">
-        Escolha a sua equipe
-      </h1>
-      
       {/* 2x2 Grid of Characters */}
-      <div className="grid grid-cols-2 gap-2 md:gap-4 mb-4 w-full max-w-xl px-2">
+      <div className="grid grid-cols-2 gap-2 md:gap-4 mb-3 w-full max-w-xl px-2">
         {party.map((hero, idx) => (
           <div 
             key={idx} 
@@ -129,7 +160,7 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
             <FFWindow className="aspect-square w-full max-h-48 md:max-h-56 mx-auto p-2 md:p-3 flex flex-col justify-center">
               {hero ? (
                 <>
-                  <div className="text-white text-base md:text-xl uppercase font-black tracking-wider text-center mt-0.5">
+                  <div className="text-white text-sm md:text-base uppercase font-black tracking-wider text-center mt-0.5">
                     {hero.heroClass}
                   </div>
                   
@@ -140,20 +171,21 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
                       emoji={hero.emoji}
                       name={hero.name}
                       hideBadge={true}
-                      className="w-16 h-16 md:w-24 md:h-24 rounded-xl border-[3px] border-slate-100 shadow-[inset_0_0_0_2px_#000,0_8px_16px_rgba(0,0,0,0.8)]"
+                      className="w-16 h-16 md:w-22 md:h-22 rounded-xl border-[3px] border-slate-100 shadow-[inset_0_0_0_2px_#000,0_8px_16px_rgba(0,0,0,0.8)]"
                     />
                   </div>
 
-                  <div className="text-amber-400 text-lg md:text-2xl font-black tracking-widest mb-1 drop-shadow-md text-center">
-                    {hero.name}
+                  <div className="flex flex-col items-center justify-center mb-1">
+                    <div className="text-white text-sm md:text-lg font-black tracking-wider uppercase drop-shadow-md text-center">
+                      {hero.name}
+                    </div>
                   </div>
                 </>
               ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center gap-1 md:gap-2 border-2 border-dashed border-slate-500/70 rounded-lg p-2 group hover:border-yellow-400 transition-colors">
-                  <span className="text-yellow-400 text-[26px] leading-[12px] font-black select-none">►</span>
-                  <div className="text-slate-300 group-hover:text-white text-[23px] tracking-widest font-black uppercase text-center transition-colors">
+                <div className="h-full w-full flex flex-col items-center justify-center gap-1 md:gap-2 border-2 border-dashed border-slate-500/70 rounded-lg p-2 group hover:border-cyan-400 transition-colors">
+                  <div className="text-slate-300 group-hover:text-white text-[20px] md:text-[23px] tracking-widest font-black uppercase text-center transition-colors">
                     Heroi {idx + 1}
-                    <span className="block text-[10px] text-slate-500 font-normal mt-0.5">Criar</span>
+                    <span className="block text-[11px] md:text-xs text-cyan-300 font-bold mt-1">+ Criar</span>
                   </div>
                 </div>
               )}
@@ -162,15 +194,21 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
         ))}
       </div>
 
-      {/* Start Button */}
-      {allFilled && editingSlot === null && (
-        <button 
-          onClick={handleStart}
-          className="px-6 py-2.5 border-4 border-slate-200 text-white font-mono font-black text-xl md:text-2xl uppercase tracking-widest hover:bg-white/20 hover:text-yellow-300 transition-colors rounded-lg shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] flex items-center gap-2 animate-pulse mt-1 md:mt-2"
-          style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
-        >
-          <span className="text-yellow-400">►</span> Aventura <span className="text-yellow-400">◄</span>
-        </button>
+      {/* Start Button or Progress Indicator */}
+      {editingSlot === null && (
+        allFilled ? (
+          <button 
+            onClick={handleStart}
+            className="px-6 py-2.5 border-4 border-slate-200 text-white font-mono font-black text-xl md:text-2xl uppercase tracking-widest hover:bg-white/20 hover:text-cyan-200 transition-colors rounded-lg shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] flex items-center gap-2 animate-pulse mt-1 md:mt-2 cursor-pointer"
+            style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+          >
+            Comecar
+          </button>
+        ) : (
+          <div className="text-slate-400 text-xs md:text-sm font-bold uppercase tracking-wider py-2 px-4 border border-slate-700 bg-slate-900/80 rounded-lg">
+            Crie os 4 herois da equipe - {filledCount} de 4 para iniciar
+          </div>
+        )
       )}
 
       {/* Editor Modal */}
@@ -182,67 +220,54 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b-2 border-slate-400/60 pb-2 mb-3 shrink-0">
-              <div className="text-yellow-400 text-xl md:text-3xl tracking-widest flex items-center gap-2">
-                <span>►</span>
-                <span>Criar Heroi {editingSlot + 1}</span>
-              </div>
-              <div className="text-slate-300 text-xs tracking-wider">
-                [Nome & Foto]
+              <div className="text-white text-xl md:text-3xl tracking-widest flex items-center gap-2">
+                <span>Personalizar Heroi {editingSlot + 1}</span>
               </div>
             </div>
             
-            {/* Content: 2-column layout matching Combat HUD Action Panels */}
+            {/* Content: 2-column layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch min-h-0 overflow-y-auto custom-scrollbar pb-1">
-              {/* Left Box: Portrait & Name Only */}
+              {/* Left Box: Portrait & Name Input */}
               <div 
                 className="rounded-lg border-[3px] border-slate-300 p-3 flex flex-col items-center justify-center gap-2 shadow-[inset_0_0_0_1px_#000] bg-black/40"
               >
-                <div className="text-slate-300 text-[10px] md:text-xs tracking-wider uppercase font-bold">
-                  Retrato
-                </div>
-
                 <HeroPortrait
                   heroClass={currentClass}
                   hideBadge={true}
-                  name={currentName || 'HEROI'}
-                  className="w-20 h-20 md:w-32 md:h-32 rounded-xl border-[3px] border-slate-200 shadow-[inset_0_0_0_2px_#000,0_8px_16px_rgba(0,0,0,0.8)]"
+                  name={previewName}
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-xl border-[3px] border-slate-200 shadow-[inset_0_0_0_2px_#000,0_8px_16px_rgba(0,0,0,0.8)]"
                 />
 
-                <div className="text-yellow-400 text-lg md:text-2xl font-black tracking-widest uppercase mt-1">
-                  {currentClass}
+                <div className="text-center">
+                  <div className="text-white text-base md:text-xl font-black tracking-widest uppercase">
+                    {previewName}
+                  </div>
+                  <div className="text-cyan-300 text-xs md:text-sm font-bold uppercase">
+                    - {currentClass}
+                  </div>
                 </div>
 
                 {/* Name Input */}
-                <div className="w-full mt-1">
-                  <label className="text-slate-300 text-[10px] md:text-xs uppercase tracking-wider block mb-1 font-bold">
-                    Nome (Max 8 Letras):
-                  </label>
-                  <div className="flex items-center bg-black/70 border-2 border-slate-300 rounded px-2 py-1 focus-within:border-yellow-400 shadow-[inset_0_0_0_1px_#000]">
-                    <span className="text-yellow-400 text-lg mr-2 font-black select-none">►</span>
+                <div className="w-full mt-2">
+                  <div className="flex items-center bg-black/70 border-2 border-slate-300 rounded px-2 py-1.5 focus-within:border-cyan-400 shadow-[inset_0_0_0_1px_#000]">
+                    <span className="text-cyan-300 text-base mr-2 font-black select-none">►</span>
                     <input 
                       type="text" 
                       value={currentName}
-                      onChange={e => {
-                        const val = e.target.value.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-                        setCurrentName(val.toUpperCase());
-                      }}
-                      maxLength={8}
-                      className="bg-transparent text-white text-lg md:text-xl outline-none font-mono font-black tracking-widest uppercase w-full placeholder:text-slate-600"
-                      placeholder="HEROI"
+                      onChange={e => setCurrentName(cleanAscii(e.target.value).slice(0, 12))}
+                      maxLength={12}
+                      className="bg-transparent text-white text-base md:text-lg outline-none font-mono font-black tracking-widest uppercase w-full placeholder:text-slate-600"
+                      placeholder={`EX: HEROI ${editingSlot + 1}`}
                       autoFocus
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Right Box: Class Menu (Styled exactly like Combat Action Menu) */}
+              {/* Right Box: Class Menu */}
               <div 
                 className="rounded-lg border-[3px] border-slate-300 p-2 md:p-3 flex flex-col justify-between shadow-[inset_0_0_0_1px_#000] bg-black/40 min-h-0"
               >
-                <div className="text-slate-300 text-[10px] md:text-xs tracking-wider uppercase mb-1 px-1 font-bold shrink-0">
-                  Classe
-                </div>
-
                 <div className="flex flex-col gap-1 overflow-y-auto custom-scrollbar flex-1 pr-1">
                   {(Object.keys(CLASS_INFO) as HeroClass[]).map(cls => {
                     const isSelected = currentClass === cls;
@@ -250,15 +275,14 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
                     return (
                       <button
                         key={cls}
-                        onClick={() => setCurrentClass(cls)}
-                        disabled={taken}
-                        className={`flex items-center text-left hover:bg-white/20 px-2 py-1 rounded transition-all font-mono uppercase font-black text-sm md:text-lg ${
+                        onClick={() => handleClassChange(cls)}
+                        className={`flex items-center text-left hover:bg-white/20 px-2 py-1.5 rounded transition-all font-mono uppercase font-black text-sm md:text-base cursor-pointer ${
                           isSelected 
-                            ? 'text-yellow-300 bg-white/10 ring-1 ring-yellow-400/50' 
+                            ? 'text-cyan-300 bg-white/10 ring-1 ring-cyan-400/50' 
                             : 'text-white'
-                        } ${taken ? 'opacity-30 cursor-not-allowed' : ''}`}
+                        }`}
                       >
-                        <span className="w-5 shrink-0 text-yellow-400 font-black text-lg select-none">
+                        <span className="w-4 shrink-0 text-cyan-300 font-black text-base select-none">
                           {isSelected ? '►' : ''}
                         </span>
                         <HeroPortrait
@@ -266,37 +290,34 @@ export const CharacterCreation: React.FC<CharacterCreationProps> = ({ onComplete
                           hideBadge={true}
                           className="w-6 h-6 rounded border border-slate-300 shadow shrink-0 mr-2 overflow-hidden"
                         />
-                        <span className="tracking-wider flex-1 truncate">{cls}</span>
+                        <div className="flex-1 truncate">
+                          <span>{cls}</span>
+                        </div>
                         {taken && (
                           <span className="text-[9px] text-slate-400 font-normal ml-1 shrink-0">
-                            (USADO)
+                            - JA USADO
                           </span>
                         )}
                       </button>
                     );
                   })}
                 </div>
-
-                <div className="mt-2 pt-1 border-t border-slate-700 text-[10px] md:text-[11px] text-slate-400 text-center tracking-wide shrink-0">
-                  Selecione a classe desejada
-                </div>
               </div>
             </div>
 
-            {/* Bottom Controls (Combat Action Menu Style) */}
+            {/* Bottom Controls */}
             <div className="flex justify-between items-center border-t-2 border-slate-400/60 pt-3 mt-3 w-full shrink-0">
               <button 
                 onClick={() => setEditingSlot(null)}
-                className="flex items-center gap-1.5 hover:bg-white/20 px-3 py-1.5 rounded text-slate-300 hover:text-white uppercase font-black text-base md:text-lg transition-colors"
+                className="flex items-center gap-1.5 hover:bg-white/20 px-3 py-1.5 rounded text-slate-300 hover:text-white uppercase font-black text-base md:text-lg transition-colors cursor-pointer"
               >
-                <span className="text-yellow-400">◄</span> Voltar
+                Voltar
               </button>
               <button 
                 onClick={handleSaveHero}
-                disabled={!currentName.trim()}
-                className="flex items-center gap-1.5 hover:bg-white/20 px-4 py-1.5 rounded text-yellow-400 hover:text-white uppercase font-black text-base md:text-lg transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+                className="flex items-center gap-1.5 hover:bg-white/20 px-4 py-1.5 rounded text-cyan-300 hover:text-white uppercase font-black text-base md:text-lg transition-colors cursor-pointer"
               >
-                <span>►</span> Confirmar
+                Confirmar
               </button>
             </div>
           </div>

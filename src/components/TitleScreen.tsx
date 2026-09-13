@@ -19,7 +19,6 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const [selectedIndex, setSelectedIndex] = useState<number>(hasSave ? 0 : 1);
   const [isExtrasOpen, setIsExtrasOpen] = useState<boolean>(false);
   const [noSaveAlert, setNoSaveAlert] = useState<boolean>(false);
-  const [bgmActive, setBgmActive] = useState<boolean>(bgm.enabled);
 
   useEffect(() => {
     bgm.playPrologue();
@@ -87,23 +86,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         backgroundImage: 'radial-gradient(circle at 50% 45%, #ffffff 0%, #ececef 65%, #dddee2 100%)',
       }}
     >
-      {/* Top Bar / Watermark & Audio Toggle */}
-      <div className="w-full px-6 pt-3 flex justify-end items-center z-10">
-        <button
-          onClick={() => {
-            const next = bgm.toggle();
-            setBgmActive(next);
-            if (soundFX.enabled) soundFX.playSelect();
-          }}
-          className="flex items-center gap-2 px-3 py-1 rounded bg-black/40 hover:bg-black/60 border border-slate-400/50 text-xs font-mono text-slate-100 cursor-pointer transition-all active:scale-95 shadow-sm"
-          title="Alternar musica de fundo"
-        >
-          <span>BGM:</span>
-          <span className={bgmActive ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>
-            {bgmActive ? 'LIGADO' : 'MUDO'}
-          </span>
-        </button>
-      </div>
+      {/* Top Bar Spacer */}
+      <div className="w-full px-6 pt-3 h-8 pointer-events-none z-10" />
 
       {/* Center Section: Iconic FF6 Logo & Silhouette */}
       <div className="flex-1 w-full max-w-4xl flex flex-col items-center justify-center relative px-4 -mt-4">
@@ -308,7 +292,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             exit={{ opacity: 0 }}
             className="mt-3 px-4 py-1.5 bg-black/80 text-yellow-300 text-xs md:text-sm font-mono font-bold rounded border border-yellow-400 shadow-lg"
           >
-           Nenhum arquivo de save encontrado! Inicie um "Novo Jogo".
+           Nenhum arquivo de save encontrado! Inicie um Novo Jogo.
           </motion.div>
         )}
       </div>
@@ -357,7 +341,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   className="text-yellow-400 hover:text-white text-xl md:text-2xl flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <span>←</span>
-                  <span>VOLTAR [ESC]</span>
+                  <span>VOLTAR - ESC</span>
                 </button>
                 <div className="text-xl md:text-2xl font-black tracking-widest text-white drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
                   EXTRAS E BESTIARIO
@@ -374,11 +358,11 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
                     {[
-                      { name: 'Goblin Saqueador', tag: '[LV 03]', loc: 'Planicies Iniciais', hp: '35', drop: 'Adaga Velha', weak: 'Fogo' },
-                      { name: 'Lobo Selvagem', tag: '[LV 05]', loc: 'Bosques do Oeste', hp: '50', drop: 'Pele de Lobo', weak: 'Gelo' },
-                      { name: 'Esqueleto Guerreiro', tag: '[LV 08]', loc: 'Catacumbas', hp: '80', drop: 'Osso Raro', weak: 'Luz' },
-                      { name: 'Golem de Granito', tag: '[LV 12]', loc: 'Picos Rochosos', hp: '160', drop: 'Nucleo de Pedra', weak: 'Trovao' },
-                      { name: 'Dragao Anciao Supremo', tag: '[CHEFE]', loc: 'Dungeon Final', hp: '500', drop: 'Escama Lendaria', weak: 'Gelo' },
+                      { name: 'Goblin Saqueador', tag: 'LV 03', loc: 'Planicies Iniciais', hp: '35', drop: 'Adaga Velha', weak: 'Fogo' },
+                      { name: 'Lobo Selvagem', tag: 'LV 05', loc: 'Bosques do Oeste', hp: '50', drop: 'Pele de Lobo', weak: 'Gelo' },
+                      { name: 'Esqueleto Guerreiro', tag: 'LV 08', loc: 'Catacumbas', hp: '80', drop: 'Osso Raro', weak: 'Luz' },
+                      { name: 'Golem de Granito', tag: 'LV 12', loc: 'Picos Rochosos', hp: '160', drop: 'Nucleo de Pedra', weak: 'Trovao' },
+                      { name: 'Dragao Anciao Supremo', tag: 'CHEFE', loc: 'Dungeon Final', hp: '500', drop: 'Escama Lendaria', weak: 'Gelo' },
                     ].map((m) => (
                       <div key={m.name} className="p-2.5 bg-blue-950/70 rounded border border-blue-800 flex items-center gap-3">
                         <span className="text-amber-300 font-mono font-bold text-sm tracking-wider">{m.tag}</span>
@@ -405,10 +389,10 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     Reuna os quatro cristais sagrados para enfraquecer a barreira magica que protege a camara do Dragao Anciao:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
-                    <div className="p-2 bg-red-950/60 rounded border border-red-700" style={{ fontSize: '14px' }}>[FOGO]<br/><span className="text-slate-400">Poder de Chamas</span></div>
-                    <div className="p-2 bg-blue-950/60 rounded border border-blue-700" style={{ fontSize: '14px' }}>[AGUA]<br/><span className="text-slate-400">Pureza dos Rios</span></div>
-                    <div className="p-2 bg-emerald-950/60 rounded border border-emerald-700" style={{ fontSize: '14px' }}>[TERRA]<br/><span className="text-slate-400">Forca da Rocha</span></div>
-                    <div className="p-2 bg-cyan-950/60 rounded border border-cyan-700" style={{ fontSize: '14px' }}>[VENTO]<br/><span className="text-slate-400">Furia dos Ceus</span></div>
+                    <div className="p-2 bg-red-950/60 rounded border border-red-700" style={{ fontSize: '14px' }}>FOGO<br/><span className="text-slate-400">Poder de Chamas</span></div>
+                    <div className="p-2 bg-blue-950/60 rounded border border-blue-700" style={{ fontSize: '14px' }}>AGUA<br/><span className="text-slate-400">Pureza dos Rios</span></div>
+                    <div className="p-2 bg-emerald-950/60 rounded border border-emerald-700" style={{ fontSize: '14px' }}>TERRA<br/><span className="text-slate-400">Forca da Rocha</span></div>
+                    <div className="p-2 bg-cyan-950/60 rounded border border-cyan-700" style={{ fontSize: '14px' }}>VENTO<br/><span className="text-slate-400">Furia dos Ceus</span></div>
                   </div>
                 </div>
 
@@ -419,7 +403,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                     className="text-slate-300 normal-case font-normal"
                     style={{ fontSize: '25px', lineHeight: '15.5px' }}
                   >
-                    Tributo aos classicos JRPGs da era de ouro do Super Nintendo Entertainment System (1994). Arte inspirada no lendario ilustrador Yoshitaka Amano e nas obras primas da Squaresoft.
+                    Tributo aos classicos JRPGs da era de ouro do Super Nintendo Entertainment System - 1994. Arte inspirada no lendario ilustrador Yoshitaka Amano e nas obras primas da Squaresoft.
                   </p>
                 </div>
               </div>
@@ -433,7 +417,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                   }}
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-mono font-black text-sm md:text-base uppercase rounded border-2 border-slate-200 cursor-pointer transition-all active:scale-95"
                 >
-                  FECHAR [ESC]
+                  FECHAR - ESC
                 </button>
               </div>
             </motion.div>

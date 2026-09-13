@@ -17,7 +17,9 @@ class MusicManager {
   private targetTrack: MusicTrack = null;
   private isEnabled: boolean = true;
   private volume: number = 0.65;
+  private isDucked: boolean = false;
   private fadeInterval: any = null;
+  private duckInterval: any = null;
   private userInteracted: boolean = false;
 
   constructor() {
@@ -66,8 +68,43 @@ class MusicManager {
   public setVolume(vol: number) {
     this.volume = Math.max(0, Math.min(1, vol));
     if (this.currentAudio) {
-      this.currentAudio.volume = this.volume;
+      const target = this.isDucked ? Math.max(0.05, this.volume * 0.22) : this.volume;
+      this.currentAudio.volume = target;
     }
+  }
+
+  public setDucked(ducked: boolean) {
+    this.isDucked = ducked;
+    if (!this.currentAudio) return;
+
+    if (this.duckInterval) {
+      clearInterval(this.duckInterval);
+      this.duckInterval = null;
+    }
+
+    const targetVol = ducked ? Math.max(0.06, this.volume * 0.22) : this.volume;
+    const currentVol = this.currentAudio.volume;
+    const diff = targetVol - currentVol;
+    const steps = 8;
+    let stepCount = 0;
+
+    this.duckInterval = setInterval(() => {
+      stepCount++;
+      if (!this.currentAudio || stepCount >= steps) {
+        clearInterval(this.duckInterval);
+        this.duckInterval = null;
+        if (this.currentAudio) {
+          this.currentAudio.volume = targetVol;
+        }
+      } else {
+        const nextVol = currentVol + (diff * (stepCount / steps));
+        this.currentAudio.volume = Math.max(0, Math.min(1, nextVol));
+      }
+    }, 25);
+  }
+
+  public get ducked(): boolean {
+    return this.isDucked;
   }
 
   public getTrack(): MusicTrack {
@@ -142,7 +179,7 @@ class MusicManager {
         .then(() => {
           // Fade in
           let inVol = 0;
-          const targetVol = this.volume;
+          const targetVol = this.isDucked ? Math.max(0.06, this.volume * 0.22) : this.volume;
           const stepIn = targetVol / 8;
           const inFader = setInterval(() => {
             inVol += stepIn;

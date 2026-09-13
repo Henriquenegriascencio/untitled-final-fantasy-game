@@ -45,9 +45,9 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
         try {
           const parsed = JSON.parse(raw);
           const timeSec = parsed.playTimeSeconds || 0;
-          const mins = Math.floor(timeSec / 60);
-          const secs = timeSec % 60;
-          const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+          const hours = Math.floor(timeSec / 3600);
+          const mins = Math.floor((timeSec % 3600) / 60);
+          const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
           setSaveDetails({
             heroesCount: parsed.player?.party?.length || 4,
             gold: parsed.player?.gold || 0,
@@ -137,10 +137,10 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
           {/* Header Bar identical to Combat HUD Style */}
           <div className="flex items-center justify-between border-b-2 border-slate-500/80 pb-2">
             <div className="flex items-center gap-2 text-xl sm:text-2xl md:text-3xl text-white font-mono font-black tracking-wider drop-shadow-[0_2px_2px_rgba(0,0,0,1)]">
-              <span className="text-yellow-400">►</span>
+              <span className="text-yellow-400"></span>
               <span>CONFIGURACOES</span>
             </div>
-            <button
+              <button
               id="title_settings_back_btn"
               onClick={() => {
                 soundFX.playCancel();
@@ -148,7 +148,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
               }}
               className="text-yellow-400 hover:text-white text-base sm:text-lg md:text-xl font-mono font-black uppercase cursor-pointer transition-colors"
             >
-               VOLTAR [ESC]
+               VOLTAR - ESC
             </button>
           </div>
 
@@ -281,7 +281,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                       </div>
                     ) : (
                       <div className="text-slate-300 text-sm md:text-base py-2">
-                        Nenhum arquivo de progresso salvo encontrado. Inicie um "Novo Jogo" para criar um save.
+                        Nenhum arquivo de progresso salvo encontrado. Inicie um Novo Jogo para criar um save.
                       </div>
                     )}
                   </div>
@@ -298,7 +298,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                           }}
                           className="w-full flex items-center text-left hover:bg-white/20 p-2 rounded text-red-400 hover:text-white font-mono uppercase font-black text-base sm:text-lg md:text-xl cursor-pointer"
                         >
-                          <span className="w-8 text-yellow-400">►</span> APAGAR DADOS (DELETAR SAVE)
+                          <span className="w-8 text-yellow-400"></span> APAGAR DADOS - DELETAR SAVE
                         </button>
                       ) : (
                         <div className="flex flex-col gap-2 p-2 border-2 border-red-500 bg-black/70 rounded">
@@ -310,7 +310,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                             onClick={handleExecuteDelete}
                             className="flex items-center text-left hover:bg-red-800/50 p-2 rounded text-red-400 hover:text-white font-mono uppercase font-black text-base sm:text-lg cursor-pointer"
                           >
-                            <span className="w-8 text-yellow-400">►</span> [SIM] APAGAR PERMANENTEMENTE
+                            <span className="w-8 text-yellow-400"></span> SIM - APAGAR PERMANENTEMENTE
                           </button>
                           <button
                             onClick={() => {
@@ -319,7 +319,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                             }}
                             className="flex items-center text-left hover:bg-white/20 p-2 rounded text-slate-300 hover:text-white font-mono uppercase font-black text-base sm:text-lg cursor-pointer"
                           >
-                            <span className="w-8"></span> [NAO] CANCELAR
+                            <span className="w-8"></span> NAO - CANCELAR
                           </button>
                         </div>
                       )
@@ -343,7 +343,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                     {/* BGM section */}
                     <div>
                       <div className="border-b border-slate-500 pb-1 mb-2 text-yellow-400 text-base md:text-xl">
-                        TRILHA SONORA (BGM)
+                        TRILHA SONORA BGM
                       </div>
                       <p className="text-slate-300 text-sm md:text-base leading-snug mb-3">
                         Musicas originais de Prologo, Overworld, Batalha e Vitoria.
@@ -355,7 +355,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                           }}
                           className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
                         >
-                          <span className="w-8 text-yellow-400">{bgmEnabled ? '►' : ''}</span> LIGADO (MUSICA ATIVA)
+                          <span className="w-8 text-yellow-400">{bgmEnabled ? '►' : ''}</span> LIGADO - MUSICA ATIVA
                         </button>
                         <button
                           onClick={() => {
@@ -363,7 +363,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                           }}
                           className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
                         >
-                          <span className="w-8 text-yellow-400">{!bgmEnabled ? '►' : ''}</span> MUDO (DESATIVADA)
+                          <span className="w-8 text-yellow-400">{!bgmEnabled ? '►' : ''}</span> MUDO - DESATIVADA
                         </button>
                       </div>
                     </div>
@@ -383,7 +383,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                           }}
                           className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
                         >
-                          <span className="w-8 text-yellow-400">{sfxEnabled ? '►' : ''}</span> LIGADO (EFEITOS ATIVOS)
+                          <span className="w-8 text-yellow-400">{sfxEnabled ? '►' : ''}</span> LIGADO - EFEITOS ATIVOS
                         </button>
                         <button
                           onClick={() => {
@@ -391,7 +391,7 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                           }}
                           className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
                         >
-                          <span className="w-8 text-yellow-400">{!sfxEnabled ? '►' : ''}</span> MUDO (DESATIVADO)
+                          <span className="w-8 text-yellow-400">{!sfxEnabled ? '►' : ''}</span> MUDO - DESATIVADO
                         </button>
                       </div>
                     </div>
@@ -454,18 +454,18 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                         onClick={() => handleSetDifficulty('normal')}
                         className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
                       >
-                        <span className="w-8 text-yellow-400">{difficulty === 'normal' ? '►' : ''}</span> CLASSICO (BALANCEADO)
+                        <span className="w-8 text-yellow-400">{difficulty === 'normal' ? '►' : ''}</span> CLASSICO - BALANCEADO
                       </button>
                       <button
                         onClick={() => handleSetDifficulty('hard')}
                         className="flex items-center text-left hover:bg-white/20 p-2 rounded text-white cursor-pointer"
                       >
-                        <span className="w-8 text-yellow-400">{difficulty === 'hard' ? '►' : ''}</span> DESAFIO (MONSTROS FORTES)
+                        <span className="w-8 text-yellow-400">{difficulty === 'hard' ? '►' : ''}</span> DESAFIO - MONSTROS FORTES
                       </button>
                     </div>
                   </div>
                   <div className="text-xs text-slate-400 border-t border-slate-700 pt-2">
-                    MODO ATUAL: {difficulty === 'normal' ? 'CLASSICO' : 'DESAFIO (HARD)'}
+                    MODO ATUAL: {difficulty === 'normal' ? 'CLASSICO' : 'DESAFIO - HARD'}
                   </div>
                 </div>
               )}
@@ -479,22 +479,22 @@ export const TitleSettingsModal: React.FC<TitleSettingsModalProps> = ({
                     </div>
                     <div className="flex flex-col gap-2.5 text-sm sm:text-base md:text-lg text-slate-200">
                       <div className="flex items-center gap-2">
-                        <span className="text-yellow-400">►</span>
+                        <span className="text-yellow-400"></span>
                         <span className="text-white font-bold">WASD / SETAS:</span>
                         <span className="text-slate-300">Mover no mapa &amp; menus</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-yellow-400">►</span>
+                        <span className="text-yellow-400"></span>
                         <span className="text-white font-bold">ENTER / ESPACO:</span>
                         <span className="text-slate-300">Confirmar &amp; Interagir</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-yellow-400">►</span>
+                        <span className="text-yellow-400"></span>
                         <span className="text-white font-bold">ESC / TECLA M:</span>
                         <span className="text-slate-300">Menu Pause / Voltar</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-yellow-400">►</span>
+                        <span className="text-yellow-400"></span>
                         <span className="text-white font-bold">MOUSE:</span>
                         <span className="text-slate-300">Totalmente jogavel por cliques</span>
                       </div>

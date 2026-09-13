@@ -19,165 +19,240 @@ export const HeroPortrait: React.FC<HeroPortraitProps> = ({
   // Renders a high-detail SNES-style bust portrait tailored to the character class
   const renderClassArt = () => {
     switch (heroClass) {
+      case 'Guerreiro':
       case 'Cavalheiro':
-        // Celes / Edgar style Knight with blonde flowing hair & royal blue armor
+        // Guerreiro: Tanque com armadura pesada de aco e ombreiras robustas
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-            {/* Background subtle vignette */}
             <rect width="64" height="64" fill="#0f172a" />
-            {/* Hair back */}
-            <path d="M 18 16 Q 10 32 14 50 Q 22 54 26 44" fill="#ca8a04" />
-            <path d="M 20 18 Q 14 30 18 48" fill="#eab308" />
-            {/* Cape & Shoulders */}
-            <path d="M 6 64 L 6 52 Q 18 42 34 46 L 58 52 L 58 64 Z" fill="#1e3a8a" />
-            <path d="M 12 50 Q 24 44 40 47 L 44 64 L 20 64 Z" fill="#2563eb" />
-            {/* Gold Gorget / Trim */}
-            <path d="M 24 46 Q 32 50 40 46 L 42 52 Q 32 56 22 52 Z" fill="#facc15" />
-            {/* Neck & Face */}
-            <path d="M 28 36 L 28 46 L 38 46 L 38 36 Z" fill="#fbcfe8" />
+            <path d="M 18 16 Q 10 32 14 50 Q 22 54 26 44" fill="#991b1b" />
+            <path d="M 20 18 Q 14 30 18 48" fill="#dc2626" />
+            <path d="M 6 64 L 6 50 Q 18 40 34 44 L 58 50 L 58 64 Z" fill="#334155" />
+            <path d="M 12 48 Q 24 42 40 45 L 44 64 L 20 64 Z" fill="#475569" />
+            <path d="M 24 44 Q 32 48 40 44 L 42 50 Q 32 54 22 50 Z" fill="#94a3b8" />
+            <path d="M 28 34 L 28 44 L 38 44 L 38 34 Z" fill="#fbcfe8" />
             <path d="M 22 18 Q 20 34 26 38 Q 36 42 42 36 Q 46 28 42 18 Q 34 14 22 18 Z" fill="#fed7aa" />
-            {/* Earring */}
-            <circle cx="23" cy="30" r="2" fill="#c084fc" />
-            {/* Facial details (Eyes, Nose, Mouth profile) */}
             <path d="M 38 24 L 43 25 L 39 27" stroke="#7c2d12" strokeWidth="1.5" fill="none" />
             <path d="M 34 22 Q 38 21 40 23" stroke="#451a03" strokeWidth="1.5" fill="none" />
-            <circle cx="37" cy="24" r="1.5" fill="#1e3a8a" />
+            <circle cx="37" cy="24" r="1.5" fill="#0284c7" />
             <path d="M 36 32 Q 40 33 42 31" stroke="#9a3412" strokeWidth="1.5" fill="none" />
-            {/* Flowing Blonde Bangs & Headband */}
-            <path d="M 26 12 Q 36 10 44 16 Q 34 16 30 20 Q 24 16 26 12 Z" fill="#fef08a" />
-            <path d="M 24 18 Q 32 16 36 22 Q 28 22 24 18 Z" fill="#fde047" />
-            <path d="M 28 14 Q 38 18 42 22 L 40 24 Q 34 18 26 16 Z" fill="#ca8a04" />
+            <path d="M 24 10 Q 34 6 44 12 Q 34 14 28 18 Q 22 14 24 10 Z" fill="#b91c1c" />
+            <path d="M 22 16 Q 30 14 36 20 Q 28 20 22 16 Z" fill="#ef4444" />
           </svg>
         );
 
-      case 'Mago':
-        // Mysterious Sorcerer with pointed wizard cowl & mystical aura
+      case 'Cavaleiro':
+        // Cavaleiro (Guerreiro Promovido): Armadura real prateada com elmo e guarnicao de ouro
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-            <rect width="64" height="64" fill="#1e1b4b" />
-            {/* Mystical glow */}
-            <circle cx="32" cy="32" r="28" fill="#4338ca" opacity="0.3" />
-            {/* Robe shoulders */}
-            <path d="M 4 64 L 10 48 Q 32 40 54 48 L 60 64 Z" fill="#312e81" />
-            <path d="M 18 48 Q 32 44 46 48 L 50 64 L 14 64 Z" fill="#4338ca" />
-            {/* Silver collar brooch */}
-            <circle cx="32" cy="48" r="3" fill="#38bdf8" />
-            <circle cx="32" cy="48" r="1.5" fill="#ffffff" />
-            {/* Dark Cowl / Hood */}
-            <path d="M 14 42 Q 10 18 32 8 Q 54 18 50 42 Q 32 46 14 42 Z" fill="#1e1b4b" />
-            <path d="M 18 40 Q 14 22 32 14 Q 50 22 46 40 Q 32 44 18 40 Z" fill="#0f172a" />
-            {/* Shadowed Face */}
-            <ellipse cx="32" cy="30" rx="12" ry="10" fill="#020617" />
-            {/* Glowing Ethereal Eyes */}
-            <ellipse cx="27" cy="29" rx="3.5" ry="2" fill="#38bdf8" />
-            <ellipse cx="27" cy="29" rx="1.5" ry="1" fill="#ffffff" />
-            <ellipse cx="37" cy="29" rx="3.5" ry="2" fill="#38bdf8" />
-            <ellipse cx="37" cy="29" rx="1.5" ry="1" fill="#ffffff" />
-            {/* Silver Runes on Cowl */}
-            <path d="M 28 11 L 32 6 L 36 11" stroke="#818cf8" strokeWidth="1.5" fill="none" />
+            <rect width="64" height="64" fill="#020617" />
+            <path d="M 6 64 L 6 48 Q 18 38 34 42 L 58 48 L 58 64 Z" fill="#1e3a8a" />
+            <path d="M 10 46 Q 24 40 42 43 L 46 64 L 18 64 Z" fill="#2563eb" />
+            <path d="M 22 42 Q 32 46 42 42 L 44 48 Q 32 52 20 48 Z" fill="#facc15" />
+            <path d="M 18 20 Q 16 38 24 42 Q 36 44 42 38 Q 46 28 44 18 Q 34 12 20 18 Z" fill="#cbd5e1" />
+            <path d="M 24 8 Q 32 2 40 8 L 44 24 Q 32 18 20 24 Z" fill="#64748b" />
+            <path d="M 28 4 Q 32 0 36 4 L 38 12 L 26 12 Z" fill="#eab308" />
+            <path d="M 26 22 L 38 22 L 36 26 L 28 26 Z" fill="#0f172a" />
+            <circle cx="29" cy="24" r="1.5" fill="#38bdf8" />
+            <circle cx="35" cy="24" r="1.5" fill="#38bdf8" />
           </svg>
         );
 
-      case 'Alquimista':
-        // Locke / Alchemist style adventurer with brass goggles & leather hood
+      case 'Ladrao':
+        // Ladrao: Capuz agil de ladino verde/cinza com adaga e olhar perspicaz
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
             <rect width="64" height="64" fill="#064e3b" />
-            {/* Coat */}
             <path d="M 6 64 L 10 50 Q 32 44 54 50 L 58 64 Z" fill="#065f46" />
             <path d="M 16 52 Q 32 46 48 52 L 52 64 L 12 64 Z" fill="#047857" />
-            {/* Potion straps */}
-            <rect x="22" y="52" width="6" height="10" rx="2" fill="#10b981" />
-            <rect x="36" y="52" width="6" height="10" rx="2" fill="#3b82f6" />
-            {/* Face & Wild Silver Hair */}
-            <path d="M 16 28 Q 12 40 22 44 Q 32 48 44 42 Q 50 34 46 24" fill="#94a3b8" />
-            <path d="M 22 22 Q 18 36 24 40 Q 34 44 40 38 Q 44 30 40 20 Z" fill="#fde047" opacity="0.3" />
-            <path d="M 24 22 Q 22 34 26 38 Q 34 42 40 36 Q 42 28 38 20 Z" fill="#fed7aa" />
-            {/* Bandana on forehead */}
-            <path d="M 20 18 Q 32 14 44 18 L 44 24 Q 32 20 20 24 Z" fill="#0284c7" />
-            {/* Brass Goggles */}
-            <circle cx="28" cy="22" r="5" fill="#b45309" stroke="#f59e0b" strokeWidth="1" />
-            <circle cx="28" cy="22" r="3.5" fill="#34d399" />
-            <circle cx="38" cy="22" r="5" fill="#b45309" stroke="#f59e0b" strokeWidth="1" />
-            <circle cx="38" cy="22" r="3.5" fill="#34d399" />
-            <path d="M 33 22 L 35 22" stroke="#f59e0b" strokeWidth="2" />
-            {/* Smirk & Nose */}
-            <path d="M 38 29 L 41 30 L 38 32" stroke="#78350f" strokeWidth="1.2" fill="none" />
-            <path d="M 33 34 Q 37 36 40 34" stroke="#78350f" strokeWidth="1.5" fill="none" />
-          </svg>
-        );
-
-      case 'Arqueiro':
-        // Forest Ranger with green hood, focused eyes & feather
-        return (
-          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-            <rect width="64" height="64" fill="#14532d" />
-            {/* Quiver & Shoulder */}
-            <path d="M 6 64 L 12 48 Q 32 42 52 48 L 58 64 Z" fill="#166534" />
-            <path d="M 44 40 L 56 22 L 60 25 L 48 44 Z" fill="#78350f" />
-            {/* Arrow fletching */}
-            <path d="M 54 22 L 60 16 L 62 18 L 56 24 Z" fill="#ffffff" />
-            {/* Hood */}
-            <path d="M 16 38 Q 12 14 32 8 Q 52 14 48 38 Q 32 44 16 38 Z" fill="#15803d" />
-            {/* Feather */}
-            <path d="M 38 8 Q 50 2 56 6 Q 48 12 40 10 Z" fill="#ef4444" />
-            {/* Face inside hood */}
+            <path d="M 16 38 Q 12 14 32 8 Q 52 14 48 38 Q 32 44 16 38 Z" fill="#0284c7" />
+            <path d="M 20 18 Q 32 12 44 18 L 44 24 Q 32 20 20 24 Z" fill="#0369a1" />
             <path d="M 22 20 Q 20 34 26 38 Q 34 42 38 38 Q 44 32 42 20 Z" fill="#ffedd5" />
-            {/* Sharp Eyes */}
-            <path d="M 26 25 Q 29 23 32 25" stroke="#14532d" strokeWidth="1.5" fill="none" />
-            <circle cx="29" cy="26" r="1.5" fill="#16a34a" />
-            <path d="M 34 25 Q 37 23 40 25" stroke="#14532d" strokeWidth="1.5" fill="none" />
-            <circle cx="37" cy="26" r="1.5" fill="#16a34a" />
+            <path d="M 26 25 Q 29 23 32 25" stroke="#0369a1" strokeWidth="1.5" fill="none" />
+            <circle cx="29" cy="26" r="1.5" fill="#38bdf8" />
+            <path d="M 34 25 Q 37 23 40 25" stroke="#0369a1" strokeWidth="1.5" fill="none" />
+            <circle cx="37" cy="26" r="1.5" fill="#38bdf8" />
             <path d="M 32 30 L 34 32 L 31 33" stroke="#9a3412" strokeWidth="1" fill="none" />
+            <path d="M 28 35 Q 33 37 38 34" stroke="#78350f" strokeWidth="1.5" fill="none" />
           </svg>
         );
 
-      case 'Lutador':
-        // Cyan / Martial Artist style with red headband & fierce samurai look
+      case 'Ninja':
+      case 'Arqueiro':
+        // Ninja (Ladrao Promovido): Mascara ninja oriental com faixa vermelha e olhos afiados
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-            <rect width="64" height="64" fill="#450a0a" />
-            {/* Gi Shoulders */}
-            <path d="M 6 64 L 12 48 Q 32 42 52 48 L 58 64 Z" fill="#991b1b" />
+            <rect width="64" height="64" fill="#18181b" />
+            <path d="M 6 64 L 12 48 Q 32 42 52 48 L 58 64 Z" fill="#27272a" />
+            <path d="M 18 48 Q 32 44 46 48 L 50 64 L 14 64 Z" fill="#3f3f46" />
+            <path d="M 16 38 Q 12 12 32 8 Q 52 12 48 38 Q 32 42 16 38 Z" fill="#18181b" />
+            <path d="M 18 16 Q 32 12 46 16 L 46 22 Q 32 18 18 22 Z" fill="#dc2626" />
+            <path d="M 44 18 L 56 24 L 54 28 L 44 20 Z" fill="#b91c1c" />
+            <rect x="22" y="22" width="20" height="8" fill="#fed7aa" />
+            <circle cx="27" cy="26" r="1.5" fill="#ef4444" />
+            <circle cx="37" cy="26" r="1.5" fill="#ef4444" />
+            <path d="M 18 30 Q 32 28 46 30 L 44 42 Q 32 46 20 42 Z" fill="#27272a" />
+          </svg>
+        );
+
+      case 'Monge':
+      case 'Lutador':
+        // Monge: Artista marcial desarmado com faixa na testa e peito aberto
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#451a03" />
+            <path d="M 6 64 L 12 48 Q 32 42 52 48 L 58 64 Z" fill="#b45309" />
             <path d="M 22 48 Q 32 44 42 48 L 38 64 L 26 64 Z" fill="#fed7aa" />
-            {/* Dark spiked hair & Topknot */}
-            <path d="M 18 20 Q 14 8 26 6 Q 38 4 48 10 Q 52 24 48 30" fill="#18181b" />
-            <path d="M 38 6 Q 46 0 48 4" stroke="#18181b" strokeWidth="4" />
-            {/* Red Headband */}
-            <path d="M 18 18 Q 32 14 46 18 L 46 22 Q 32 18 18 22 Z" fill="#dc2626" />
-            <path d="M 44 20 L 56 26 L 54 30 L 44 22 Z" fill="#b91c1c" />
-            {/* Rugged Face */}
+            <path d="M 18 20 Q 14 8 26 6 Q 38 4 48 10 Q 52 24 48 30" fill="#78350f" />
+            <path d="M 18 18 Q 32 14 46 18 L 46 22 Q 32 18 18 22 Z" fill="#f59e0b" />
+            <path d="M 44 20 L 56 26 L 54 30 L 44 22 Z" fill="#d97706" />
             <path d="M 22 22 Q 20 36 26 42 Q 34 44 38 40 Q 44 34 42 22 Z" fill="#fdba74" />
-            {/* Mustache / Beard (Cyan style!) */}
-            <path d="M 26 34 Q 32 32 38 34 Q 38 38 35 38 Q 32 35 28 38 Z" fill="#18181b" />
-            {/* Piercing Eyes & Eyebrows */}
             <path d="M 24 24 L 30 25" stroke="#18181b" strokeWidth="2" />
             <path d="M 34 25 L 40 24" stroke="#18181b" strokeWidth="2" />
             <circle cx="28" cy="27" r="1.5" fill="#18181b" />
             <circle cx="36" cy="27" r="1.5" fill="#18181b" />
+            <path d="M 30 36 Q 34 38 38 36" stroke="#78350f" strokeWidth="1.5" fill="none" />
           </svg>
         );
 
-      case 'Inventor':
-      default:
-        // Engineer with brass goggles, tool gear & leather cap
+      case 'Mestre':
+        // Mestre (Monge Promovido): Grande mestre de artes marciais lendario com postura imponente
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
-            <rect width="64" height="64" fill="#78350f" />
-            {/* Leather Vest & Wrench */}
-            <path d="M 6 64 L 12 50 Q 32 46 52 50 L 58 64 Z" fill="#92400e" />
-            <path d="M 12 52 L 20 40 L 24 43 L 16 56 Z" fill="#94a3b8" />
-            {/* Aviator Leather Cap */}
-            <path d="M 16 16 Q 32 8 48 16 L 48 30 Q 32 26 16 30 Z" fill="#451a03" />
-            <path d="M 14 26 L 14 36 L 20 34 L 18 26 Z" fill="#451a03" />
-            {/* Large Brass Eyepiece / Goggles */}
-            <circle cx="28" cy="22" r="6" fill="#ca8a04" stroke="#fef08a" strokeWidth="1" />
-            <circle cx="28" cy="22" r="4" fill="#38bdf8" />
-            <circle cx="40" cy="22" r="6" fill="#ca8a04" stroke="#fef08a" strokeWidth="1" />
-            <circle cx="40" cy="22" r="4" fill="#38bdf8" />
-            {/* Face */}
-            <path d="M 22 26 Q 20 38 26 42 Q 34 44 38 40 Q 42 34 40 26 Z" fill="#fed7aa" />
-            <path d="M 30 36 Q 34 38 38 36" stroke="#78350f" strokeWidth="1.5" fill="none" />
+            <rect width="64" height="64" fill="#7f1d1d" />
+            <path d="M 6 64 L 12 48 Q 32 42 52 48 L 58 64 Z" fill="#991b1b" />
+            <path d="M 22 48 Q 32 44 42 48 L 38 64 L 26 64 Z" fill="#fef08a" />
+            <path d="M 16 18 Q 12 4 28 2 Q 44 2 48 10 Q 52 24 48 30" fill="#ffffff" />
+            <path d="M 18 16 Q 32 12 46 16 L 46 20 Q 32 16 18 20 Z" fill="#fbbf24" />
+            <path d="M 22 20 Q 20 36 26 42 Q 34 44 38 40 Q 44 34 42 20 Z" fill="#fdba74" />
+            <path d="M 26 34 Q 32 30 38 34 Q 38 44 32 46 Q 26 44 26 34 Z" fill="#ffffff" />
+            <path d="M 24 22 L 30 23" stroke="#451a03" strokeWidth="2" />
+            <path d="M 34 23 L 40 22" stroke="#451a03" strokeWidth="2" />
+            <circle cx="28" cy="25" r="1.5" fill="#eab308" />
+            <circle cx="36" cy="25" r="1.5" fill="#eab308" />
+          </svg>
+        );
+
+      case 'Mago Branco':
+        // Mago Branco: Manto branco puro com triangulos vermelhos caracteristicos
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#0f172a" />
+            <circle cx="32" cy="32" r="28" fill="#38bdf8" opacity="0.25" />
+            <path d="M 4 64 L 10 48 Q 32 40 54 48 L 60 64 Z" fill="#f8fafc" />
+            <path d="M 18 48 Q 32 44 46 48 L 50 64 L 14 64 Z" fill="#e2e8f0" />
+            {/* Triangulos vermelhos de Mago Branco */}
+            <polygon points="12,50 16,56 20,50" fill="#dc2626" />
+            <polygon points="24,48 28,54 32,48" fill="#dc2626" />
+            <polygon points="36,48 40,54 44,48" fill="#dc2626" />
+            <polygon points="48,50 52,56 56,50" fill="#dc2626" />
+            <path d="M 14 42 Q 10 16 32 8 Q 54 16 50 42 Q 32 46 14 42 Z" fill="#ffffff" />
+            <path d="M 18 40 Q 14 22 32 14 Q 50 22 46 40 Q 32 44 18 40 Z" fill="#cbd5e1" />
+            <ellipse cx="32" cy="30" rx="10" ry="10" fill="#fed7aa" />
+            <circle cx="28" cy="28" r="1.5" fill="#0284c7" />
+            <circle cx="36" cy="28" r="1.5" fill="#0284c7" />
+            <path d="M 30 35 Q 32 37 34 35" stroke="#be123c" strokeWidth="1.5" fill="none" />
+          </svg>
+        );
+
+      case 'Mago Branco Superior':
+        // Mago Branco Superior: Vestes divinas com tiara sagrada e aura curativa resplandecente
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#1e1b4b" />
+            <circle cx="32" cy="32" r="30" fill="#fef08a" opacity="0.3" />
+            <path d="M 4 64 L 8 46 Q 32 38 56 46 L 60 64 Z" fill="#ffffff" />
+            <path d="M 16 46 Q 32 42 48 46 L 52 64 L 12 64 Z" fill="#f1f5f9" />
+            <polygon points="10,48 15,55 20,48" fill="#b91c1c" />
+            <polygon points="22,46 27,53 32,46" fill="#b91c1c" />
+            <polygon points="34,46 39,53 44,46" fill="#b91c1c" />
+            <polygon points="46,48 51,55 56,48" fill="#b91c1c" />
+            <path d="M 12 40 Q 8 12 32 6 Q 56 12 52 40 Q 32 44 12 40 Z" fill="#ffffff" />
+            <path d="M 22 10 Q 32 4 42 10 L 44 16 Q 32 12 20 16 Z" fill="#facc15" />
+            <circle cx="32" cy="11" r="2.5" fill="#38bdf8" />
+            <ellipse cx="32" cy="28" rx="11" ry="11" fill="#fed7aa" />
+            <circle cx="28" cy="27" r="1.5" fill="#38bdf8" />
+            <circle cx="36" cy="27" r="1.5" fill="#38bdf8" />
+            <path d="M 30 33 Q 32 35 34 33" stroke="#be123c" strokeWidth="1.5" fill="none" />
+          </svg>
+        );
+
+      case 'Mago Negro':
+      case 'Mago':
+        // Mago Negro: Chapeu pontudo classico azul/amarelo com rosto na sombra e olhos amarelos brilhantes
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#020617" />
+            <circle cx="32" cy="32" r="28" fill="#4338ca" opacity="0.3" />
+            <path d="M 4 64 L 10 48 Q 32 40 54 48 L 60 64 Z" fill="#1e3a8a" />
+            <path d="M 18 48 Q 32 44 46 48 L 50 64 L 14 64 Z" fill="#2563eb" />
+            {/* Chapeu pontudo de Mago Negro */}
+            <path d="M 6 36 Q 32 26 58 36 L 50 32 L 36 4 L 32 2 L 28 4 L 14 32 Z" fill="#d97706" />
+            <path d="M 10 36 Q 32 30 54 36 L 46 33 L 34 8 L 30 8 L 18 33 Z" fill="#f59e0b" />
+            <ellipse cx="32" cy="38" rx="14" ry="10" fill="#020617" />
+            <ellipse cx="27" cy="37" rx="3.5" ry="2" fill="#fef08a" />
+            <circle cx="27" cy="37" r="1" fill="#ffffff" />
+            <ellipse cx="37" cy="37" rx="3.5" ry="2" fill="#fef08a" />
+            <circle cx="37" cy="37" r="1" fill="#ffffff" />
+          </svg>
+        );
+
+      case 'Mago Negro Superior':
+        // Mago Negro Superior: Mago Negro supremo com runas arcanas roxas e olhos incandescentes
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#3b0764" />
+            <circle cx="32" cy="32" r="30" fill="#9333ea" opacity="0.4" />
+            <path d="M 4 64 L 10 46 Q 32 38 54 46 L 60 64 Z" fill="#581c87" />
+            <path d="M 18 46 Q 32 42 46 46 L 50 64 L 14 64 Z" fill="#6b21a8" />
+            <path d="M 6 34 Q 32 24 58 34 L 50 30 L 36 2 L 32 0 L 28 2 L 14 30 Z" fill="#3b0764" />
+            <path d="M 10 34 Q 32 28 54 34 L 46 31 L 34 6 L 30 6 L 18 31 Z" fill="#4c1d95" />
+            <path d="M 28 12 L 32 8 L 36 12" stroke="#c084fc" strokeWidth="2" fill="none" />
+            <ellipse cx="32" cy="36" rx="14" ry="10" fill="#020617" />
+            <ellipse cx="26" cy="35" rx="4" ry="2.5" fill="#f43f5e" />
+            <circle cx="26" cy="35" r="1.5" fill="#fef08a" />
+            <ellipse cx="38" cy="35" rx="4" ry="2.5" fill="#f43f5e" />
+            <circle cx="38" cy="35" r="1.5" fill="#fef08a" />
+          </svg>
+        );
+
+      case 'Mago Vermelho':
+        // Mago Vermelho: Chapeu vermelho elegante com pena branca e capa estilosa
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#450a0a" />
+            <path d="M 4 64 L 10 48 Q 32 42 54 48 L 60 64 Z" fill="#991b1b" />
+            <path d="M 18 48 Q 32 44 46 48 L 50 64 L 14 64 Z" fill="#b91c1c" />
+            <path d="M 40 28 Q 54 12 58 8 Q 52 20 44 32 Z" fill="#ffffff" />
+            <path d="M 10 34 Q 32 24 54 34 L 48 26 L 34 8 L 30 8 L 16 26 Z" fill="#b91c1c" />
+            <path d="M 14 32 Q 32 26 50 32 L 46 28 L 34 12 L 30 12 L 18 28 Z" fill="#dc2626" />
+            <path d="M 22 22 Q 20 36 26 40 Q 34 44 38 40 Q 44 34 42 22 Z" fill="#fed7aa" />
+            <path d="M 26 26 Q 29 24 32 26" stroke="#451a03" strokeWidth="1.5" fill="none" />
+            <circle cx="29" cy="27" r="1.5" fill="#1e3a8a" />
+            <path d="M 34 26 Q 37 24 40 26" stroke="#451a03" strokeWidth="1.5" fill="none" />
+            <circle cx="37" cy="27" r="1.5" fill="#1e3a8a" />
+            <path d="M 32 34 Q 36 36 39 34" stroke="#7f1d1d" strokeWidth="1.5" fill="none" />
+          </svg>
+        );
+
+      case 'Mago Vermelho Superior':
+      case 'Alquimista':
+      case 'Inventor':
+      default:
+        // Mago Vermelho Superior: Traje nobre escarlate com detalhes de ouro e pena dourada
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#581c87" />
+            <path d="M 4 64 L 10 46 Q 32 40 54 46 L 60 64 Z" fill="#7f1d1d" />
+            <path d="M 18 46 Q 32 42 46 46 L 50 64 L 14 64 Z" fill="#991b1b" />
+            <path d="M 24 44 Q 32 48 40 44 L 42 50 Q 32 54 22 50 Z" fill="#facc15" />
+            <path d="M 42 26 Q 56 8 62 4 Q 54 18 46 30 Z" fill="#fef08a" />
+            <path d="M 8 32 Q 32 22 56 32 L 48 24 L 34 6 L 30 6 L 16 24 Z" fill="#991b1b" />
+            <path d="M 12 30 Q 32 24 52 30 L 46 26 L 34 10 L 30 10 L 18 26 Z" fill="#dc2626" />
+            <path d="M 22 20 Q 20 36 26 40 Q 34 44 38 40 Q 44 34 42 20 Z" fill="#fed7aa" />
+            <circle cx="29" cy="26" r="1.5" fill="#facc15" />
+            <circle cx="37" cy="26" r="1.5" fill="#facc15" />
+            <path d="M 32 33 Q 36 35 39 33" stroke="#7f1d1d" strokeWidth="1.5" fill="none" />
           </svg>
         );
     }

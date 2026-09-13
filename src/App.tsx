@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GameState, Player, Enemy, CombatUnit, EnemyType, MapId, Hero } from './types';
-import { MAPS, WEAPONS, ITEMS, ENEMY_TEMPLATES, BOSS } from './constants';
+import { GameState, Player, Enemy, CombatUnit, EnemyType, MapId, Hero, Cutscene, Weapon } from './types';
+import { MAPS, WEAPONS, ITEMS, ENEMY_TEMPLATES, BOSS, GET_DUNGEON_BOSS, generateCombatEnemies, CHESTS_DATA, CUTSCENES_DATA } from './constants';
 import { Exploration } from './components/Exploration';
 import { Combat } from './components/Combat';
 import { Shop } from './components/Shop';
@@ -9,6 +9,14 @@ import { CharacterCreation } from './components/CharacterCreation';
 import { WorldMenu } from './components/WorldMenu';
 import { TitleSettingsModal } from './components/TitleSettingsModal';
 import { TitleScreen } from './components/TitleScreen';
+import { CutsceneDialog } from './components/CutsceneDialog';
+import { TreasureModal } from './components/TreasureModal';
+import { PrologueIntro } from './components/PrologueIntro';
+import { TownDialogModal } from './components/TownDialogModal';
+import { ToolsmithModal } from './components/ToolsmithModal';
+import { InnModal } from './components/InnModal';
+import { MapTransitionOverlay, MAP_TITLES } from './components/MapTransitionOverlay';
+import { TOWNS_CONFIG, TownNPC } from './data/townData';
 import { soundFX, bgm } from './utils/audio';
 
 export default function App() {
@@ -18,8 +26,22 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTitleSettingsOpen, setIsTitleSettingsOpen] = useState(false);
   const [hasSave, setHasSave] = useState(() => !!localStorage.getItem('eldoria_save'));
-  const [totalSteps, setTotalSteps] = useState(48392);
-  const [playTimeSeconds, setPlayTimeSeconds] = useState(1108); // Starts at 18:28 like the classic reference or ticks up
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [playTimeSeconds, setPlayTimeSeconds] = useState(0);
+  
+  // Cutscene and Treasure Modal states
+  const [activeCutscene, setActiveCutscene] = useState<Cutscene | null>(null);
+  const [treasureModal, setTreasureModal] = useState<{ title: string; message: string } | null>(null);
+
+  // Map Transition State
+  const [transitionInfo, setTransitionInfo] = useState<{ isVisible: boolean; label?: string; subtitle?: string }>({ isVisible: false });
+  const isTransitioningRef = useRef(false);
+
+  // Town interaction states
+  const [activeTownNpc, setActiveTownNpc] = useState<TownNPC | null>(null);
+  const [isToolsmithOpen, setIsToolsmithOpen] = useState(false);
+  const [isInnOpen, setIsInnOpen] = useState(false);
+  const [currentTownId, setCurrentTownId] = useState<string>('TOWN_CORNELIA');
 
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -55,26 +77,59 @@ export default function App() {
     setHasSave(false);
   };
 
+  const ensurePartyNames = (party: Hero[]): Hero[] => {
+    return party.map((h, i) => {
+      const name = h.name && h.name.trim() ? h.name.trim() : `Heroi ${i + 1}`;
+      const vigor = h.stats?.vigor ?? h.stats?.for ?? 16;
+      const magPwr = h.stats?.magPwr ?? h.stats?.int ?? 12;
+      const def = h.stats?.def ?? 14;
+      const batPwr = h.stats?.batPwr ?? (vigor + (h.weapon?.damage || 10));
+      const magDef = h.stats?.magDef ?? Math.round(magPwr * 0.9 + 5);
+      const mBlock = h.stats?.mBlock ?? Math.min(40, Math.round(magPwr * 0.5 + 5));
+      const vel = h.stats?.vel ?? 10;
+      const mov = h.stats?.mov ?? 3;
+      const stats = {
+        ...h.stats,
+        batPwr,
+        def,
+        magDef,
+        mBlock,
+        vel,
+        vigor,
+        magPwr,
+        mov,
+        for: vigor,
+        int: magPwr
+      };
+      return { ...h, name, stats };
+    });
+  };
+
   const loadGame = () => {
     const data = localStorage.getItem('eldoria_save');
     if (data) {
       const parsed = JSON.parse(data);
-      setPlayer(parsed.player);
+      const loadedParty = ensurePartyNames(parsed.player?.party || []);
+      setPlayer({
+        ...parsed.player,
+        party: loadedParty
+      });
       setMapId(parsed.mapId);
       setOverworldPos(parsed.overworldPos);
       setArtifacts(parsed.artifacts);
       if (parsed.totalSteps !== undefined) setTotalSteps(parsed.totalSteps);
       if (parsed.playTimeSeconds !== undefined) setPlayTimeSeconds(parsed.playTimeSeconds);
+      stepsSinceEncounter.current = 0;
       spawnForMap(parsed.mapId);
       setGameState('EXPLORATION');
     }
   };
 
   const [mapId, setMapId] = useState<MapId>('OVERWORLD');
-  const [overworldPos, setOverworldPos] = useState({ x: 5, y: 5 }); // To restore pos after dungeon/shop
+  const [overworldPos, setOverworldPos] = useState({ x: 36, y: 96 }); // Spawn in Cornelia area on 160x120 map
   
   const [player, setPlayer] = useState<Player>({
-    x: 10, y: 15,
+    x: 36, y: 96,
     party: [],
     artifacts: [],
     inventory: { items: [ { ...ITEMS.pocao, count: 3 } ] },
@@ -114,11 +169,117 @@ export default function App() {
     }
   }, [gameState, combatEnemies]);
 
+  // Duck music volume when dialogue is active
+  useEffect(() => {
+    if (activeCutscene) {
+      bgm.setDucked(true);
+    } else {
+      bgm.setDucked(false);
+    }
+  }, [activeCutscene]);
+
+  // Helper to map speaker names to player's actual chosen party names
+  const getPartySpeakerName = (originalSpeaker: string): string => {
+    const p = player.party;
+    if (!p || p.length === 0) return originalSpeaker;
+
+    const lower = originalSpeaker.toLowerCase();
+    if (lower.includes('caelen')) {
+      return p[0]?.name || originalSpeaker;
+    }
+    if (lower.includes('lyra')) {
+      return p[1]?.name || originalSpeaker;
+    }
+    if (lower.includes('rowan')) {
+      return p[2]?.name || originalSpeaker;
+    }
+    if (lower.includes('elira')) {
+      return p[3]?.name || originalSpeaker;
+    }
+    return originalSpeaker;
+  };
+
+  const adaptCutsceneText = (text: string): string => {
+    const p = player.party;
+    if (!p || p.length === 0) return text;
+
+    let res = text;
+    if (p[0]?.name) {
+      res = res.replace(/Caelen Guardiao/gi, p[0].name).replace(/Caelen/gi, p[0].name);
+    }
+    if (p[1]?.name) {
+      res = res.replace(/Lyra Arcanista/gi, p[1].name).replace(/Lyra/gi, p[1].name);
+    }
+    if (p[2]?.name) {
+      res = res.replace(/Rowan Arqueiro/gi, p[2].name).replace(/Rowan/gi, p[2].name);
+    }
+    if (p[3]?.name) {
+      res = res.replace(/Elira Alquimista/gi, p[3].name).replace(/Elira/gi, p[3].name);
+    }
+    return res;
+  };
+
+  // Trigger in-game cutscenes with story flags
+  const triggerCutscene = (cutsceneId: string) => {
+    if (player.storyFlags?.[cutsceneId]) return;
+    const cutsceneDef = CUTSCENES_DATA[cutsceneId];
+    if (cutsceneDef) {
+      const adaptedMessages = cutsceneDef.messages.map(m => ({
+        speaker: getPartySpeakerName(m.speaker),
+        text: adaptCutsceneText(m.text)
+      }));
+
+      setActiveCutscene({
+        ...cutsceneDef,
+        messages: adaptedMessages,
+        onComplete: () => {
+          setPlayer(curr => ({
+            ...curr,
+            storyFlags: { ...(curr.storyFlags || {}), [cutsceneId]: true }
+          }));
+          setActiveCutscene(null);
+        }
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (gameState === 'EXPLORATION' && !player.storyFlags?.['intro_world']) {
+      triggerCutscene('intro_world');
+    }
+  }, [gameState, player.storyFlags]);
+
   // Spawn logic based on map
   const spawnForMap = (mId: MapId) => {
     let newEnemies: Enemy[] = [];
-    if (mId === 'OVERWORLD') {
-      newEnemies.push(BOSS); // Boss sits at F
+    if (mId === 'DUNGEON_PRELUDIO_2') {
+      if (!player.storyFlags?.['boss_preludio_defeated']) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_PRELUDIO_2'));
+      }
+    } else if (mId === 'DUNGEON_DESAFIO_2') {
+      if (!player.storyFlags?.['cidadela_desafios_defeated']) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_DESAFIO_2'));
+      }
+    } else if (mId === 'DUNGEON_TERRA_2') {
+      if (!player.artifacts?.includes('Terra')) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_TERRA_2'));
+      }
+    } else if (mId === 'DUNGEON_FOGO_2') {
+      if (!player.artifacts?.includes('Fogo')) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_FOGO_2'));
+      }
+    } else if (mId === 'DUNGEON_AGUA_2') {
+      if (!player.artifacts?.includes('Agua')) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_AGUA_2'));
+      }
+    } else if (mId === 'DUNGEON_AR_3') {
+      if (!player.artifacts?.includes('Ar')) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_AR_3'));
+      }
+    } else if (mId === 'DUNGEON_FINAL_3') {
+      newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_FINAL_3'));
+    } else if (mId.startsWith('TOWN_')) {
+      newEnemies = [];
     }
     setEnemies(newEnemies);
   };
@@ -129,37 +290,282 @@ export default function App() {
 
   const handleCreationComplete = (party: Hero[]) => {
     setPlayer({
-      x: 10, y: 15,
-      party,
+      x: 36, y: 96,
+      party: ensurePartyNames(party),
       artifacts: [],
       inventory: { items: [ { ...ITEMS.pocao, count: 3 } ] },
       gold: 50
     });
+    setTotalSteps(0);
+    setPlayTimeSeconds(0);
+    setOverworldPos({ x: 36, y: 96 });
     setMapId('OVERWORLD');
     
-    // Set Artifacts locations
+    // Set Artifacts locations on boss floors
     setArtifacts([
-      { id: 'Fogo', mapId: 'DUNGEON_FOGO', x: 7, y: 5, emoji: '' },
-      { id: 'Agua', mapId: 'DUNGEON_AGUA', x: 7, y: 5, emoji: '' },
-      { id: 'Ar', mapId: 'DUNGEON_AR', x: 7, y: 5, emoji: '' },
-      { id: 'Terra', mapId: 'DUNGEON_TERRA', x: 13, y: 3, emoji: '' }
+      { id: 'Terra', mapId: 'DUNGEON_TERRA_2', x: 8, y: 5, emoji: '' },
+      { id: 'Fogo', mapId: 'DUNGEON_FOGO_2', x: 7, y: 5, emoji: '' },
+      { id: 'Agua', mapId: 'DUNGEON_AGUA_2', x: 7, y: 5, emoji: '' },
+      { id: 'Ar', mapId: 'DUNGEON_AR_3', x: 7, y: 5, emoji: '' }
     ]);
     
     spawnForMap('OVERWORLD');
     setGameState('STORY_CRAWL');
   };
 
-  const changeMap = (newMapId: MapId, startX: number, startY: number) => {
-    if (mapId === 'OVERWORLD') {
-      setOverworldPos({ x: player.x, y: player.y });
+  const changeMap = (newMapId: MapId, startX: number, startY: number, soundType: 'door' | 'stairs' | 'teleport' = 'door') => {
+    if (isTransitioningRef.current) return;
+    isTransitioningRef.current = true;
+
+    if (soundType === 'stairs') {
+      soundFX.playStairs();
+    } else if (soundType === 'door') {
+      soundFX.playDoor();
+    } else {
+      soundFX.playSelect();
     }
-    setMapId(newMapId);
-    setPlayer(prev => ({ ...prev, x: startX, y: startY }));
-    spawnForMap(newMapId);
+
+    const titleInfo = MAP_TITLES[newMapId] || { label: newMapId };
+    setTransitionInfo({
+      isVisible: true,
+      label: titleInfo.label,
+      subtitle: titleInfo.subtitle
+    });
+
+    setTimeout(() => {
+      stepsSinceEncounter.current = 0;
+      if (mapId === 'OVERWORLD') {
+        setOverworldPos({ x: player.x, y: player.y });
+      }
+      setMapId(newMapId);
+      setPlayer(prev => ({ ...prev, x: startX, y: startY }));
+      spawnForMap(newMapId);
+
+      setTimeout(() => {
+        setTransitionInfo({ isVisible: false });
+        isTransitioningRef.current = false;
+      }, 350);
+    }, 280);
+  };
+
+  const handleInteract = (facingDir: 0 | 1 | 2 | 3 = 0) => {
+    if (gameState !== 'EXPLORATION' || isMenuOpen || isTransitioningRef.current) return;
+    if (activeTownNpc || isToolsmithOpen || isInnOpen || treasureModal || activeCutscene) return;
+
+    const currentMap = MAPS[mapId];
+    if (!currentMap) return;
+
+    const dx = facingDir === 3 ? 1 : facingDir === 2 ? -1 : 0;
+    const dy = facingDir === 0 ? 1 : facingDir === 1 ? -1 : 0;
+
+    const checkCoords = [
+      { x: player.x + dx, y: player.y + dy },
+      { x: player.x, y: player.y },
+      { x: player.x, y: player.y + 1 },
+      { x: player.x, y: player.y - 1 },
+      { x: player.x - 1, y: player.y },
+      { x: player.x + 1, y: player.y },
+    ];
+
+    // 1. Check Living Bosses / Enemies on Map
+    for (const coord of checkCoords) {
+      const hitEnemy = enemies.find(e => e.x === coord.x && e.y === coord.y);
+      if (hitEnemy) {
+        soundFX.playSelect();
+        const encounterGroup = generateCombatEnemies(mapId, player.party, true, hitEnemy);
+        setCombatEnemies(encounterGroup);
+        setGameState('ENCOUNTER_TRANSITION');
+        setTimeout(() => {
+          setGameState('COMBAT');
+        }, 1200);
+        return;
+      }
+    }
+
+    // 2. Check Town & Interior NPCs & Facilities
+    if (mapId.startsWith('TOWN_') || mapId.startsWith('INTERIOR_')) {
+      const cfg = TOWNS_CONFIG[mapId] || TOWNS_CONFIG[currentTownId];
+      for (const coord of checkCoords) {
+        if (coord.y >= 0 && coord.y < currentMap.length && coord.x >= 0 && coord.x < currentMap[0].length) {
+          const tile = currentMap[coord.y][coord.x];
+          
+          // NPC interaction
+          if (tile === 'N' && cfg) {
+            const matched = cfg.npcs.find(n => Math.abs(n.x - coord.x) <= 1 && Math.abs(n.y - coord.y) <= 1) || cfg.npcs[0];
+            if (matched) {
+              soundFX.playSelect();
+              setActiveTownNpc(matched);
+              return;
+            }
+          }
+
+          // Town Building entrances (when interacting with building facade on TOWN_ map)
+          if (mapId.startsWith('TOWN_')) {
+            if (tile === 'H') {
+              const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_HOUSE' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_HOUSE' : 'INTERIOR_GAIA_HOUSE';
+              changeMap(interiorMap, 5, 5, 'door');
+              return;
+            }
+            if (tile === 'P') {
+              const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_SHOP' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_SHOP' : 'INTERIOR_GAIA_SHOP';
+              changeMap(interiorMap, 5, 5, 'door');
+              return;
+            }
+            if (tile === 'E') {
+              const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_TOOLSMITH' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_TOOLSMITH' : 'INTERIOR_GAIA_TOOLSMITH';
+              changeMap(interiorMap, 5, 5, 'door');
+              return;
+            }
+            if (tile === 'I') {
+              const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_INN' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_INN' : 'INTERIOR_GAIA_INN';
+              changeMap(interiorMap, 5, 5, 'door');
+              return;
+            }
+          }
+
+          // Interior Counter / Desk / Beds / Bookshelves / Hearth / Exit
+          if (mapId.startsWith('INTERIOR_')) {
+            if (tile === 'T') {
+              if (mapId.includes('_SHOP')) {
+                soundFX.playDoor();
+                setGameState('SHOP');
+                return;
+              }
+              if (mapId.includes('_TOOLSMITH')) {
+                soundFX.playDoor();
+                setIsToolsmithOpen(true);
+                return;
+              }
+              if (mapId.includes('_INN')) {
+                soundFX.playDoor();
+                setIsInnOpen(true);
+                return;
+              }
+              if (mapId.includes('_HOUSE')) {
+                soundFX.playSelect();
+                if (cfg && cfg.npcs.length > 0) {
+                  setActiveTownNpc(cfg.npcs[0]);
+                  return;
+                }
+              }
+            }
+            if (tile === 'E') {
+              soundFX.playDoor();
+              setIsToolsmithOpen(true);
+              return;
+            }
+            if (tile === 'I') {
+              soundFX.playDoor();
+              setIsInnOpen(true);
+              return;
+            }
+            if (tile === 'B') {
+              soundFX.playSelect();
+              let bookLore = 'Tratados antigos sobre a harmonia dos Quatro Cristais Sagrados e as lendas de Cornelia.';
+              if (mapId.includes('PRAVOCA')) {
+                bookLore = 'Mapas nauticos e cronicas sobre os segredos das profundezas oceanicas.';
+              } else if (mapId.includes('GAIA')) {
+                bookLore = 'Manuscritos milenares dos Sabios das Alturas descrevendo os segredos da magia pura.';
+              }
+              setTreasureModal({
+                title: 'ESTANTE DE LIVROS',
+                message: bookLore
+              });
+              return;
+            }
+            if (tile === 'H') {
+              soundFX.playSelect();
+              setTreasureModal({
+                title: 'LAREIRA ACONCHEGANTE',
+                message: 'O fogo queima calmamente aquecendo todo o interior da residencia.'
+              });
+              return;
+            }
+            if (tile === '<') {
+              const parentTown: MapId = mapId.includes('CORNELIA') ? 'TOWN_CORNELIA' : mapId.includes('PRAVOCA') ? 'TOWN_PRAVOCA' : 'TOWN_GAIA';
+              let exitX = 3;
+              let exitY = 3;
+              if (mapId.includes('_SHOP')) {
+                exitX = 16;
+                exitY = 3;
+              } else if (mapId.includes('_TOOLSMITH')) {
+                exitX = 16;
+                exitY = 11;
+              } else if (mapId.includes('_INN')) {
+                exitX = 3;
+                exitY = 11;
+              }
+              changeMap(parentTown, exitX, exitY, 'door');
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Check Treasure Chests
+    for (const coord of checkCoords) {
+      if (coord.y >= 0 && coord.y < currentMap.length && coord.x >= 0 && coord.x < currentMap[0].length) {
+        const tile = currentMap[coord.y][coord.x];
+        if (tile === 'X') {
+          const chestKey = `${mapId}_${coord.x}_${coord.y}`;
+          const opened = player.openedChests || [];
+          if (opened.includes(chestKey)) {
+            soundFX.playCursor();
+            setTreasureModal({
+              title: 'BAU VAZIO',
+              message: 'O bau esta vazio!'
+            });
+            return;
+          }
+
+          const data = CHESTS_DATA[chestKey] || { type: 'gold', gold: 150, name: '150 Moedas de Ouro' };
+          soundFX.playLevelUp();
+
+          setPlayer(prev => {
+            let newGold = prev.gold;
+            let newItems = [...prev.inventory.items];
+            let newParty = [...prev.party];
+
+            if (data.type === 'gold' && data.gold) {
+              newGold += data.gold;
+            } else if (data.type === 'item' && data.itemId) {
+              const itemDef = ITEMS[data.itemId] || { id: data.itemId, name: data.name, type: 'heal', value: 60, price: 50, description: '' };
+              const existing = newItems.find(i => i.id === itemDef.id);
+              if (existing) {
+                existing.count += 1;
+              } else {
+                newItems.push({ ...itemDef, count: 1 });
+              }
+            } else if (data.type === 'weapon' && data.weaponId) {
+              const wepDef = WEAPONS[data.weaponId];
+              if (wepDef && newParty.length > 0) {
+                newParty[0] = { ...newParty[0], weapon: wepDef };
+              }
+            }
+
+            return {
+              ...prev,
+              gold: newGold,
+              inventory: { items: newItems },
+              party: newParty,
+              openedChests: [...opened, chestKey]
+            };
+          });
+
+          setTreasureModal({
+            title: 'BAU DE TESOURO',
+            message: `Recebeu * ${data.name} *!`
+          });
+          return;
+        }
+      }
+    }
   };
 
   const handleMove = (dx: number, dy: number) => {
-    if (gameState !== 'EXPLORATION' || isMenuOpen) return;
+    if (gameState !== 'EXPLORATION' || isMenuOpen || isTransitioningRef.current) return;
+    if (activeTownNpc || isToolsmithOpen || isInnOpen || treasureModal || activeCutscene) return;
     
     setPlayer(prev => {
       const newX = prev.x + dx;
@@ -170,80 +576,236 @@ export default function App() {
       
       const tile = currentMap[newY][newX];
       
-      // Walls / Water blocking
-      if (tile === 'M' || tile === '~') return prev;
+      // Solid tiles that block walking
+      if (mapId.startsWith('INTERIOR_')) {
+        if (tile === 'W' || tile === 'T' || tile === 'I' || tile === 'B' || tile === 'H' || tile === 'E' || tile === 'N' || tile === 'X' || tile === '@') {
+          return prev;
+        }
+      } else {
+        if (tile === 'M' || tile === '~' || tile === 'W' || tile === 'P' || tile === 'E' || tile === 'I' || tile === 'H' || tile === 'N' || tile === 'X' || tile === '@') {
+          return prev;
+        }
+      }
+
+      // Check if enemy occupies the tile
+      const enemyOnTile = enemies.find(e => e.x === newX && e.y === newY);
+      if (enemyOnTile) {
+        return prev;
+      }
 
       // Track successful step
       setTotalSteps(s => s + 1);
 
-      if (tile === 'S') {
-         saveGame();
-         return prev;
-      } 
-
-      // Portals and Cities
-      if (tile === 'F') {
-         if (prev.artifacts.length < 4) {
-             console.log("Portal bloqueado");
-             return prev;
-         }
-         // Boss fight
-         const hitBoss = enemies.find(e => e.id === 'boss');
-         if (hitBoss) {
-           setCombatEnemies([hitBoss]);
-           setGameState('COMBAT');
-           return prev;
-         }
-      } else if (tile === 'C') {
-         setOverworldPos({ x: prev.x, y: prev.y });
-         setGameState('SHOP');
-         return prev; // don't move into city block, stay next to it
-      } else if (tile === '1') { changeMap('DUNGEON_FOGO', 7, 1); return prev; }
-        else if (tile === '2') { changeMap('DUNGEON_AGUA', 7, 1); return prev; }
-        else if (tile === '3') { changeMap('DUNGEON_AR', 7, 1); return prev; }
-        else if (tile === '4') { changeMap('DUNGEON_TERRA', 7, 1); return prev; }
-        else if (tile === '<') { changeMap('OVERWORLD', overworldPos.x, overworldPos.y); return prev; }
-
-      // Check boss encounter explicitly (since it is the only static enemy left)
-      const hitEnemy = enemies.find(e => e.x === newX && e.y === newY);
-      if (hitEnemy) {
-        setCombatEnemies([hitEnemy]);
-        setGameState('COMBAT');
+      // Interior exit doorway (< or bottom edge)
+      if (mapId.startsWith('INTERIOR_') && (tile === '<' || newY >= 7)) {
+        const parentTown: MapId = mapId.includes('CORNELIA') ? 'TOWN_CORNELIA' : mapId.includes('PRAVOCA') ? 'TOWN_PRAVOCA' : 'TOWN_GAIA';
+        let exitX = 3;
+        let exitY = 3;
+        if (mapId.includes('_SHOP')) {
+          exitX = 16;
+          exitY = 3;
+        } else if (mapId.includes('_TOOLSMITH')) {
+          exitX = 16;
+          exitY = 11;
+        } else if (mapId.includes('_INN')) {
+          exitX = 3;
+          exitY = 11;
+        }
+        changeMap(parentTown, exitX, exitY, 'door');
         return prev;
       }
 
-      // Random Encounter Logic (Only on floor tiles, outside cities)
-      // The user specifically requested not to spawn on cities, but we don't allow walking on C tiles anyway.
-      // We will trigger a random encounter on normal floor `.`
+      // Town building doorways
+      if (mapId.startsWith('TOWN_')) {
+        // Step into House doorway at (3, 2)
+        if (newX === 3 && newY === 2) {
+          const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_HOUSE' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_HOUSE' : 'INTERIOR_GAIA_HOUSE';
+          changeMap(interiorMap, 5, 5, 'door');
+          return prev;
+        }
+        // Step into Shop doorway at (16, 2)
+        if (newX === 16 && newY === 2) {
+          const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_SHOP' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_SHOP' : 'INTERIOR_GAIA_SHOP';
+          changeMap(interiorMap, 5, 5, 'door');
+          return prev;
+        }
+        // Step into Inn doorway at (3, 10)
+        if (newX === 3 && newY === 10) {
+          const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_INN' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_INN' : 'INTERIOR_GAIA_INN';
+          changeMap(interiorMap, 5, 5, 'door');
+          return prev;
+        }
+        // Step into Toolsmith doorway at (16, 10)
+        if (newX === 16 && newY === 10) {
+          const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_TOOLSMITH' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_TOOLSMITH' : 'INTERIOR_GAIA_TOOLSMITH';
+          changeMap(interiorMap, 5, 5, 'door');
+          return prev;
+        }
+      }
+
+      // Portals, Dungeons and Cities
+      if (tile === 'C') {
+         setOverworldPos({ x: prev.x, y: prev.y });
+         saveGame();
+         const distCornelia = Math.abs(newX - 36) + Math.abs(newY - 84);
+         const distPravoca = Math.abs(newX - 110) + Math.abs(newY - 76);
+         const distGaia = Math.abs(newX - 96) + Math.abs(newY - 24);
+
+         let targetTown: MapId = 'TOWN_CORNELIA';
+         if (distCornelia <= distPravoca && distCornelia <= distGaia) {
+           targetTown = 'TOWN_CORNELIA';
+         } else if (distPravoca <= distGaia) {
+           targetTown = 'TOWN_PRAVOCA';
+         } else {
+           targetTown = 'TOWN_GAIA';
+         }
+         setCurrentTownId(targetTown);
+         changeMap(targetTown, 10, 13, 'door');
+         return prev;
+      }
+
+      // Town exit gate
+      if (mapId.startsWith('TOWN_') && tile === '<') {
+        changeMap('OVERWORLD', overworldPos.x, overworldPos.y + 1, 'door');
+        return prev;
+      }
+
+      // Overworld Dungeon Entrances
+      if (tile === '0') {
+         changeMap('DUNGEON_PRELUDIO_1', 7, 10, 'stairs');
+         triggerCutscene('enter_preludio');
+         return prev;
+      } else if (tile === '6') {
+         changeMap('DUNGEON_DESAFIO_1', 7, 10, 'stairs');
+         triggerCutscene('enter_desafio');
+         return prev;
+      } else if (tile === '1') {
+         if (!prev.storyFlags?.['boss_preludio_defeated']) {
+           setTreasureModal({
+             title: 'ENTRADA BLOQUEADA',
+             message: 'A Caverna da Terra esta selada! Derrote o guardiao da Caverna do Preludio primeiro.'
+           });
+           return prev;
+         }
+         if (!prev.storyFlags?.['cidadela_desafios_defeated']) {
+           setTreasureModal({
+             title: 'ENTRADA BLOQUEADA',
+             message: 'O Santuario da Terra esta selado por runas da Cidadela dos Desafios! Conquiste o Amuleto dos Sabios na Cidadela primeiro.'
+           });
+           return prev;
+         }
+         changeMap('DUNGEON_TERRA_1', 7, 10, 'stairs');
+         triggerCutscene('enter_terra');
+         return prev;
+      } else if (tile === '2') {
+         if (!prev.artifacts.includes('Terra')) {
+           setTreasureModal({
+             title: 'ENTRADA BLOQUEADA',
+             message: 'O calor abrasador bloqueia a passagem! Obtenha o Cristal da Terra primeiro.'
+           });
+           return prev;
+         }
+         changeMap('DUNGEON_FOGO_1', 7, 10, 'stairs');
+         triggerCutscene('enter_fogo');
+         return prev;
+      } else if (tile === '3') {
+         if (!prev.artifacts.includes('Fogo')) {
+           setTreasureModal({
+             title: 'ENTRADA BLOQUEADA',
+             message: 'As ondas caoticas barram a entrada! Obtenha o Cristal de Fogo primeiro.'
+           });
+           return prev;
+         }
+         changeMap('DUNGEON_AGUA_1', 7, 10, 'stairs');
+         triggerCutscene('enter_agua');
+         return prev;
+      } else if (tile === '4') {
+         if (!prev.artifacts.includes('Agua')) {
+           setTreasureModal({
+             title: 'ENTRADA BLOQUEADA',
+             message: 'Os ventos cortantes barram sua ascensao! Obtenha o Cristal da Agua primeiro.'
+           });
+           return prev;
+         }
+         changeMap('DUNGEON_AR_1', 7, 10, 'stairs');
+         triggerCutscene('enter_ar');
+         return prev;
+      } else if (tile === '5' || tile === 'F') {
+         if (prev.artifacts.length < 4) {
+           setTreasureModal({
+             title: 'PORTAL SELADO',
+             message: `O Portal de Chaos exige os 4 Cristais Elementais! Voce reuniu apenas ${prev.artifacts.length} de 4.`
+           });
+           return prev;
+         }
+         changeMap('DUNGEON_FINAL_1', 9, 12, 'door');
+         triggerCutscene('enter_final');
+         return prev;
+      } else if (tile === 'G') {
+         // Cornelia Royal Bridge Guard
+         if (newX >= 80 && newX <= 92 && newY >= 72 && newY <= 84) {
+           if (!prev.storyFlags?.['boss_preludio_defeated']) {
+             setTreasureModal({
+               title: 'PONTE REAL TRANCADA',
+               message: 'O Guarda Real barra a passagem: Alto la! O caminho para a Cidade de Pravoca esta infestado de perigos. Apenas quem derrotar a ameaca na Caverna do Preludio e obtiver o Selo de Cobre podera avancar!'
+             });
+             return prev;
+           }
+         }
+         // Mystic Mountain Barrier to Gaia
+         if (newX >= 74 && newX <= 86 && newY >= 36 && newY <= 48) {
+           if (!prev.storyFlags?.['cidadela_desafios_defeated']) {
+             setTreasureModal({
+               title: 'BARREIRA ANCESTRAL',
+               message: 'Uma barreira magica bloqueia o vale: A passagem para a Cidade de Gaia e para os Quatro Templos Elementais so se abrira para quem conquistar a Cidadela dos Desafios e trouxer o Amuleto dos Sabios!'
+             });
+             return prev;
+           }
+         }
+      } else if (tile === '>') {
+         // Stairs down
+         if (mapId === 'DUNGEON_PRELUDIO_1') { changeMap('DUNGEON_PRELUDIO_2', 3, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_DESAFIO_1') { changeMap('DUNGEON_DESAFIO_2', 7, 7, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_TERRA_1') { changeMap('DUNGEON_TERRA_2', 3, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FOGO_1') { changeMap('DUNGEON_FOGO_2', 3, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AGUA_1') { changeMap('DUNGEON_AGUA_2', 3, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_1') { changeMap('DUNGEON_AR_2', 3, 1, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_2') { changeMap('DUNGEON_AR_3', 3, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_1') { changeMap('DUNGEON_FINAL_2', 3, 1, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_2') { changeMap('DUNGEON_FINAL_3', 3, 11, 'stairs'); return prev; }
+      } else if (tile === '<') {
+         // Stairs up / exit
+         if (mapId === 'DUNGEON_PRELUDIO_2') { changeMap('DUNGEON_PRELUDIO_1', 11, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_DESAFIO_2') { changeMap('DUNGEON_DESAFIO_1', 7, 8, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_TERRA_2') { changeMap('DUNGEON_TERRA_1', 11, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FOGO_2') { changeMap('DUNGEON_FOGO_1', 11, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AGUA_2') { changeMap('DUNGEON_AGUA_1', 11, 9, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_3') { changeMap('DUNGEON_AR_2', 11, 1, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_2') { changeMap('DUNGEON_AR_1', 11, 7, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_3') { changeMap('DUNGEON_FINAL_2', 13, 1, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_2') { changeMap('DUNGEON_FINAL_1', 13, 11, 'stairs'); return prev; }
+         changeMap('OVERWORLD', overworldPos.x, overworldPos.y + 1, 'door');
+         return prev;
+      }
+
+      // Random Encounter Logic (Plains, forests, deserts, swamps, bridges)
       stepsSinceEncounter.current += 1;
       
-      // Encounter chance increases the more steps you take without one.
-      // Base chance 0% for first 5 steps, then increases.
-      const baseChance = Math.max(0, (stepsSinceEncounter.current - 5) * 0.02);
+      const isWildTile = !mapId.startsWith('TOWN_') && ['.', 'T', 'D', 'S', 'B'].includes(tile);
+      const encounterRateMultiplier = tile === 'S' ? 0.75 : tile === 'T' ? 0.6 : tile === 'D' ? 0.5 : tile === 'B' ? 0.2 : 0.45;
+      const safeSteps = 48;
+      const baseChance = Math.max(0, (stepsSinceEncounter.current - safeSteps) * 0.0035);
       
-      if (tile === '.' && Math.random() < baseChance) {
+      if (isWildTile && Math.random() < baseChance * encounterRateMultiplier) {
          stepsSinceEncounter.current = 0;
-         let allowedTypes: EnemyType[] = mapId === 'OVERWORLD' ? ['slime', 'goblin'] : ['orc', 'elemental'];
-         const type = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
-         const template = ENEMY_TEMPLATES[type];
+         const encounterGroup = generateCombatEnemies(mapId, prev.party, false);
          
-         const randomEnemy: Enemy = {
-            id: `encounter_${Date.now()}`,
-            x: 0, y: 0, // Doesn't matter for combat board
-            type,
-            stats: { ...template.stats },
-            weapon: template.weapon,
-            emoji: template.emoji,
-            goldReward: template.gold
-         };
-         
-         setCombatEnemies([randomEnemy]);
+         setCombatEnemies(encounterGroup);
          setGameState('ENCOUNTER_TRANSITION');
          
-         // Transition to COMBAT after effect
          setTimeout(() => {
             setGameState('COMBAT');
-         }, 2000);
+         }, 1500);
          
          return { ...prev, x: newX, y: newY };
       }
@@ -260,59 +822,217 @@ export default function App() {
     });
   };
 
-  const handleCombatVictory = () => {
-     const reward = combatEnemies.reduce((sum, e) => sum + (e.goldReward || 0), 0);
-     const expGain = combatEnemies.reduce((sum, e) => sum + 50, 0); // 50 exp per enemy for now
+  const handleCombatVictory = (exp?: number, goldReward?: number, drops?: string[], finalParty?: CombatUnit[], finalInv?: any[]) => {
+     stepsSinceEncounter.current = 0;
+     const reward = goldReward !== undefined ? goldReward : combatEnemies.reduce((sum, e) => sum + (e.goldReward || 0), 0);
+     const expGain = exp !== undefined ? exp : combatEnemies.reduce((sum, e) => sum + (e.expReward || 50), 0);
      
      setEnemies(prev => prev.filter(e => !combatEnemies.find(ce => ce.id === e.id)));
      
-     if (combatEnemies.find(e => e.id === 'boss')) {
-        setGameState('VICTORY');
-     } else {
-        let anyLeveledUp = false;
-        setPlayer(prev => {
-           const updatedParty = prev.party.map(hero => {
-              let newExp = hero.exp + expGain;
-              let newLevel = hero.level;
-              let newStats = { ...hero.stats };
-              
-              // Level up logic (every 100 exp)
-              while (newExp >= newLevel * 100) {
-                 newExp -= newLevel * 100;
-                 newLevel++;
-                 anyLeveledUp = true;
-                 // Stat growth
-                 newStats.maxHp += 15;
-                 newStats.maxMp += 10;
-                 newStats.for += 3;
-                 newStats.int += 3;
-                 newStats.def += 2;
-                 newStats.vel += 1;
-              }
+     const defeatedBoss = combatEnemies.find(e => e.type === 'boss' || e.id === 'boss' || e.id.startsWith('boss_'));
+     if (defeatedBoss) {
+        if (defeatedBoss.id === 'boss_chaos' || defeatedBoss.id === 'boss') {
+           setGameState('VICTORY');
+           return;
+        }
+        if (defeatedBoss.id === 'boss_preludio') {
+           setPlayer(p => ({
+              ...p,
+              storyFlags: { ...(p.storyFlags || {}), 'boss_preludio_defeated': true }
+           }));
+           setTreasureModal({
+              title: 'SELO DE COBRE OBTIDO!',
+              message: 'Voce derrotou a Gargula do Preludio e obteve o Selo de Cobre! A Guarda Real na Ponte de Cornelia agora permitira sua passagem para Pravoca!'
+           });
+        } else if (defeatedBoss.id === 'boss_desafio') {
+           setPlayer(p => {
+              const promotedParty = p.party.map(h => {
+                 const currentClass = h.heroClass;
+                 let newClass = currentClass;
+                 if (currentClass === 'Guerreiro') newClass = 'Cavaleiro';
+                 else if (currentClass === 'Ladrao') newClass = 'Ninja';
+                 else if (currentClass === 'Monge') newClass = 'Mestre';
+                 else if (currentClass === 'Mago Branco') newClass = 'Mago Branco Superior';
+                 else if (currentClass === 'Mago Negro') newClass = 'Mago Negro Superior';
+                 else if (currentClass === 'Mago Vermelho') newClass = 'Mago Vermelho Superior';
+                 else if (currentClass === 'Cavalheiro') newClass = 'Cavaleiro';
+                 else if (currentClass === 'Arqueiro') newClass = 'Ninja';
+                 else if (currentClass === 'Lutador') newClass = 'Mestre';
+                 else if (currentClass === 'Mago') newClass = 'Mago Negro Superior';
+                 else if (currentClass === 'Alquimista') newClass = 'Mago Vermelho Superior';
+
+                 const upgradedMaxHp = h.stats.maxHp + 30;
+                 const upgradedMaxMp = h.stats.maxMp + 20;
+                 const upgradedVigor = (h.stats.vigor || 16) + 4;
+                 const upgradedMagPwr = (h.stats.magPwr || 12) + 4;
+                 const upgradedDef = (h.stats.def || 14) + 4;
+                 const upgradedMagDef = (h.stats.magDef || 12) + 4;
+                 const upgradedVel = (h.stats.vel || 10) + 2;
+                 const upgradedBatPwr = (h.stats.batPwr || 20) + 6;
+
+                 return {
+                    ...h,
+                    heroClass: newClass,
+                    stats: {
+                       ...h.stats,
+                       hp: upgradedMaxHp,
+                       maxHp: upgradedMaxHp,
+                       mp: upgradedMaxMp,
+                       maxMp: upgradedMaxMp,
+                       vigor: upgradedVigor,
+                       magPwr: upgradedMagPwr,
+                       def: upgradedDef,
+                       magDef: upgradedMagDef,
+                       vel: upgradedVel,
+                       batPwr: upgradedBatPwr,
+                       for: upgradedVigor,
+                       int: upgradedMagPwr
+                    }
+                 };
+              });
 
               return {
-                 ...hero,
-                 exp: newExp,
-                 level: newLevel,
-                 stats: { ...newStats, hp: Math.min(newStats.maxHp, newStats.hp + 20) } // Heal slightly after battle
+                 ...p,
+                 party: promotedParty,
+                 storyFlags: { ...(p.storyFlags || {}), 'cidadela_desafios_defeated': true, 'class_promoted': true }
               };
            });
 
-           if (anyLeveledUp) {
-              soundFX.playLevelUp();
+           soundFX.playSave();
+           setTreasureModal({
+              title: 'EVOLUCAO DE CLASSES CONQUISTADA!',
+              message: 'Voce conquistou o Amuleto dos Sabios na Cidadela dos Desafios! A energia dos antigos despertou em seus herois: Guerreiro vira Cavaleiro, Ladrao vira Ninja, Monge vira Mestre, Mago Branco vira Mago Branco Superior, Mago Negro vira Mago Negro Superior e Mago Vermelho vira Mago Vermelho Superior! Todas as novas habilidades e poderes foram liberados!'
+           });
+        } else if (defeatedBoss.id === 'boss_terra') {
+           setPlayer(p => ({
+              ...p,
+              artifacts: p.artifacts.includes('Terra') ? p.artifacts : [...p.artifacts, 'Terra']
+           }));
+        } else if (defeatedBoss.id === 'boss_fogo') {
+           setPlayer(p => ({
+              ...p,
+              artifacts: p.artifacts.includes('Fogo') ? p.artifacts : [...p.artifacts, 'Fogo']
+           }));
+        } else if (defeatedBoss.id === 'boss_agua') {
+           setPlayer(p => ({
+              ...p,
+              artifacts: p.artifacts.includes('Agua') ? p.artifacts : [...p.artifacts, 'Agua']
+           }));
+        } else if (defeatedBoss.id === 'boss_ar') {
+           setPlayer(p => ({
+              ...p,
+              artifacts: p.artifacts.includes('Ar') ? p.artifacts : [...p.artifacts, 'Ar']
+           }));
+        }
+     }
+
+     let anyLeveledUp = false;
+     setPlayer(prev => {
+        const updatedParty = prev.party.map((hero, i) => {
+           let newExp = hero.exp + expGain;
+           let newLevel = hero.level;
+           let newStats = { ...hero.stats };
+           
+           // If we have finalParty state from combat, preserve current HP/MP and debuffs
+           const combatUnit = finalParty ? finalParty[i] : null;
+           let currentHp = combatUnit ? combatUnit.stats.hp : hero.stats.hp;
+           let currentMp = combatUnit ? combatUnit.stats.mp : hero.stats.mp;
+           let currentDebuffs = combatUnit ? combatUnit.debuffs : hero.debuffs;
+
+           // Level up logic (every 100 exp)
+           while (newExp >= newLevel * 100) {
+              newExp -= newLevel * 100;
+              newLevel++;
+              anyLeveledUp = true;
+              // Stat growth
+              newStats.maxHp += 15;
+              newStats.maxMp += 10;
+              newStats.for += 3;
+              newStats.int += 3;
+              newStats.def += 2;
+              newStats.vel += 1;
+              currentHp = newStats.maxHp;
+              currentMp = newStats.maxMp;
            }
 
+           // Defeated team member recovers with at least 1 HP
+           const recoveredHp = currentHp <= 0 ? 1 : Math.min(newStats.maxHp, currentHp + 20);
+
            return {
-              ...prev,
-              gold: prev.gold + reward,
-              party: updatedParty
+              ...hero,
+              exp: newExp,
+              level: newLevel,
+              stats: { ...newStats, hp: recoveredHp, mp: currentMp },
+              debuffs: currentDebuffs
            };
         });
-        setGameState('EXPLORATION');
-     }
+
+        if (anyLeveledUp) {
+           soundFX.playLevelUp();
+        }
+
+        const invToUse = finalInv ? { items: finalInv } : prev.inventory;
+
+        return {
+           ...prev,
+           gold: prev.gold + reward,
+           party: updatedParty,
+           inventory: invToUse
+        };
+     });
+     setGameState('EXPLORATION');
   };
 
-  const handleCombatDefeat = () => {
+  const handleCombatEscape = (finalParty?: CombatUnit[], finalInv?: any[]) => {
+     stepsSinceEncounter.current = 0;
+     setPlayer(prev => {
+        const partyToUse = finalParty && finalParty.length > 0
+          ? prev.party.map((hero, i) => {
+              const combatUnit = finalParty[i];
+              if (combatUnit) {
+                return {
+                  ...hero,
+                  stats: {
+                    ...hero.stats,
+                    hp: combatUnit.stats.hp <= 0 ? 1 : combatUnit.stats.hp,
+                    mp: combatUnit.stats.mp
+                  },
+                  debuffs: combatUnit.debuffs || []
+                };
+              }
+              return hero;
+            })
+          : prev.party.map(hero => ({
+              ...hero,
+              stats: {
+                ...hero.stats,
+                hp: hero.stats.hp <= 0 ? 1 : hero.stats.hp
+              }
+            }));
+
+        const invToUse = finalInv ? { items: finalInv } : prev.inventory;
+
+        return {
+          ...prev,
+          party: partyToUse,
+          inventory: invToUse
+        };
+     });
+     setGameState('EXPLORATION');
+  };
+
+  const handleCombatDefeat = (finalParty?: CombatUnit[], finalInv?: any[]) => {
+     stepsSinceEncounter.current = 0;
+     if (finalParty) {
+        setPlayer(prev => ({
+           ...prev,
+           party: prev.party.map((hero, i) => {
+              const u = finalParty[i];
+              return u ? { ...hero, stats: { ...hero.stats, hp: u.stats.hp, mp: u.stats.mp }, debuffs: u.debuffs || [] } : hero;
+           }),
+           inventory: finalInv ? { items: finalInv } : prev.inventory
+        }));
+     }
      setGameState('GAME_OVER');
   };
 
@@ -354,6 +1074,62 @@ export default function App() {
     }
   };
 
+  const handleTeachSpell = (spellId: string, heroId: string, price: number) => {
+    if (player.gold < price) return;
+    setPlayer(prev => {
+      const updatedParty = prev.party.map(hero => {
+        if (hero.id === heroId) {
+          const currentMagics = hero.magics || [];
+          if (!currentMagics.includes(spellId)) {
+            return { ...hero, magics: [...currentMagics, spellId] };
+          }
+        }
+        return hero;
+      });
+      return {
+        ...prev,
+        gold: prev.gold - price,
+        party: updatedParty
+      };
+    });
+  };
+
+  const handleBuyWeaponInToolsmith = (weapon: Weapon, targetHeroIndex: number): boolean => {
+    const price = weapon.damage * 18;
+    if (player.gold < price) return false;
+
+    setPlayer(prev => {
+      const updatedParty = [...prev.party];
+      if (updatedParty[targetHeroIndex]) {
+        updatedParty[targetHeroIndex] = {
+          ...updatedParty[targetHeroIndex],
+          weapon
+        };
+      }
+      return {
+        ...prev,
+        gold: prev.gold - price,
+        party: updatedParty
+      };
+    });
+    soundFX.playEquip();
+    return true;
+  };
+
+  const handleRestAtInn = () => {
+    setPlayer(prev => ({
+      ...prev,
+      party: prev.party.map(hero => ({
+        ...hero,
+        stats: {
+          ...hero.stats,
+          hp: hero.stats.maxHp,
+          mp: hero.stats.maxMp
+        }
+      }))
+    }));
+  };
+
   return (
     <div className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden font-sans text-slate-200">
       <div className="relative bg-slate-950 overflow-hidden" style={{ width: 1024, height: 768, transform: `scale(${scale})`, transformOrigin: 'center' }}>
@@ -385,47 +1161,33 @@ export default function App() {
 
       {gameState === 'STORY_CRAWL' && (
         <motion.div key="story" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }} className="absolute inset-0 flex items-center justify-center bg-slate-950">
-        <div className="relative w-full max-w-3xl h-[80vh] overflow-hidden flex flex-col items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-transparent to-slate-950 z-10 pointer-events-none" />
-          
-          <motion.div
-            initial={{ y: '100vh' }}
-            animate={{ y: '-100vh' }}
-            transition={{ duration: 45, ease: 'linear' }}
-            onAnimationComplete={() => setGameState('EXPLORATION')}
-            className="text-center text-3xl md:text-5xl text-slate-300 font-serif leading-relaxed px-4 space-y-12 z-0"
-          >
-            <p>Ha muitas eras, o mundo de Eldoria vivia em perfeita harmonia, sustentado pela magia cristalina dos Quatro Artefatos Elementais...</p>
-            <p>Mas a paz foi estilhacada quando o Dragao Anciao despertou das profundezas, roubando a essencia da vida e espalhando seus monstros pelas planicies.</p>
-            <p>O caos consumiu a terra. O ceu escureceu, e os mares recuaram.</p>
-            <p>Apenas um guerreiro valente, dominando a lamina, o arco e a magia antiga, pode encontrar os artefatos perdidos e destrancar os portoes da Dungeon Final.</p>
-            <p>A esperanca de toda uma era repousa em suas maos.</p>
-            <p>Seu destino aguarda.</p>
-          </motion.div>
-
-          <button 
-            onClick={() => setGameState('EXPLORATION')}
-            className="absolute bottom-8 right-8 z-20 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-full text-sm uppercase tracking-widest transition-colors"
-          >
-            Pular Cena
-          </button>
-        </div>
+          <PrologueIntro
+            party={player.party}
+            onComplete={() => {
+              setPlayer(prev => ({
+                ...prev,
+                storyFlags: { ...(prev.storyFlags || {}), intro_world: true }
+              }));
+              setGameState('EXPLORATION');
+            }}
+          />
         </motion.div>
       )}
 
       {gameState === 'EXPLORATION' && (
         <motion.div key="expl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0 flex items-center justify-center">
-         {saveMessage && <div className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black font-black uppercase px-6 py-3 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.8)] z-50 animate-bounce">{saveMessage}</div>}
+         {saveMessage && !activeCutscene && <div className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black font-black uppercase px-6 py-3 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.8)] z-50 animate-bounce">{saveMessage}</div>}
          <Exploration 
            mapId={mapId}
            player={player} 
            enemies={enemies} 
            artifacts={artifacts.filter(a => a.mapId === mapId)} 
            onMove={handleMove} 
-           onInteract={() => {}}
+           onInteract={handleInteract}
            onEquipWeapon={handleEquipWeapon}
-           isMenuOpen={isMenuOpen}
+           isMenuOpen={isMenuOpen || !!activeTownNpc || isToolsmithOpen || isInnOpen || !!treasureModal}
            onToggleMenu={() => setIsMenuOpen(prev => !prev)}
+           isCutsceneActive={!!activeCutscene}
          />
          {isMenuOpen && (
            <WorldMenu 
@@ -451,6 +1213,7 @@ export default function App() {
            player={player}
            onBuyItem={handleBuyItem}
            onBuyWeapon={handleBuyWeapon}
+           onTeachSpell={handleTeachSpell}
            onExit={() => setGameState('EXPLORATION')}
          />
       )}
@@ -488,10 +1251,23 @@ export default function App() {
         <motion.div key="combat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0 flex items-center justify-center">
          <Combat 
             mapId={mapId}
-            playerUnits={player.party.map(hero => ({ ...hero, isPlayer: true, x: 0, y: 0, hasMoved: false, hasActed: false }))}
+            playerUnits={player.party.map(hero => ({ 
+              ...hero, 
+              stats: { ...hero.stats, hp: hero.stats.hp <= 0 ? 1 : hero.stats.hp },
+              isPlayer: true, 
+              x: 0, 
+              y: 0, 
+              hasMoved: false, 
+              hasActed: false 
+            }))}
             enemyUnits={combatEnemies.map(e => ({ ...e, isPlayer: false, hasMoved: false, hasActed: false }))}
+            inventory={player.inventory.items}
+            onUpdateInventory={(updatedInv) => {
+              setPlayer(p => ({ ...p, inventory: { items: updatedInv } }));
+            }}
             onVictory={handleCombatVictory}
             onDefeat={handleCombatDefeat}
+            onEscape={handleCombatEscape}
          />
         </motion.div>
       )}
@@ -513,7 +1289,7 @@ export default function App() {
         <div className="text-center space-y-8 animate-in slide-in-from-bottom-10 duration-1000">
           <h1 className="text-6xl font-black text-yellow-400">VITORIA!</h1>
           <p className="text-xl text-slate-400 max-w-md mx-auto">
-            Voce derrotou o Dragao Anciao e restaurou o equilibrio elemental.
+            Voce derrotou Chaos e restaurou o equilibrio elemental de Eldoria!
           </p>
           <button 
             onClick={handleStart}
@@ -525,6 +1301,58 @@ export default function App() {
       )}
       
       </AnimatePresence>
+
+      {/* In-Game Cutscene Dialog Overlay */}
+      {activeCutscene && (
+        <CutsceneDialog 
+          cutscene={activeCutscene} 
+          onClose={() => {
+            if (activeCutscene.onComplete) {
+              activeCutscene.onComplete();
+            } else {
+              setActiveCutscene(null);
+            }
+          }} 
+        />
+      )}
+
+      {/* Treasure Chest Loot Modal Overlay */}
+      {treasureModal && (
+        <TreasureModal 
+          title={treasureModal.title}
+          message={treasureModal.message}
+          onClose={() => setTreasureModal(null)}
+        />
+      )}
+
+      {/* Town NPC Dialog Modal */}
+      {activeTownNpc && (
+        <TownDialogModal
+          npc={activeTownNpc}
+          onClose={() => setActiveTownNpc(null)}
+        />
+      )}
+
+      {/* Toolsmith Weapon Shop Modal */}
+      {isToolsmithOpen && (
+        <ToolsmithModal
+          party={player.party}
+          gold={player.gold}
+          availableWeapons={TOWNS_CONFIG[currentTownId]?.toolsmithWeapons || []}
+          onBuyWeapon={handleBuyWeaponInToolsmith}
+          onClose={() => setIsToolsmithOpen(false)}
+        />
+      )}
+
+      {/* Inn Resting Modal */}
+      {isInnOpen && (
+        <InnModal
+          townName={TOWNS_CONFIG[currentTownId]?.name || 'Estalagem'}
+          party={player.party}
+          onRest={handleRestAtInn}
+          onClose={() => setIsInnOpen(false)}
+        />
+      )}
       </div>
     </div>
   );
