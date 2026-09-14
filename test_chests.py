@@ -1,0 +1,31 @@
+# Let's verify all X positions
+chests = [
+    # Preludio
+    'DUNGEON_PRELUDIO_1_4_3', 'DUNGEON_PRELUDIO_1_17_12',
+    'DUNGEON_PRELUDIO_2_3_3', 'DUNGEON_PRELUDIO_2_3_13',
+    # Desafio
+    'DUNGEON_DESAFIO_1_4_3', 'DUNGEON_DESAFIO_1_17_12',
+    'DUNGEON_DESAFIO_2_3_3', 'DUNGEON_DESAFIO_2_3_13',
+    # Terra
+    'DUNGEON_TERRA_1_4_3', 'DUNGEON_TERRA_1_17_12',
+    'DUNGEON_TERRA_2_3_3', 'DUNGEON_TERRA_2_3_13',
+    # Fogo
+    'DUNGEON_FOGO_1_4_3', 'DUNGEON_FOGO_1_17_12',
+    'DUNGEON_FOGO_2_3_3', 'DUNGEON_FOGO_2_3_13',
+    # Agua
+    'DUNGEON_AGUA_1_4_3', 'DUNGEON_AGUA_1_17_12',
+    'DUNGEON_AGUA_2_3_3', 'DUNGEON_AGUA_2_3_13',
+    # Ar
+    'DUNGEON_AR_1_4_3', 'DUNGEON_AR_1_17_12',
+    'DUNGEON_AR_2_17_12',
+    'DUNGEON_AR_3_17_13',
+    # Final
+    'DUNGEON_FINAL_1_3_3', 'DUNGEON_FINAL_1_20_3', 'DUNGEON_FINAL_1_3_12', 'DUNGEON_FINAL_1_20_12',
+    'DUNGEON_FINAL_2_4_4', 'DUNGEON_FINAL_2_19_4',
+    'DUNGEON_FINAL_3_3_3', 'DUNGEON_FINAL_3_3_13',
+    # Towns
+    'TOWN_CORNELIA_22_1', 'TOWN_CORNELIA_1_16',
+    'TOWN_PRAVOCA_22_1', 'TOWN_PRAVOCA_1_16',
+    'TOWN_GAIA_22_1', 'TOWN_GAIA_1_16'
+]
+print(f'Total {len(chests)} dungeon and town chests mapped!')

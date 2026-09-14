@@ -17,11 +17,11 @@ export const PrologueIntro: React.FC<PrologueIntroProps> = ({ party, onComplete 
   const hero4 = party[3]?.name || 'Heroi 4';
 
   const LORE_PARAGRAPHS = [
-    'No alvorecer dos tempos, o continente de Eldoria prosperava sob a resplandecencia dos Quatro Cristais Sagrados.',
-    'Contudo, as forcas do Caos despertaram das profundezas, rompendo a harmonia elemental e corrompendo a terra.',
-    'Duas masmorras ancestrais nao-elementais — a Caverna do Preludio e a Cidadela dos Desafios — foram seladas para proteger as passagens entre os reinos.',
-    'Em resposta ao clamor do mundo, os sabios invocaram quatro guerreiros atraves das fendas do espaco e do tempo...',
-    'Eis que os quatro escolhidos despertam no coracao de Eldoria.'
+    'Em algum ano esquecido, o desenvolvedor decidiu criar um RPG. Sem criatividade, copiou a historia inteira de Final Fantasy.',
+    'O mundo de Eldoria estava em perigo porque quatro pedras brilhantes chamadas Cristais pararam de funcionar por falta de manutencao.',
+    'Em vez de mandar o exercito real ou chamar reforcos, o rei resolveu terceirizar a crise para quatro desconhecidos sem preparo.',
+    'Para esticar as horas de gameplay, colocaram duas masmorras burocraticas antes de liberar o resto do continente.',
+    'Eis que os quatro desocupados despertam na grama pixelada, confusos e reclamando do enredo.'
   ];
 
   const DIALOGUE_LINES = [
@@ -29,31 +29,31 @@ export const PrologueIntro: React.FC<PrologueIntroProps> = ({ party, onComplete 
       speaker: hero1,
       role: party[0]?.heroClass || 'Lider',
       avatar: party[0]?.heroClass || 'Cavalheiro',
-      text: 'Onde... onde estamos? A terra sob nossos pes vibra com uma energia ancestral desconhecida...'
+      text: 'Ai minha cabeca... Onde a gente foi parar? Por que o meu corpo parece feito de dezesseis quadradinhos borrados?'
     },
     {
       speaker: hero2,
       role: party[1]?.heroClass || 'Mago',
       avatar: party[1]?.heroClass || 'Mago',
-      text: 'As forcas dos Cristais estao em colapso. O ritual dos sabios nos transportou para o continente esquecido de Eldoria!'
+      text: 'Pelo que estou lendo neste roteiro barato, somos os Guerreiros da Luz. Sim, aquele mesmo cliche batido de trinta anos atras.'
     },
     {
       speaker: hero3,
       role: party[2]?.heroClass || 'Estrategista',
       avatar: party[2]?.heroClass || 'Arqueiro',
-      text: 'Olhem para o norte, logo alem destas planicies: avisto muralhas de pedra e estandartes. E a Cidade de Cornelia!'
+      text: 'Olhem ali na frente: a grande e imponente capital do reino consiste literalmente em tres casinhas e duas arvores mal desenhadas.'
     },
     {
       speaker: hero4,
       role: party[3]?.heroClass || 'Especialista',
       avatar: party[3]?.heroClass || 'Lutador',
-      text: 'Devemos ir ate la primeiro! Os cidadaos, a Loja de Itens e o Ferramenteiro nos darao pistas sobre a Caverna do Preludio e como abrir os caminhos do reino.'
+      text: 'E com certeza os moradores vao nos pedir para matar gosmas numa caverna em troca de cinco moedas de cobre. Que emocao.'
     },
     {
       speaker: hero1,
       role: party[0]?.heroClass || 'Lider',
       avatar: party[0]?.heroClass || 'Cavalheiro',
-      text: 'Exato. Nosso destino comeca agora. Vamos reunir provisoes em Cornelia e salvar este mundo!'
+      text: 'Pois e. Nao temos escolha ate alguem fechar essa janela. Ei, voce no teclado: tenta nao nos jogar contra as montanhas!'
     }
   ];
 

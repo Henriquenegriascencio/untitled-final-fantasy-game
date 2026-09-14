@@ -320,8 +320,24 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   const [actionZoomMultiplier, setActionZoomMultiplier] = useState(1);
   const [cameraFocus, setCameraFocus] = useState<{ x: number, y: number }>({ x: 3.5, y: 3.5 });
   const [freeCamOffset, setFreeCamOffset] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
+  const [cameraShake, setCameraShake] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const [isActionBusy, setIsActionBusy] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  const triggerCameraShake = useCallback((intensity: number = 6) => {
+    const sX = (Math.random() > 0.5 ? 1 : -1) * intensity;
+    const sY = (Math.random() > 0.5 ? 1 : -1) * (intensity * 0.7);
+    setCameraShake({ x: sX, y: sY });
+    setTimeout(() => {
+      setCameraShake({ x: -sX * 0.6, y: -sY * 0.6 });
+      setTimeout(() => {
+        setCameraShake({ x: sX * 0.2, y: -sY * 0.2 });
+        setTimeout(() => {
+          setCameraShake({ x: 0, y: 0 });
+        }, 50);
+      }, 50);
+    }, 50);
+  }, []);
 
   const isPointerDownRef = useRef(false);
   const dragModeRef = useRef<'pan' | 'orbit'>('pan');
@@ -409,31 +425,34 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     const rotGridX = localX * Math.cos(rad) - localY * Math.sin(rad);
     const rotGridY = localX * Math.sin(rad) + localY * Math.cos(rad);
 
+    const roundedX = Math.max(0, Math.min(7, Math.round(gridX)));
+    const roundedY = Math.max(0, Math.min(7, Math.round(gridY)));
+    const elev = elevations[roundedY]?.[roundedX] || 0;
+    const elevOffsetY = is3D ? (elev * 16 * Math.sin(pitchRad)) : 0;
+
     const screenX = rotGridX;
-    const screenY = is3D ? rotGridY * Math.cos(pitchRad) : rotGridY;
+    const screenY = is3D ? (rotGridY * Math.cos(pitchRad) - elevOffsetY) : rotGridY;
 
     return {
       x: -screenX,
       y: -screenY,
     };
-  }, [rotZ, rotX, is3D]);
+  }, [rotZ, rotX, is3D, elevations]);
 
   const billboardTransform = is3D ? `rotateZ(${-rotZ}deg) rotateX(${-rotX}deg)` : 'none';
 
   const currentAutoOffset = getCameraOffset(cameraFocus.x, cameraFocus.y);
-  const cameraX = isFreeCamera ? freeCamOffset.x : currentAutoOffset.x;
-  const cameraY = isFreeCamera ? freeCamOffset.y : currentAutoOffset.y;
-  const effectiveZoom = Math.min(2.5, Math.max(0.5, userZoom * actionZoomMultiplier));
-  const cameraZ = is3D ? Math.min(500, (effectiveZoom - 1) * 550) : 0;
-  const cameraScale = is3D ? Math.pow(effectiveZoom, 0.4) : effectiveZoom;
+  const cameraX = (isFreeCamera ? freeCamOffset.x : currentAutoOffset.x) + cameraShake.x;
+  const cameraY = (isFreeCamera ? freeCamOffset.y : currentAutoOffset.y) + cameraShake.y;
+  const effectiveZoom = Math.min(2.2, Math.max(0.65, userZoom * actionZoomMultiplier));
+  const cameraScale = effectiveZoom;
 
   const focusOnGrid = useCallback((gx: number, gy: number, zoomMult: number = 1) => {
     setCameraFocus({ x: gx, y: gy });
     setActionZoomMultiplier(zoomMult);
-    if (isFreeCamera) {
-      setFreeCamOffset(getCameraOffset(gx, gy));
-    }
-  }, [isFreeCamera, getCameraOffset]);
+    const newOffset = getCameraOffset(gx, gy);
+    setFreeCamOffset(newOffset);
+  }, [getCameraOffset]);
 
   const focusBetweenUnits = useCallback((x1: number, y1: number, x2: number, y2: number, zoomMult: number = 1.35) => {
     const midX = (x1 + x2) / 2;
@@ -868,9 +887,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     setNextUpcomingUnitId(nextUnit.id);
     showActionText(`Turno de ${nextUnit.name || 'Combatente'}!`);
 
-    if (!isFreeCamera) {
-      focusOnGrid(nextUnit.x, nextUnit.y, 1.05);
-    }
+    focusOnGrid(nextUnit.x, nextUnit.y, 1.05);
 
     if (turnTimeoutRef.current) {
       clearTimeout(turnTimeoutRef.current);
@@ -894,9 +911,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
       setNextUpcomingUnitId(null);
       setIsTurnTransitioning(false);
 
-      if (!isFreeCamera) {
-        focusOnGrid(nextUnit.x, nextUnit.y, 1.05);
-      }
+      focusOnGrid(nextUnit.x, nextUnit.y, 1.05);
     }, 1600);
   };
 
@@ -962,13 +977,13 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           for (const d of u.debuffs) {
             if (d.type === 'burn') {
                newHp -= 10;
-               showActionText(`${u.name || 'Combatente'} sofreu 10 de dano por Queimadura!`);
+               showActionText(`${u.name || 'Combatente'} sofre dano de Queimadura!`);
                const effId = Date.now() + Math.floor(Math.random() * 50);
                setVisualEffects(v => [...v, { id: effId, unitId: u.id, type: 'hit', value: '-10 FOGO', x: u.x, y: u.y }]);
                setTimeout(() => setVisualEffects(v => v.filter(item => item.id !== effId)), 1000);
             } else if (d.type === 'poison') {
                newHp -= 5;
-               showActionText(`${u.name || 'Combatente'} sofreu 5 de dano por Veneno!`);
+               showActionText(`${u.name || 'Combatente'} sofre dano de Veneno!`);
                const effId = Date.now() + Math.floor(Math.random() * 50);
                setVisualEffects(v => [...v, { id: effId, unitId: u.id, type: 'hit', value: '-5 VENENO', x: u.x, y: u.y }]);
                setTimeout(() => setVisualEffects(v => v.filter(item => item.id !== effId)), 1000);
@@ -1047,9 +1062,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     setActionMenu('MAIN');
     setSelectedAction(null);
 
-    if (!isFreeCamera) {
-      focusOnGrid(target.x, target.y, 1.35);
-    }
+    focusOnGrid(target.x, target.y, 1.35);
     showActionText(`${activeUnit.name || 'Heroi'} usou ${item.name}!`);
 
     const updatedInv = currentInventory
@@ -1130,9 +1143,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
         setSelectedAction(null);
 
         // Camera smoothly follows movement to destination
-        if (!isFreeCamera) {
-          focusOnGrid(x, y, 1.1);
-        }
+        focusOnGrid(x, y, 1.1);
 
         setUnits(prev => {
           const updated = prev.map(u => u.id === activeUnit.id ? { ...u, x, y, hasMoved: true } : u);
@@ -1159,9 +1170,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           soundFX.playAttack();
 
           // 1. Camera focuses & zooms in on confrontation
-          if (!isFreeCamera) {
-            focusBetweenUnits(activeUnit.x, activeUnit.y, target.x, target.y, 1.35);
-          }
+          focusBetweenUnits(activeUnit.x, activeUnit.y, target.x, target.y, 1.35);
 
           // 2. Anticipation delay
           setTimeout(() => {
@@ -1174,6 +1183,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             const rawDamage = Math.max(1, atkPwr - targetDef);
             const damage = isHighGround ? Math.max(1, Math.round(rawDamage * 0.65)) : rawDamage;
             soundFX.playHit();
+            triggerCameraShake(6);
             
             const nextUnits = units.map(u => {
               if (u.id === target.id) {
@@ -1196,9 +1206,9 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             ]);
             setUnits(nextUnits);
             if (isHighGround) {
-              showActionText(`${activeUnit.name || 'Heroi'} atacou ${target.name || 'Inimigo'} causando ${damage} de dano - Terreno Alto: -35 de dano`);
+              showActionText(`${activeUnit.name || 'Heroi'} ataca ${target.name || 'Inimigo'} em Terreno Alto!`);
             } else {
-              showActionText(`${activeUnit.name || 'Heroi'} atacou ${target.name || 'Inimigo'} causando ${damage} de dano!`);
+              showActionText(`${activeUnit.name || 'Heroi'} ataca ${target.name || 'Inimigo'}!`);
             }
 
             setTimeout(() => setVisualEffects(prev => prev.filter(v => v.id !== effId && v.id !== effId + 1)), 1200);
@@ -1235,9 +1245,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             setIsActionBusy(true);
             setSelectedAction(null);
             soundFX.playHeal();
-            if (!isFreeCamera) {
-              focusBetweenUnits(activeUnit.x, activeUnit.y, allyTarget.x, allyTarget.y, 1.4);
-            }
+            focusBetweenUnits(activeUnit.x, activeUnit.y, allyTarget.x, allyTarget.y, 1.4);
             showActionText(`Conjurando ${spellDef.name} em ${allyTarget.name || 'Heroi'}...`);
 
             setTimeout(() => {
@@ -1306,9 +1314,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           setSelectedAction(null);
           soundFX.playMagic();
 
-          if (!isFreeCamera) {
-            focusBetweenUnits(activeUnit.x, activeUnit.y, target.x, target.y, 1.4);
-          }
+          focusBetweenUnits(activeUnit.x, activeUnit.y, target.x, target.y, 1.4);
           showActionText(`Conjurando ${spellDef.name} em ${target.name}...`);
 
           setTimeout(() => {
@@ -1335,6 +1341,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             }
             const damage = isHighGround ? Math.max(1, Math.round(rawDamage * 0.65)) : rawDamage;
             soundFX.playHit();
+            triggerCameraShake(7);
 
             const nextUnits = units.map(u => {
               if (u.id === target.id) {
@@ -1370,11 +1377,11 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             ]);
             setUnits(nextUnits);
             if (isBlocked) {
-              showActionText(`${target.name || 'Alvo'} ativou Bloqueio Magico! ${damage} de dano!`);
+              showActionText(`${activeUnit.name || 'Heroi'} conjura ${spellDef.name} em ${target.name || 'Alvo'} - Bloqueio Magico!`);
             } else if (isWeaknessHit) {
-              showActionText(`${spellDef.name} acertou a FRAQUEZA! ${damage} de dano!`);
+              showActionText(`${activeUnit.name || 'Heroi'} conjura ${spellDef.name} em ${target.name || 'Alvo'} - Fraqueza Elemental!`);
             } else {
-              showActionText(`${spellDef.name} causou ${damage} de dano!`);
+              showActionText(`${activeUnit.name || 'Heroi'} conjura ${spellDef.name} em ${target.name || 'Alvo'}!`);
             }
 
             setTimeout(() => setVisualEffects(prev => prev.filter(v => v.id !== effId && v.id !== effId + 1)), 1200);
@@ -1411,9 +1418,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             setIsActionBusy(true);
             setSelectedAction(null);
 
-            if (!isFreeCamera) {
-              focusBetweenUnits(activeUnit.x, activeUnit.y, target.x, target.y, 1.45);
-            }
+            focusBetweenUnits(activeUnit.x, activeUnit.y, target.x, target.y, 1.45);
             showActionText(`Executando Tecnica Especial!`);
             soundFX.playAttack();
 
@@ -1450,6 +1455,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                 damage = Math.max(1, Math.floor(damage));
               }
               soundFX.playHit();
+              triggerCameraShake(8);
 
               const nextUnits = units.map(u => {
                 if (u.id === target.id) {
@@ -1469,7 +1475,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                 { id: effId + 1, unitId: target.id, type: 'attack', startX: activeUnit.x, startY: activeUnit.y, attackKind: 'magic' }
               ]);
               setUnits(nextUnits);
-              showActionText(`${logMsg} causou ${damage} de dano CRITICO!`);
+              showActionText(`${logMsg} - Ataque Especial!`);
 
               setTimeout(() => setVisualEffects(prev => prev.filter(v => v.id !== effId && v.id !== effId + 1)), 1200);
 
@@ -1504,9 +1510,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           setIsActionBusy(true);
 
           // 1. Camera focuses on active enemy
-          if (!isFreeCamera) {
-            focusOnGrid(activeUnit.x, activeUnit.y, 1.15);
-          }
+          focusOnGrid(activeUnit.x, activeUnit.y, 1.15);
 
           // Deliberation pause for readable turn transition
           await new Promise(r => setTimeout(r, 1200));
@@ -1523,9 +1527,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           // SOS Reinforcement logic (Fixed: adds new enemy to turn queue and updates units ref)
           if (aliveEnemies.length < 4 && activeUnit.stats.hp <= (activeUnit.stats.maxHp || 50) * 0.45 && Math.random() < 0.40) {
              showActionText(`${activeUnit.name || 'Inimigo'} convocou reforcos pelo Chamado SOS!`);
-             if (!isFreeCamera) {
-               focusOnGrid(activeUnit.x, activeUnit.y, 1.25);
-             }
+             focusOnGrid(activeUnit.x, activeUnit.y, 1.25);
              soundFX.playMagic();
              await new Promise(r => setTimeout(r, 700));
 
@@ -1603,9 +1605,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           const woundedAlly = otherAliveEnemies.find(ally => ally.stats.hp < ally.stats.maxHp * 0.65 && getDistance(activeUnit.x, activeUnit.y, ally.x, ally.y) <= 3);
 
           if (woundedAlly && Math.random() < 0.65) {
-             if (!isFreeCamera) {
-               focusBetweenUnits(activeUnit.x, activeUnit.y, woundedAlly.x, woundedAlly.y, 1.35);
-             }
+             focusBetweenUnits(activeUnit.x, activeUnit.y, woundedAlly.x, woundedAlly.y, 1.35);
              showActionText(`${activeUnit.name || 'Inimigo'} usou Cura Sombria em ${woundedAlly.name || 'Aliado'}!`);
              soundFX.playHeal();
              await new Promise(r => setTimeout(r, 550));
@@ -1634,9 +1634,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
 
           const nearbyAlly = otherAliveEnemies.find(ally => getDistance(activeUnit.x, activeUnit.y, ally.x, ally.y) <= 2);
           if (nearbyAlly && Math.random() < 0.30) {
-             if (!isFreeCamera) {
-               focusBetweenUnits(activeUnit.x, activeUnit.y, nearbyAlly.x, nearbyAlly.y, 1.35);
-             }
+             focusBetweenUnits(activeUnit.x, activeUnit.y, nearbyAlly.x, nearbyAlly.y, 1.35);
              showActionText(`${activeUnit.name || 'Inimigo'} usou Grito de Guerra fortalecendo ${nearbyAlly.name || 'Aliado'}!`);
              soundFX.playMagic();
              await new Promise(r => setTimeout(r, 550));
@@ -1741,9 +1739,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                 return updated;
              });
              showActionText(`${activeUnit.name || 'Inimigo'} avancou no campo.`);
-             if (!isFreeCamera) {
-                focusOnGrid(curX, curY, 1.15);
-             }
+             focusOnGrid(curX, curY, 1.15);
              // Interval after move so player sees the movement
              await new Promise(r => setTimeout(r, 1600));
              if (isCancelled) return;
@@ -1752,9 +1748,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           // Recheck distance after moving
           currentDist = getDistance(curX, curY, targetPlayer.x, targetPlayer.y);
           if (currentDist <= activeUnit.weapon.range) {
-             if (!isFreeCamera) {
-                focusBetweenUnits(curX, curY, targetPlayer.x, targetPlayer.y, 1.35);
-             }
+             focusBetweenUnits(curX, curY, targetPlayer.x, targetPlayer.y, 1.35);
 
              // Enemy special technique roll (40% chance)
              const isSpecial = Math.random() < 0.40;
@@ -1805,16 +1799,17 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
              const damage = isHighGround ? Math.max(1, Math.round(rawDamage * 0.65)) : rawDamage;
              
              if (isBlocked) {
-                showActionText(`${targetPlayer.name || 'Heroi'} ativou Bloqueio Magico! ${damage} de dano!`);
+                showActionText(`${activeUnit.name || 'Inimigo'} ataca ${targetPlayer.name || 'Heroi'} - Bloqueio Magico!`);
              } else if (isHighGround) {
-                showActionText(`${targetPlayer.name || 'Heroi'} defendeu em Terreno Alto! -35 de dano: ${damage}`);
+                showActionText(`${activeUnit.name || 'Inimigo'} ataca ${targetPlayer.name || 'Heroi'} em Terreno Alto!`);
              } else if (specialName) {
-                showActionText(`${activeUnit.name || 'Inimigo'} usou ${specialName} em ${targetPlayer.name || 'Heroi'} causando ${damage} de dano!`);
+                showActionText(`${activeUnit.name || 'Inimigo'} desfere ${specialName} em ${targetPlayer.name || 'Heroi'}!`);
              } else {
-                showActionText(`${activeUnit.name || 'Inimigo'} atacou ${targetPlayer.name || 'Heroi'} causando ${damage} de dano!`);
+                showActionText(`${activeUnit.name || 'Inimigo'} ataca ${targetPlayer.name || 'Heroi'}!`);
              }
 
              soundFX.playHit();
+             triggerCameraShake(7);
              const effId = Date.now();
              const attKind: 'melee' | 'ranged' | 'magic' = activeUnit.weapon?.type === 'ranged' ? 'ranged' : activeUnit.weapon?.type === 'magic' ? 'magic' : 'melee';
 
@@ -1888,6 +1883,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
       const isActive = unit.id === activeUnitId;
       const isNextUpcoming = unit.id === nextUpcomingUnitId;
       const hpPercent = Math.max(0, Math.min(100, (unit.stats.hp / unit.stats.maxHp) * 100));
+      const isSos = hpPercent <= 25 && unit.stats.hp > 0;
 
       return (
         <div 
@@ -1903,18 +1899,22 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           {/* Ground Footprint & Tactical Base Ring (Lies flat on tile floor) */}
           <div 
             className={`absolute w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center shadow-[inset_0_0_0_1px_#000] ${
-              isNextUpcoming
-                ? 'border-slate-100 ring-2 ring-cyan-400 shadow-[inset_0_0_0_1px_#000,0_0_15px_rgba(6,182,212,1)] scale-105'
-                : isActive 
-                  ? 'border-slate-200 ring-1 ring-cyan-400 shadow-[inset_0_0_10px_rgba(6,182,212,0.8)] animate-pulse' 
-                  : unit.isPlayer 
-                    ? 'border-slate-300 shadow-[inset_0_0_0_1px_#000,0_0_6px_rgba(59,130,246,0.8)]' 
-                    : 'border-red-400 shadow-[inset_0_0_0_1px_#000,0_0_6px_rgba(239,68,68,0.8)]'
+              isSos
+                ? 'border-red-500 ring-2 ring-amber-400 shadow-[inset_0_0_0_1px_#000,0_0_14px_rgba(239,68,68,1)] animate-pulse'
+                : isNextUpcoming
+                  ? 'border-slate-100 ring-2 ring-cyan-400 shadow-[inset_0_0_0_1px_#000,0_0_15px_rgba(6,182,212,1)] scale-105'
+                  : isActive 
+                    ? 'border-slate-200 ring-1 ring-cyan-400 shadow-[inset_0_0_10px_rgba(6,182,212,0.8)] animate-pulse' 
+                    : unit.isPlayer 
+                      ? 'border-slate-300 shadow-[inset_0_0_0_1px_#000,0_0_6px_rgba(59,130,246,0.8)]' 
+                      : 'border-red-400 shadow-[inset_0_0_0_1px_#000,0_0_6px_rgba(239,68,68,0.8)]'
             }`}
             style={{
-              background: unit.isPlayer || isNextUpcoming || isActive
-                ? 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)'
-                : 'linear-gradient(to bottom, #7f1d1d 0%, #000000 100%)',
+              background: isSos
+                ? 'linear-gradient(to bottom, #991b1b 0%, #000000 100%)'
+                : unit.isPlayer || isNextUpcoming || isActive
+                  ? 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)'
+                  : 'linear-gradient(to bottom, #7f1d1d 0%, #000000 100%)',
               transformStyle: is3D ? 'preserve-3d' : 'flat',
               transform: is3D ? 'translateZ(1px)' : 'none'
             }}
@@ -1923,7 +1923,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           {/* Soft Ground Shadow underneath miniature feet in 3D */}
           {is3D && (
             <div 
-              className="absolute w-8 h-3 rounded-full bg-black/50 blur-[1.5px] -bottom-1 pointer-events-none" 
+              className="absolute w-8 h-3 rounded-full bg-black/60 -bottom-1 pointer-events-none" 
               style={{ transform: 'translateZ(1.5px)' }} 
             />
           )}
@@ -1939,7 +1939,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                 }}
               />
               <div 
-                className="absolute -inset-4 rounded-full bg-gradient-to-r from-cyan-400/60 via-blue-300/80 to-indigo-500/60 blur-md animate-pulse pointer-events-none" 
+                className="absolute -inset-4 rounded-full bg-gradient-to-r from-cyan-400/60 via-blue-300/80 to-indigo-500/60 animate-pulse pointer-events-none" 
                 style={{
                   transformStyle: is3D ? 'preserve-3d' : 'flat',
                   transform: is3D ? 'translateZ(1.5px)' : 'none'
@@ -1948,18 +1948,16 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             </>
           )}
 
-          {/* Upright Standing 3D Miniature Assembly (Billboarded facing the camera directly) */}
+          {/* Upright Standing 3D Miniature Assembly (Always stays standing upright in the cell) */}
           <div 
-            className="absolute bottom-[12px] flex flex-col items-center justify-end select-none pointer-events-none z-20"
+            className="absolute bottom-[16px] w-full flex flex-col items-center justify-end select-none pointer-events-none z-20"
             style={{
               transformStyle: is3D ? 'preserve-3d' : 'flat',
-              transform: is3D ? `${billboardTransform} translateZ(8px)` : 'none',
+              transform: is3D ? `${billboardTransform} translateZ(10px)` : 'none',
               transformOrigin: 'center bottom',
               transition: isDragging ? 'none' : 'transform 0.4s ease-out'
             }}
           >
-            {/* Overhead balloons removed in favor of top action banner */}
-
             {/* Enemy Weakness Badge */}
             {!unit.isPlayer && (() => {
               const w = getEnemyWeakness(unit);
@@ -1973,7 +1971,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
               );
             })()}
 
-            {/* Visual Debuff Status Badges with Clear Icons and Labels */}
+            {/* Visual Debuff Status Badges with Clear Icons and Labels (No CSS blur to keep 3D upright) */}
             {unit.debuffs && unit.debuffs.length > 0 && (
               <div className="flex flex-col gap-0.5 mb-1 items-center z-30">
                 {unit.debuffs.map((d, i) => (
@@ -1981,10 +1979,10 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                     key={i} 
                     className={`flex items-center gap-1 text-[8px] md:text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded border shadow-lg tracking-wider whitespace-nowrap leading-none ${
                       d.type === 'burn'
-                        ? 'bg-red-950/95 border-red-500 text-amber-300 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse'
+                        ? 'bg-red-950 border-red-500 text-amber-300 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
                         : d.type === 'poison'
-                        ? 'bg-purple-950/95 border-purple-400 text-purple-200 shadow-[0_0_8px_rgba(168,85,247,0.8)] animate-pulse'
-                        : 'bg-cyan-950/95 border-cyan-400 text-cyan-200 shadow-[0_0_8px_rgba(6,182,212,0.8)] animate-pulse'
+                        ? 'bg-purple-950 border-purple-400 text-purple-200 shadow-[0_0_8px_rgba(168,85,247,0.8)]'
+                        : 'bg-cyan-950 border-cyan-400 text-cyan-200 shadow-[0_0_8px_rgba(6,182,212,0.8)]'
                     }`}
                   >
                     <span>{d.type === 'burn' ? '🔥' : d.type === 'poison' ? '☠' : '❄'}</span>
@@ -1992,6 +1990,13 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                     <span className="text-[7px] text-slate-300 font-bold"> - {d.duration}t</span>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* SOS Danger Badge */}
+            {isSos && (
+              <div className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded border border-red-500 bg-red-950 text-amber-300 mb-0.5 animate-bounce shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                SOS
               </div>
             )}
 
@@ -2019,7 +2024,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                   ease: "easeInOut",
                   delay: (units.filter(u => u.isPlayer).indexOf(unit) * 0.15)
                 }}
-                className="relative flex items-center justify-center drop-shadow-[0_6px_10px_rgba(250,204,21,0.9)]"
+                className="relative flex items-center justify-center shadow-[0_6px_10px_rgba(250,204,21,0.9)]"
               >
                 <UnitAvatar 
                   unit={unit} 
@@ -2030,53 +2035,60 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
             ) : (
               <div 
                 className={`relative flex items-center justify-center transition-all ${
-                  isNextUpcoming 
-                    ? 'scale-110 drop-shadow-[0_0_14px_rgba(250,204,21,1)]' 
-                    : 'drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)]'
+                  isSos
+                    ? 'animate-pulse'
+                    : isNextUpcoming 
+                      ? 'scale-110' 
+                      : ''
                 }`}
               >
-                {/* Visual Debuff Auras & Effects around Avatar */}
+                {/* Visual Debuff Auras & Effects around Avatar (No CSS filter blur to preserve 3D upright orientation) */}
                 {unit.debuffs?.some(d => d.type === 'burn') && (
                   <>
-                    <div className="absolute -inset-2 rounded-lg bg-gradient-to-t from-red-600/70 via-orange-500/50 to-amber-300/30 blur-[1px] animate-pulse pointer-events-none z-20 shadow-[0_0_12px_rgba(239,68,68,0.9)]" />
+                    <div className="absolute -inset-1.5 rounded-lg border border-red-500 bg-red-600/25 pointer-events-none z-20 shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
                     <div className="absolute -inset-3 pointer-events-none z-20 flex justify-between items-end px-0.5">
-                      <span className="text-xs animate-bounce" style={{ animationDuration: '0.6s' }}>🔥</span>
-                      <span className="text-xs animate-bounce" style={{ animationDuration: '0.85s' }}>🔥</span>
+                      <span className="text-xs">🔥</span>
+                      <span className="text-xs">🔥</span>
                     </div>
                   </>
                 )}
                 {unit.debuffs?.some(d => d.type === 'poison') && (
                   <>
-                    <div className="absolute -inset-2 rounded-lg bg-purple-700/60 blur-[1px] animate-pulse pointer-events-none z-20 shadow-[0_0_14px_rgba(168,85,247,0.9)]" />
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex items-center justify-center animate-bounce" style={{ animationDuration: '1s' }}>
-                      <span className="text-xs text-purple-300 drop-shadow-[0_0_6px_rgba(192,132,252,1)]">☠</span>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 pointer-events-none z-20 animate-pulse">
-                      <span className="text-[10px] text-emerald-400 drop-shadow-[0_0_4px_rgba(52,211,153,1)]">☣</span>
+                    <div className="absolute -inset-1.5 rounded-lg border border-purple-500 bg-purple-700/25 pointer-events-none z-20 shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex items-center justify-center">
+                      <span className="text-xs text-purple-300">☠</span>
                     </div>
                   </>
                 )}
                 {unit.debuffs?.some(d => d.type === 'freeze') && (
                   <>
-                    <div className="absolute -inset-1.5 rounded-lg border-2 border-cyan-300 bg-cyan-400/30 backdrop-blur-[1px] shadow-[0_0_16px_rgba(6,182,212,0.9)] animate-pulse pointer-events-none z-20" />
-                    <div className="absolute -top-2.5 -left-1 pointer-events-none z-20 animate-spin" style={{ animationDuration: '4s' }}>
-                      <span className="text-xs text-cyan-200 drop-shadow-[0_0_6px_rgba(103,232,249,1)]">❄</span>
+                    <div className="absolute -inset-1.5 rounded-lg border-2 border-cyan-300 bg-cyan-400/25 shadow-[0_0_12px_rgba(6,182,212,0.8)] pointer-events-none z-20" />
+                    <div className="absolute -top-2.5 -left-1 pointer-events-none z-20">
+                      <span className="text-xs text-cyan-200">❄</span>
                     </div>
                     <div className="absolute -bottom-1 -right-1 pointer-events-none z-20">
-                      <span className="text-xs text-blue-300 drop-shadow-[0_0_6px_rgba(147,197,253,1)]">❄</span>
+                      <span className="text-xs text-blue-300">❄</span>
                     </div>
                   </>
                 )}
 
                 <UnitAvatar 
                   unit={unit} 
-                  className="w-8 h-8 md:w-9 md:h-9 rounded shadow-md border-2 border-slate-100 overflow-hidden pointer-events-none" 
+                  className={`w-8 h-8 md:w-9 md:h-9 rounded shadow-md border-2 overflow-hidden pointer-events-none ${
+                    isSos
+                      ? 'border-red-500 ring-2 ring-amber-400'
+                      : isNextUpcoming 
+                        ? 'border-yellow-300 ring-1 ring-cyan-300' 
+                        : unit.isPlayer 
+                          ? 'border-slate-100' 
+                          : 'border-red-400'
+                  }`} 
                   hideBadge={true}
                 />
-                {isBuff && <div className="absolute inset-0 bg-yellow-400/60 blur-sm rounded-full animate-ping pointer-events-none z-30" />}
-                {isHit && <div className="absolute inset-0 bg-red-500/80 blur-sm rounded-full animate-ping pointer-events-none z-30" />}
+                {isBuff && <div className="absolute inset-0 bg-yellow-400/40 rounded-full animate-ping pointer-events-none z-30" />}
+                {isHit && <div className="absolute inset-0 bg-red-500/70 rounded-full animate-ping pointer-events-none z-30" />}
                 {isNextUpcoming && (
-                  <span className="absolute text-lg -top-1.5 -right-1.5 animate-spin text-yellow-200 drop-shadow-[0_0_8px_rgba(250,204,21,1)] pointer-events-none z-20">✦</span>
+                  <span className="absolute text-lg -top-1.5 -right-1.5 animate-spin text-yellow-200 pointer-events-none z-20">✦</span>
                 )}
               </div>
             )}
@@ -2145,13 +2157,20 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
       const renderEffects = () => {
     return visualEffects.map(eff => {
       const targetElev = elevations[eff.y]?.[eff.x] || 0;
-      const targetZ = targetElev * 16 + 40;
+      const targetZ = targetElev * 16 + 48;
       
       if (eff.type === 'hit') {
+        const valStr = String(eff.value || '');
+        const isCritical = valStr.includes('!') && !valStr.includes('BLOQ');
+        const isWeakness = valStr.includes('FRAQ');
+        const isBlocked = valStr.includes('BLOQ');
+        const isDebuffTick = valStr.includes('FOGO') || valStr.includes('VENENO');
+        const cleanNumber = valStr.replace('BLOQ!', '').replace('FRAQ!', '').replace('!', '').trim();
+
         return (
           <div
             key={eff.id}
-            className="absolute pointer-events-none z-[150]"
+            className="absolute pointer-events-none z-[170]"
             style={{
               left: 8 + eff.x * 56,
               top: 8 + eff.y * 56,
@@ -2159,43 +2178,87 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
               transformStyle: is3D ? 'preserve-3d' : 'flat',
             }}
           >
-            {/* 3D Floating Pop Damage Number directly in front */}
+            {/* 3D Floating Pop Damage Indicator in world space */}
             <motion.div
-              initial={{ y: 5, opacity: 0, scale: 0.5 }}
-              animate={{ y: -50, opacity: [0, 1, 1, 0], scale: [0.5, 1.45, 1.1] }}
-              transition={{ duration: 0.85, ease: "easeOut" }}
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              initial={{ y: 8, opacity: 0, scale: 0.6 }}
+              animate={{ 
+                y: [-5, -45, -55], 
+                opacity: [0, 1, 1, 0], 
+                scale: [0.6, 1.45, 1.15] 
+              }}
+              transition={{ duration: 0.95, ease: "easeOut" }}
+              className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
               style={{
                 transformStyle: is3D ? 'preserve-3d' : 'flat',
                 transform: is3D ? `translateZ(${targetZ + 36}px) ${billboardTransform}` : 'none'
               }}
             >
+              {/* 3D Status Banner */}
+              {isCritical && (
+                <div 
+                  className="text-[10px] md:text-xs font-mono font-black uppercase px-2 py-0.5 rounded border border-amber-300 bg-amber-950 text-yellow-300 mb-0.5 shadow-lg tracking-wider whitespace-nowrap"
+                  style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px #000' }}
+                >
+                  CRITICO!
+                </div>
+              )}
+              {isWeakness && (
+                <div 
+                  className="text-[10px] md:text-xs font-mono font-black uppercase px-2 py-0.5 rounded border border-cyan-300 bg-cyan-950 text-cyan-200 mb-0.5 shadow-lg tracking-wider whitespace-nowrap"
+                  style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px #000' }}
+                >
+                  FRAQUEZA!
+                </div>
+              )}
+              {isBlocked && (
+                <div 
+                  className="text-[10px] md:text-xs font-mono font-black uppercase px-2 py-0.5 rounded border border-slate-300 bg-slate-900 text-slate-200 mb-0.5 shadow-lg tracking-wider whitespace-nowrap"
+                  style={{ textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px #000' }}
+                >
+                  BLOQUEADO!
+                </div>
+              )}
+
+              {/* Bold 3D Extruded Damage Number */}
               <div 
-                className="text-4xl md:text-5xl font-black text-red-500 select-none drop-shadow-[0_4px_12px_rgba(0,0,0,1)] tracking-wider" 
-                style={{ WebkitTextStroke: '2px black' }}
+                className={`text-4xl md:text-5xl font-black select-none tracking-wider ${
+                  isCritical 
+                    ? 'text-yellow-300' 
+                    : isWeakness 
+                      ? 'text-orange-400' 
+                      : isBlocked 
+                        ? 'text-slate-300' 
+                        : isDebuffTick 
+                          ? 'text-amber-400' 
+                          : 'text-red-500'
+                }`} 
+                style={{ 
+                  textShadow: '0 1px 0 #000, 0 2px 0 #000, 0 3px 0 #000, 0 4px 0 #000, 0 5px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 6px 6px rgba(0,0,0,0.9)'
+                }}
               >
-                {eff.value}
+                {cleanNumber}
               </div>
             </motion.div>
 
             {/* 3D Radial Impact Spark Particles in front */}
             {[
-              { dx: -26, dy: -24, dz: 36, char: '✦', color: 'text-yellow-300' },
-              { dx: 28, dy: -26, dz: 40, char: '✦', color: 'text-amber-400' },
-              { dx: -24, dy: 18, dz: 32, char: '★', color: 'text-orange-400' },
-              { dx: 26, dy: 20, dz: 34, char: '✦', color: 'text-yellow-200' },
-              { dx: 0, dy: -34, dz: 46, char: '✦', color: 'text-red-400' },
-              { dx: -14, dy: 26, dz: 30, char: '★', color: 'text-amber-300' },
+              { dx: -26, dy: -24, dz: 30, char: '✦', color: 'text-yellow-300' },
+              { dx: 28, dy: -26, dz: 35, char: '✦', color: 'text-amber-400' },
+              { dx: -24, dy: 18, dz: 28, char: '★', color: 'text-orange-400' },
+              { dx: 26, dy: 20, dz: 32, char: '✦', color: 'text-yellow-200' },
+              { dx: 0, dy: -34, dz: 40, char: '✦', color: 'text-red-400' },
+              { dx: -14, dy: 26, dz: 26, char: '★', color: 'text-amber-300' },
             ].map((p, pIdx) => (
               <motion.div
                 key={`spark-${eff.id}-${pIdx}`}
                 initial={{ x: 0, y: 0, opacity: 1, scale: 0.4 }}
                 animate={{ x: p.dx, y: p.dy, opacity: 0, scale: 1.4 }}
                 transition={{ duration: 0.65, ease: "easeOut" }}
-                className={`absolute inset-0 flex items-center justify-center font-black select-none pointer-events-none ${p.color} text-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`}
+                className={`absolute inset-0 flex items-center justify-center font-black select-none pointer-events-none ${p.color} text-lg`}
                 style={{
                   transformStyle: is3D ? 'preserve-3d' : 'flat',
-                  transform: is3D ? `translateZ(${targetZ + p.dz}px) ${billboardTransform}` : 'none'
+                  transform: is3D ? `translateZ(${targetZ + p.dz}px) ${billboardTransform}` : 'none',
+                  textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px #000'
                 }}
               >
                 {p.char}
@@ -2207,9 +2270,59 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
 
       if (eff.type === 'attack' && eff.startX !== undefined && eff.startY !== undefined) {
         const isMelee = eff.attackKind !== 'ranged' && eff.attackKind !== 'magic';
+        const startElev = elevations[eff.startY]?.[eff.startX] || 0;
         
+        // Find maximum elevation along path to ensure projectile never crosses through high ground
+        let maxPathElev = Math.max(startElev, targetElev);
+        const minX = Math.min(eff.startX, eff.x);
+        const maxX = Math.max(eff.startX, eff.x);
+        const minY = Math.min(eff.startY, eff.y);
+        const maxY = Math.max(eff.startY, eff.y);
+        for (let cy = minY; cy <= maxY; cy++) {
+          for (let cx = minX; cx <= maxX; cx++) {
+            const e = elevations[cy]?.[cx] || 0;
+            if (e > maxPathElev) maxPathElev = e;
+          }
+        }
+        const safeFlightZ = (maxPathElev * 16) + 54;
+        
+        if (isMelee) {
+          return (
+            <div 
+              key={eff.id} 
+              className="absolute pointer-events-none z-[160]"
+              style={{
+                left: 8 + eff.x * 56,
+                top: 8 + eff.y * 56,
+                width: 56,
+                height: 56,
+                transformStyle: is3D ? 'preserve-3d' : 'flat',
+                transform: is3D ? `translateZ(${safeFlightZ}px) ${billboardTransform}` : 'none'
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.4, opacity: 0.9, rotate: -25 }}
+                animate={{ scale: [0.4, 1.45, 1.1], opacity: [0.9, 1, 0], rotate: [ -25, 15, 0 ] }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="relative flex items-center justify-center w-full h-full"
+              >
+                <div className="w-14 h-14 relative flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-12 h-12 text-amber-300" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M14.5 17.5L3 6V3h3l11.5 11.5" />
+                    <path d="M13 19l6-6" />
+                    <path d="M16 16l4 4" />
+                    <path d="M19 21l2-2" />
+                  </svg>
+                </div>
+                {/* Dynamic Energy Slash Wave */}
+                <div className="absolute -inset-4 border-t-4 border-amber-300 rounded-full animate-spin shadow-[0_0_16px_rgba(252,211,77,1)] pointer-events-none" />
+              </motion.div>
+            </div>
+          );
+        }
+
         return (
-          <div key={eff.id} className="absolute inset-0 pointer-events-none z-[150]" style={{ transformStyle: is3D ? 'preserve-3d' : 'flat' }}>
+          <div key={eff.id} className="absolute inset-0 pointer-events-none z-[160]" style={{ transformStyle: is3D ? 'preserve-3d' : 'flat' }}>
             <motion.div
               initial={{ 
                 left: 8 + eff.startX * 56, 
@@ -2219,41 +2332,29 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
               animate={{ 
                 left: 8 + eff.x * 56, 
                 top: 8 + eff.y * 56, 
-                scale: [0.7, 1.5, 1.25]
+                scale: [0.7, 1.45, 1.2]
               }}
-              transition={{ duration: 0.28, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               className="absolute pointer-events-none flex items-center justify-center"
               style={{ 
                 width: 56, height: 56, 
                 transformStyle: is3D ? 'preserve-3d' : 'flat',
-                transform: is3D ? `translateZ(${targetZ + 36}px) ${billboardTransform}` : 'none'
+                transform: is3D ? `translateZ(${safeFlightZ}px) ${billboardTransform}` : 'none'
               }}
             >
               <div className="relative flex items-center justify-center">
-                {/* 3D Attack Icon Right in Front */}
-                <div className="w-14 h-14 relative flex items-center justify-center filter drop-shadow-[0_0_16px_rgba(255,255,255,0.9)]">
+                <div className="w-12 h-12 relative flex items-center justify-center">
                   {eff.attackKind === 'ranged' ? (
-                    <svg viewBox="0 0 24 24" className="w-12 h-12 text-yellow-300 -rotate-45" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg viewBox="0 0 24 24" className="w-11 h-11 text-yellow-300 -rotate-45" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <line x1="2" y1="12" x2="22" y2="12" />
                       <polyline points="15 5 22 12 15 19" />
                     </svg>
-                  ) : eff.attackKind === 'magic' ? (
-                    <svg viewBox="0 0 24 24" className="w-12 h-12 text-cyan-300 animate-spin" fill="currentColor">
-                      <polygon points="12,2 15,9 22,12 15,15 12,22 9,15 2,12 9,9" />
-                    </svg>
                   ) : (
-                    <svg viewBox="0 0 24 24" className="w-12 h-12 text-amber-300" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M14.5 17.5L3 6V3h3l11.5 11.5" />
-                      <path d="M13 19l6-6" />
-                      <path d="M16 16l4 4" />
-                      <path d="M19 21l2-2" />
+                    <svg viewBox="0 0 24 24" className="w-11 h-11 text-cyan-300 animate-spin" fill="currentColor">
+                      <polygon points="12,2 15,9 22,12 15,15 12,22 9,15 2,12 9,9" />
                     </svg>
                   )}
                 </div>
-                {/* Dynamic Energy Slash Wave for melee attacks */}
-                {isMelee && (
-                  <div className="absolute -inset-6 border-t-4 border-amber-300 rounded-full animate-spin blur-[0.5px] shadow-[0_0_16px_rgba(252,211,77,1)] pointer-events-none" />
-                )}
               </div>
             </motion.div>
           </div>
@@ -2601,7 +2702,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                 ? 'bg-blue-600 text-white border-cyan-300' 
                 : 'bg-slate-700 text-white border-slate-400'
             }`}
-            title={is3D ? "Mudar para 2D Tatico (Deitado e Reto)" : "Mudar para 3D Isometrico"}
+            title={is3D ? "Mudar para 2D Tatico - Reto" : "Mudar para 3D Isometrico"}
           >
             <span style={{ fontSize: '18px', lineHeight: '20px' }}>{is3D ? '3D ISO' : '2D RETO'}</span>
           </button>
@@ -2630,13 +2731,26 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
               >
                 FRONT
               </button>
+              <button
+                onClick={() => {
+                  setCameraFocus({ x: 3.5, y: 3.5 });
+                  setFreeCamOffset({ x: 0, y: 0 });
+                  setIsFreeCamera(false);
+                  setUserZoom(1);
+                  setActionZoomMultiplier(1);
+                }}
+                className="px-1.5 py-0.5 rounded text-[11px] font-black bg-white/10 hover:bg-white/25 text-amber-300 border border-amber-400/70"
+                title="Centralizar Campo de Batalha"
+              >
+                CENTRO
+              </button>
             </div>
           )}
 
           {/* Zoom Buttons */}
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setUserZoom(prev => Math.min(1.6, prev + 0.15))}
+              onClick={() => setUserZoom(prev => Math.min(1.8, prev + 0.15))}
               className="px-1.5 py-0.5 rounded text-xs font-black bg-black/40 hover:bg-white/20 text-white border border-slate-400"
               title="Aumentar Zoom"
             >
@@ -2678,20 +2792,20 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
         {isFreeCamera && (
           <div 
             onClick={() => snapToActiveUnit()}
-            className="absolute bottom-3 right-3 z-40 bg-black/80 hover:bg-blue-950 border border-cyan-400/80 text-cyan-200 text-xs px-3 py-1.5 rounded-full shadow-lg cursor-pointer flex items-center gap-2 backdrop-blur-sm pointer-events-auto transition-all"
+            className="absolute bottom-3 right-3 z-40 bg-black/80 hover:bg-blue-950 border border-cyan-400/80 text-cyan-200 text-xs px-3 py-1.5 rounded-full shadow-lg cursor-pointer flex items-center gap-2 pointer-events-auto transition-all"
           >
             <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span>Camera Livre (Clique para Focar)</span>
+            <span>Camera Livre - Toque para Seguir Turno</span>
           </div>
         )}
         
-        {/* Dynamic Camera Rig (True 3D Spatial Geometry - NO overflow-hidden flattening) */}
+        {/* Dynamic Camera Rig (True 3D Spatial Geometry - Smooth Elevation Alignment) */}
         <div 
           className="relative flex justify-center items-center select-none pointer-events-none"
           style={{ 
             transformStyle: is3D ? 'preserve-3d' : 'flat', 
             transform: is3D 
-              ? `translate3d(${cameraX}px, ${cameraY}px, ${cameraZ}px) scale(${cameraScale})` 
+              ? `translate3d(${cameraX}px, ${cameraY}px, 0px) scale(${effectiveZoom})` 
               : `translate(${cameraX}px, ${cameraY}px) scale(${effectiveZoom})`, 
             transformOrigin: 'center center',
             transition: isDragging ? 'none' : 'transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)'

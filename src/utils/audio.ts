@@ -13,6 +13,35 @@ class SoundFX {
     }
   }
 
+  public async preloadSounds(): Promise<void> {
+    const soundNames = ['cursor', 'select', 'cancel', 'attack', 'hit', 'magic', 'heal', 'levelup'];
+    await Promise.all(soundNames.map(async (name) => {
+      try {
+        const res = await fetch(`/sounds/${name}.mp3`);
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const pool: HTMLAudioElement[] = [];
+          for (let i = 0; i < 4; i++) {
+            const audio = new Audio(url);
+            audio.preload = 'auto';
+            pool.push(audio);
+          }
+          this.audioCache.set(name, pool);
+        }
+      } catch {
+        // Fallback to on-demand audio
+      }
+    }));
+  }
+
+  public unlockAudio(): void {
+    const ctx = this.getContext();
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+  }
+
   private getOrCreateAudio(name: string): HTMLAudioElement {
     let pool = this.audioCache.get(name);
     if (!pool) {

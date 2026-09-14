@@ -51,6 +51,34 @@ export interface ExplorationTextures {
   npcBlacksmith: HTMLCanvasElement;
   npcInnkeeper: HTMLCanvasElement;
   npcResident: HTMLCanvasElement;
+  // Dungeons Distinct Floors & Walls
+  floorPreludio: HTMLCanvasElement;
+  wallPreludio: HTMLCanvasElement;
+  floorDesafio: HTMLCanvasElement;
+  wallDesafio: HTMLCanvasElement;
+  floorTerra: HTMLCanvasElement;
+  wallTerra: HTMLCanvasElement;
+  floorFogo: HTMLCanvasElement;
+  wallFogo: HTMLCanvasElement;
+  floorAgua: HTMLCanvasElement;
+  wallAgua: HTMLCanvasElement;
+  floorAr: HTMLCanvasElement;
+  wallAr: HTMLCanvasElement;
+  floorFinal: HTMLCanvasElement;
+  wallFinal: HTMLCanvasElement;
+  // Hazard & Special Dungeon Tiles
+  lavaFloor: HTMLCanvasElement;
+  waterDeep: HTMLCanvasElement;
+  voidFloor: HTMLCanvasElement;
+  cloudsFloor: HTMLCanvasElement;
+  bossAltar: HTMLCanvasElement;
+  bossAltarPreludio: HTMLCanvasElement;
+  bossAltarDesafio: HTMLCanvasElement;
+  bossAltarTerra: HTMLCanvasElement;
+  bossAltarFogo: HTMLCanvasElement;
+  bossAltarAgua: HTMLCanvasElement;
+  bossAltarAr: HTMLCanvasElement;
+  bossAltarFinal: HTMLCanvasElement;
 }
 
 export interface CombatEnvironmentTextures {
@@ -1514,6 +1542,558 @@ export const generateTextures = (tileSize: number): ExplorationTextures => {
     ctx.fillRect(tileSize * 0.5 + 3, 6, 2, 2);
   });
 
+  // 42. DUNGEON PRELUDIO (Floor & Wall: Damp subterranean limestone cavern with slate tiles and amber torch sconce)
+  const floorPreludio = createTileCanvas(tileSize, (ctx) => {
+    // Slate stone base
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Stone tile grooves
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, tileSize, 1);
+    ctx.fillRect(0, 0, 1, tileSize);
+    ctx.fillRect(tileSize * 0.5, 0, 1, tileSize);
+    ctx.fillRect(0, tileSize * 0.5, tileSize, 1);
+
+    // Subtle blue-slate highlights
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(2, 2, tileSize * 0.5 - 3, tileSize * 0.5 - 3);
+    ctx.fillRect(tileSize * 0.5 + 2, tileSize * 0.5 + 2, tileSize * 0.5 - 3, tileSize * 0.5 - 3);
+
+    // Damp moss specks
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(3, 10, 3, 2);
+    ctx.fillRect(tileSize - 8, 4, 3, 2);
+    ctx.fillRect(12, tileSize - 6, 2, 2);
+
+    // Blue water glint
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(tileSize * 0.5 - 4, tileSize * 0.5 + 3, 2, 1);
+  });
+
+  const wallPreludio = createTileCanvas(tileSize, (ctx) => {
+    // Dark stone cavern masonry base
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Limestone chiseled blocks
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(2, 2, tileSize - 4, 11);
+    ctx.fillRect(2, 15, tileSize - 4, 11);
+    ctx.fillRect(2, 28, tileSize - 4, tileSize - 30);
+
+    // Bevel highlights
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(2, 2, tileSize - 4, 2);
+    ctx.fillRect(2, 15, tileSize - 4, 2);
+    ctx.fillRect(2, 28, tileSize - 4, 2);
+
+    // Wall iron torch bracket
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(tileSize * 0.5 - 2, 10, 4, 8);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(tileSize * 0.5 - 1, 8, 2, 6);
+
+    // Burning amber torch flame
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, 7, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, 6, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 43. CIDADELA DOS DESAFIOS (Floor & Wall: Grand imperial white & gold trial hall with royal crimson crests)
+  const floorDesafio = createTileCanvas(tileSize, (ctx) => {
+    // Pristine white-gold marble base
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Golden mosaic border frame
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Inner marble tile
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(4, 4, tileSize - 8, tileSize - 8);
+
+    // Royal champion cross emblem in gold
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(tileSize * 0.5 - 1, 6, 2, tileSize - 12);
+    ctx.fillRect(6, tileSize * 0.5 - 1, tileSize - 12, 2);
+
+    // Center star gem
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(tileSize * 0.5 - 3, tileSize * 0.5 - 3, 6, 6);
+    ctx.fillStyle = '#dc2626'; // ruby center
+    ctx.fillRect(tileSize * 0.5 - 1, tileSize * 0.5 - 1, 2, 2);
+  });
+
+  const wallDesafio = createTileCanvas(tileSize, (ctx) => {
+    // Fortified polished stone wall
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // White marble ashlar blocks
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Gold trim cornice and baseboard
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(2, 2, tileSize - 4, 3);
+    ctx.fillRect(2, tileSize - 5, tileSize - 4, 3);
+
+    // Royal Crimson Wall Pennant Banner
+    ctx.fillStyle = '#991b1b';
+    ctx.beginPath();
+    ctx.moveTo(8, 5);
+    ctx.lineTo(tileSize - 8, 5);
+    ctx.lineTo(tileSize - 8, 22);
+    ctx.lineTo(tileSize * 0.5, 27);
+    ctx.lineTo(8, 22);
+    ctx.fill();
+
+    // Golden Lion / Shield sigil on the banner
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(tileSize * 0.5 - 3, 10, 6, 8);
+    ctx.fillStyle = '#991b1b';
+    ctx.fillRect(tileSize * 0.5 - 1, 12, 2, 4);
+  });
+
+  // 44. SANTUARIO DA TERRA (Floor & Wall: Overgrown ancient crypt with emerald crystal veins and thick roots)
+  const floorTerra = createTileCanvas(tileSize, (ctx) => {
+    // Deep earth stone base
+    ctx.fillStyle = '#292524';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Mossy overgrown flagstones
+    ctx.fillStyle = '#44403c';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Thick creeping roots
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, tileSize * 0.3);
+    ctx.lineTo(tileSize * 0.45, tileSize * 0.5);
+    ctx.lineTo(tileSize, tileSize * 0.8);
+    ctx.stroke();
+
+    // Lush emerald moss patches
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(3, 3, 8, 5);
+    ctx.fillRect(tileSize - 12, tileSize - 10, 9, 6);
+    ctx.fillRect(14, tileSize - 8, 6, 4);
+
+    // Glowing green earth crystal specks
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(tileSize * 0.5 - 2, tileSize * 0.5 - 2, 3, 3);
+    ctx.fillStyle = '#86efac';
+    ctx.fillRect(tileSize * 0.5 - 1, tileSize * 0.5 - 1, 1, 1);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(tileSize - 7, 6, 2, 2);
+  });
+
+  const wallTerra = createTileCanvas(tileSize, (ctx) => {
+    // Ancient cavern bedrock
+    ctx.fillStyle = '#1c1917';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Heavy weathered megalithic stone
+    ctx.fillStyle = '#57534e';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Deep stone block division lines
+    ctx.fillStyle = '#292524';
+    ctx.fillRect(2, tileSize * 0.5, tileSize - 4, 2);
+    ctx.fillRect(tileSize * 0.5, 2, 2, tileSize - 4);
+
+    // Massive petrified tree roots wrapping the stones
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(8, 0);
+    ctx.lineTo(14, tileSize);
+    ctx.moveTo(tileSize - 6, 0);
+    ctx.lineTo(tileSize - 12, tileSize);
+    ctx.stroke();
+
+    // Embedded glowing luminescent green emerald crystals
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath();
+    ctx.moveTo(tileSize * 0.5, 8);
+    ctx.lineTo(tileSize * 0.5 + 4, 13);
+    ctx.lineTo(tileSize * 0.5, 18);
+    ctx.lineTo(tileSize * 0.5 - 4, 13);
+    ctx.fill();
+
+    ctx.fillStyle = '#6ee7b7';
+    ctx.fillRect(tileSize * 0.5 - 1, 11, 2, 3);
+  });
+
+  // 45. MONTE GULG / VULCAO DE FOGO (Floor & Wall: Scorched volcanic basalt with glowing lava fissures)
+  const floorFogo = createTileCanvas(tileSize, (ctx) => {
+    // Dark volcanic basalt base
+    ctx.fillStyle = '#181411';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Scorched stone blocks
+    ctx.fillStyle = '#292524';
+    ctx.fillRect(3, 3, tileSize - 6, tileSize - 6);
+
+    // Incandescent molten lava fissures in floor
+    ctx.strokeStyle = '#ea580c';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, tileSize * 0.4);
+    ctx.lineTo(tileSize * 0.4, tileSize * 0.5);
+    ctx.lineTo(tileSize * 0.7, tileSize * 0.35);
+    ctx.lineTo(tileSize, tileSize * 0.65);
+    ctx.stroke();
+
+    // Hot golden core of fissure
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(2, tileSize * 0.4);
+    ctx.lineTo(tileSize * 0.4, tileSize * 0.5);
+    ctx.lineTo(tileSize * 0.7, tileSize * 0.35);
+    ctx.lineTo(tileSize - 2, tileSize * 0.65);
+    ctx.stroke();
+
+    // Burning ember specks
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(8, 8, 2, 2);
+    ctx.fillRect(tileSize - 10, tileSize - 12, 2, 2);
+    ctx.fillRect(tileSize * 0.5 + 4, 10, 2, 2);
+  });
+
+  const wallFogo = createTileCanvas(tileSize, (ctx) => {
+    // Obsidian volcanic base
+    ctx.fillStyle = '#0c0a09';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Black volcanic basalt masonry
+    ctx.fillStyle = '#44403c';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Fiery red cracks splitting the wall
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(tileSize * 0.5, 0);
+    ctx.lineTo(tileSize * 0.4, tileSize * 0.4);
+    ctx.lineTo(tileSize * 0.6, tileSize * 0.7);
+    ctx.lineTo(tileSize * 0.5, tileSize);
+    ctx.stroke();
+
+    // Dripping lava stream from top
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(tileSize * 0.5 - 2, 0, 4, 8);
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(tileSize * 0.5 - 1, 0, 2, 6);
+
+    // Sharp volcanic obsidian crystals
+    ctx.fillStyle = '#1c1917';
+    ctx.beginPath();
+    ctx.moveTo(6, tileSize - 2);
+    ctx.lineTo(10, tileSize - 14);
+    ctx.lineTo(14, tileSize - 2);
+    ctx.fill();
+  });
+
+  // 46. SANTUARIO SUBMERSO (Floor & Wall: Sunken aquatic teal temple with water caustics and living corals)
+  const floorAgua = createTileCanvas(tileSize, (ctx) => {
+    // Deep ocean teal base
+    ctx.fillStyle = '#042f2e';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Aquamarine temple flagstone
+    ctx.fillStyle = '#0f766e';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Water caustics reflection ripples
+    ctx.strokeStyle = '#2dd4bf';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.4, tileSize * 0.4, 10, 0, Math.PI * 0.7);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#5eead4';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.65, tileSize * 0.65, 8, Math.PI, Math.PI * 1.6);
+    ctx.stroke();
+
+    // Sea Starfish and pearl inlays
+    ctx.fillStyle = '#f43f5e'; // red starfish
+    ctx.fillRect(6, tileSize - 10, 3, 3);
+    ctx.fillRect(7, tileSize - 12, 1, 6);
+    ctx.fillRect(5, tileSize - 9, 5, 1);
+
+    ctx.fillStyle = '#e0f2fe'; // gleaming pearl
+    ctx.fillRect(tileSize - 8, 8, 3, 3);
+  });
+
+  const wallAgua = createTileCanvas(tileSize, (ctx) => {
+    // Undersea abyss base
+    ctx.fillStyle = '#022c22';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Deep ocean carved masonry
+    ctx.fillStyle = '#115e59';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Turquoise branching coral growth on the wall
+    ctx.strokeStyle = '#14b8a6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(8, tileSize);
+    ctx.lineTo(12, tileSize - 14);
+    ctx.lineTo(6, tileSize - 22);
+    ctx.moveTo(12, tileSize - 14);
+    ctx.lineTo(18, tileSize - 20);
+    ctx.stroke();
+
+    // Glowing cyan sea rune in center
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, 12, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Water drip lines
+    ctx.fillStyle = '#99f6e4';
+    ctx.fillRect(tileSize * 0.5 - 1, 18, 2, 6);
+    ctx.fillRect(tileSize - 8, 14, 2, 4);
+  });
+
+  // 47. TORRE DA MIRAGEM (Floor & Wall: Celestial alabaster sky spire with lapis lazuli wind glyphs and gold trim)
+  const floorAr = createTileCanvas(tileSize, (ctx) => {
+    // Sky blue backing
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Polished alabaster white marble
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Golden solar geometric inlays
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(4, 4, tileSize - 8, tileSize - 8);
+
+    // Swirling Lapis Lazuli wind vortex rune
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, tileSize * 0.5, 8, 0, Math.PI * 1.5);
+    ctx.stroke();
+
+    // Golden sun burst in center
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(tileSize * 0.5 - 2, tileSize * 0.5 - 2, 4, 4);
+  });
+
+  const wallAr = createTileCanvas(tileSize, (ctx) => {
+    // Sky vista backdrop
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // White marble pillar column
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(4, 0, tileSize - 8, tileSize);
+
+    // Column flute lines
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(8, 0, tileSize - 16, tileSize);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(12, 0, 2, tileSize);
+    ctx.fillRect(tileSize * 0.5 - 1, 0, 2, tileSize);
+    ctx.fillRect(tileSize - 14, 0, 2, tileSize);
+
+    // Golden capital & base
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(2, 0, tileSize - 4, 4);
+    ctx.fillRect(2, tileSize - 4, tileSize - 4, 4);
+
+    // Glowing cyan celestial wind gem
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, tileSize * 0.5, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 48. TEMPLO DO CAOS (Floor & Wall: Apocalyptic void reality fracture with eldritch purple/crimson sigils)
+  const floorFinal = createTileCanvas(tileSize, (ctx) => {
+    // Pure void abyss base
+    ctx.fillStyle = '#05030a';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Fractured obsidian reality tiles
+    ctx.fillStyle = '#1e112a';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Cosmic void purple fissures
+    ctx.strokeStyle = '#9333ea';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, tileSize * 0.25);
+    ctx.lineTo(tileSize * 0.5, tileSize * 0.55);
+    ctx.lineTo(tileSize, tileSize * 0.75);
+    ctx.stroke();
+
+    // Chaotic blood-red core
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(2, tileSize * 0.25);
+    ctx.lineTo(tileSize * 0.5, tileSize * 0.55);
+    ctx.lineTo(tileSize - 2, tileSize * 0.75);
+    ctx.stroke();
+
+    // Eldritch void eye in corner
+    ctx.fillStyle = '#c084fc';
+    ctx.fillRect(tileSize - 8, 8, 4, 4);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(tileSize - 7, 9, 2, 2);
+  });
+
+  const wallFinal = createTileCanvas(tileSize, (ctx) => {
+    // Dark void base
+    ctx.fillStyle = '#020005';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    // Corrupted gothic demonic masonry
+    ctx.fillStyle = '#271238';
+    ctx.fillRect(2, 2, tileSize - 4, tileSize - 4);
+
+    // Demonic gargoyle skull silhouette
+    ctx.fillStyle = '#581c87';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, 12, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing chaotic blood-red eyes
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(tileSize * 0.5 - 4, 10, 2, 3);
+    ctx.fillRect(tileSize * 0.5 + 2, 10, 2, 3);
+
+    // Chaotic energy discharge lines
+    ctx.strokeStyle = '#d946ef';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(tileSize * 0.5, 19);
+    ctx.lineTo(tileSize * 0.3, tileSize - 2);
+    ctx.moveTo(tileSize * 0.5, 19);
+    ctx.lineTo(tileSize * 0.7, tileSize - 2);
+    ctx.stroke();
+  });
+
+  // 49. HAZARD TILES
+  // Active Molten Lava (for Monte Gulg)
+  const lavaFloor = createTileCanvas(tileSize, (ctx) => {
+    ctx.fillStyle = '#7c2d12';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    ctx.fillStyle = '#ea580c';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.4, tileSize * 0.4, 12, 0, Math.PI * 2);
+    ctx.arc(tileSize * 0.75, tileSize * 0.7, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.4, tileSize * 0.4, 6, 0, Math.PI * 2);
+    ctx.arc(tileSize * 0.75, tileSize * 0.7, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Submerged Deep Water (for Sunken Shrine)
+  const waterDeep = createTileCanvas(tileSize, (ctx) => {
+    ctx.fillStyle = '#083344';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    ctx.fillStyle = '#0e7490';
+    ctx.beginPath();
+    ctx.ellipse(tileSize * 0.5, tileSize * 0.5, 14, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#67e8f9';
+    ctx.fillRect(tileSize * 0.5 - 2, tileSize * 0.5 - 1, 4, 2);
+  });
+
+  // Void Abyss (for Chaos Temple)
+  const voidFloor = createTileCanvas(tileSize, (ctx) => {
+    ctx.fillStyle = '#020005';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    ctx.fillStyle = '#3b0764';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.5, tileSize * 0.5, 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#c084fc';
+    ctx.fillRect(tileSize * 0.5 - 1, tileSize * 0.5 - 1, 2, 2);
+  });
+
+  // Open Sky Cloud Abyss (for Mirage Tower)
+  const cloudsFloor = createTileCanvas(tileSize, (ctx) => {
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(0, 0, tileSize, tileSize);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.beginPath();
+    ctx.arc(tileSize * 0.35, tileSize * 0.55, 10, 0, Math.PI * 2);
+    ctx.arc(tileSize * 0.65, tileSize * 0.45, 12, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 50. BOSS ALTAR TILES (@)
+  const createBossAltar = (baseColor: string, trimColor: string, gemColor: string, symbol: string) => {
+    return createTileCanvas(tileSize, (ctx) => {
+      // Floor under
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, tileSize, tileSize);
+
+      // Elevated ceremonial dais platform
+      ctx.fillStyle = baseColor;
+      ctx.beginPath();
+      ctx.arc(tileSize * 0.5, tileSize * 0.5, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Golden ornate rim
+      ctx.strokeStyle = trimColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tileSize * 0.5, tileSize * 0.5, 15, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Glowing magical center glyph
+      ctx.fillStyle = gemColor;
+      ctx.beginPath();
+      ctx.arc(tileSize * 0.5, tileSize * 0.5, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner sigil
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(symbol, tileSize * 0.5, tileSize * 0.5);
+    });
+  };
+
+  const bossAltarPreludio = createBossAltar('#334155', '#38bdf8', '#0284c7', '0');
+  const bossAltarDesafio = createBossAltar('#cbd5e1', '#eab308', '#dc2626', '6');
+  const bossAltarTerra = createBossAltar('#292524', '#22c55e', '#15803d', '1');
+  const bossAltarFogo = createBossAltar('#292524', '#f97316', '#ef4444', '2');
+  const bossAltarAgua = createBossAltar('#0f766e', '#2dd4bf', '#0284c7', '3');
+  const bossAltarAr = createBossAltar('#f8fafc', '#f59e0b', '#38bdf8', '4');
+  const bossAltarFinal = createBossAltar('#1e112a', '#a855f7', '#dc2626', '5');
+  const bossAltar = bossAltarPreludio;
+
   // 19. DUNGEON FINAL (5)
   const dungeonFinal = portalChaos;
 
@@ -1566,11 +2146,39 @@ export const generateTextures = (tileSize: number): ExplorationTextures => {
     npcMerchant,
     npcBlacksmith,
     npcInnkeeper,
-    npcResident
+    npcResident,
+    // Dungeons Distinct Floors & Walls
+    floorPreludio,
+    wallPreludio,
+    floorDesafio,
+    wallDesafio,
+    floorTerra,
+    wallTerra,
+    floorFogo,
+    wallFogo,
+    floorAgua,
+    wallAgua,
+    floorAr,
+    wallAr,
+    floorFinal,
+    wallFinal,
+    // Hazards & Altars
+    lavaFloor,
+    waterDeep,
+    voidFloor,
+    cloudsFloor,
+    bossAltar,
+    bossAltarPreludio,
+    bossAltarDesafio,
+    bossAltarTerra,
+    bossAltarFogo,
+    bossAltarAgua,
+    bossAltarAr,
+    bossAltarFinal,
   };
 };
 
-// Generate high-resolution pixel art textures for combat arenas (OVERWORLD and DUNGEONS)
+// Generate high-resolution pixel art textures for combat arenas (OVERWORLD and ALL 7 DUNGEONS)
 export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTextures> => {
   const size = 64;
 
@@ -1591,42 +2199,23 @@ export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTexture
   // 1. OVERWORLD: Lush tactical cobblestone & meadow pavers
   const overworld = createCombatSet(
     (ctx) => {
-      // Grass turf base
       ctx.fillStyle = '#1e4620';
       ctx.fillRect(0, 0, size, size);
-
-      // Central stone flagstone
       ctx.fillStyle = '#2d5a27';
       ctx.fillRect(2, 2, size - 4, size - 4);
-
-      // Cut cobblestone paver pattern
       ctx.strokeStyle = '#143316';
       ctx.lineWidth = 2;
       ctx.strokeRect(3, 3, size - 6, size - 6);
-
-      // Inner flagstone tone
       ctx.fillStyle = '#3a6f33';
       ctx.fillRect(6, 6, size - 12, size - 12);
-
-      // Stone highlights & cracks
       ctx.fillStyle = '#4c8c43';
       ctx.fillRect(6, 6, size - 12, 2);
       ctx.fillRect(6, 6, 2, size - 12);
-
-      // Grass tufts along the edges
       ctx.fillStyle = '#56a74b';
       ctx.fillRect(4, 8, 3, 2);
       ctx.fillRect(size - 8, 14, 3, 2);
-      ctx.fillRect(18, size - 6, 3, 2);
-      ctx.fillRect(36, 4, 3, 2);
-
-      // Soil specks
-      ctx.fillStyle = '#173315';
-      ctx.fillRect(12, 20, 2, 2);
-      ctx.fillRect(44, 38, 2, 2);
     },
     (ctx) => {
-      // Rocky earth foundation wall
       ctx.fillStyle = '#1b3318';
       ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#294d25';
@@ -1640,22 +2229,123 @@ export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTexture
     '#22c55e'
   );
 
-  // 2. DUNGEON FOGO: Scorched volcanic basalt with glowing lava veins
-  const dungeonFogo = createCombatSet(
+  // 2. DUNGEON PRELUDIO: Damp slate limestone cavern with torchlit stone walls
+  const dungeonPreludio = createCombatSet(
     (ctx) => {
-      // Dark volcanic basalt base
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(3, 3, size - 6, size - 6);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(6, 6, size - 12, size - 12);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(10, 10);
+      ctx.lineTo(32, 26);
+      ctx.lineTo(54, 18);
+      ctx.stroke();
+      ctx.fillStyle = '#166534';
+      ctx.fillRect(6, 6, 8, 4);
+      ctx.fillRect(size - 14, size - 10, 8, 4);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(28, 40, 3, 2);
+    },
+    (ctx) => {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#334155';
+      for (let y = 0; y < size; y += 16) {
+        ctx.fillRect(0, y, size, 2);
+        for (let x = (y % 32 === 0 ? 0 : 16); x < size; x += 32) {
+          ctx.fillRect(x, y, 2, 16);
+        }
+      }
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(size * 0.5 - 2, 12, 4, 6);
+    },
+    '#38bdf8'
+  );
+
+  // 3. DUNGEON DESAFIO: Regal imperial white and gold trial arena
+  const dungeonDesafio = createCombatSet(
+    (ctx) => {
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(3, 3, size - 6, size - 6);
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(6, 6, size - 12, size - 12);
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(size * 0.5 - 2, 8, 4, size - 16);
+      ctx.fillRect(8, size * 0.5 - 2, size - 16, 4);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(size * 0.5 - 3, size * 0.5 - 3, 6, 6);
+    },
+    (ctx) => {
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(2, 2, size - 4, size - 4);
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(0, 0, size, 4);
+      ctx.fillRect(0, size - 4, size, 4);
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(size * 0.5 - 8, 8, 16, 24);
+    },
+    '#fbbf24'
+  );
+
+  // 4. DUNGEON TERRA: Heavy weathered granite flagstone with glowing emerald crystal veins
+  const dungeonTerra = createCombatSet(
+    (ctx) => {
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#44403c';
+      ctx.fillRect(3, 3, size - 6, size - 6);
+      ctx.fillStyle = '#57534e';
+      ctx.fillRect(6, 6, size - 12, size - 12);
+      ctx.strokeStyle = '#1c1917';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(10, 14);
+      ctx.lineTo(30, 24);
+      ctx.lineTo(44, 18);
+      ctx.lineTo(54, 38);
+      ctx.stroke();
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(18, 40, 4, 4);
+      ctx.fillStyle = '#86efac';
+      ctx.fillRect(19, 41, 2, 2);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(4, 4, 8, 3);
+    },
+    (ctx) => {
       ctx.fillStyle = '#1c1917';
       ctx.fillRect(0, 0, size, size);
+      ctx.fillStyle = '#44403c';
+      for (let y = 0; y < size; y += 14) {
+        ctx.fillRect(0, y, size, 2);
+        for (let x = (y % 28 === 0 ? 0 : 14); x < size; x += 28) {
+          ctx.fillRect(x, y, 2, 14);
+        }
+      }
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(size * 0.5 - 3, 14, 6, 12);
+    },
+    '#22c55e'
+  );
 
-      // Scorched stone bevel
+  // 5. DUNGEON FOGO: Scorched volcanic basalt with glowing magma fissures
+  const dungeonFogo = createCombatSet(
+    (ctx) => {
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#292524';
       ctx.fillRect(3, 3, size - 6, size - 6);
-
-      // Obsidian paver surface
       ctx.fillStyle = '#44403c';
       ctx.fillRect(6, 6, size - 12, size - 12);
-
-      // Incandescent lava fissure cracks
       ctx.strokeStyle = '#ea580c';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1664,8 +2354,6 @@ export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTexture
       ctx.lineTo(size * 0.7, size * 0.35);
       ctx.lineTo(size - 6, size * 0.7);
       ctx.stroke();
-
-      // Hot core of the fissure
       ctx.strokeStyle = '#fef08a';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -1674,105 +2362,73 @@ export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTexture
       ctx.lineTo(size * 0.7, size * 0.35);
       ctx.lineTo(size - 8, size * 0.7);
       ctx.stroke();
-
-      // Charred embers
       ctx.fillStyle = '#f97316';
-      ctx.fillRect(14, 16, 2, 2);
-      ctx.fillRect(48, 44, 2, 2);
+      ctx.fillRect(14, 16, 3, 3);
+      ctx.fillRect(48, 44, 3, 3);
     },
     (ctx) => {
-      // Volcanic rock wall with cooled magma
       ctx.fillStyle = '#181411';
       ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#9a3412';
       ctx.fillRect(0, size * 0.5, size, 2);
-      ctx.fillStyle = '#431407';
-      ctx.fillRect(12, 0, 4, size);
-      ctx.fillRect(38, 0, 4, size);
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(size * 0.5 - 2, 0, 4, size);
     },
     '#f97316'
   );
 
-  // 3. DUNGEON AGUA: Sunken aquamarine flagstones with rippling tide sheen
+  // 6. DUNGEON AGUA: Sunken aquamarine flagstones with rippling tide sheen
   const dungeonAgua = createCombatSet(
     (ctx) => {
-      // Deep sea stone base
       ctx.fillStyle = '#042f2e';
       ctx.fillRect(0, 0, size, size);
-
-      // Teal carved tile
       ctx.fillStyle = '#0f766e';
       ctx.fillRect(3, 3, size - 6, size - 6);
-
       ctx.fillStyle = '#115e59';
       ctx.fillRect(6, 6, size - 12, size - 12);
-
-      // Wet water sheen reflection curves
       ctx.strokeStyle = '#2dd4bf';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(size * 0.5, size * 0.5, 18, 0, Math.PI * 0.6);
       ctx.stroke();
-
       ctx.strokeStyle = '#5eead4';
       ctx.beginPath();
       ctx.arc(size * 0.5, size * 0.5, 12, Math.PI, Math.PI * 1.5);
       ctx.stroke();
-
-      // Ancient temple corner glyphs
       ctx.fillStyle = '#99f6e4';
       ctx.fillRect(8, 8, 3, 3);
       ctx.fillRect(size - 11, 8, 3, 3);
-      ctx.fillRect(8, size - 11, 3, 3);
-      ctx.fillRect(size - 11, size - 11, 3, 3);
     },
     (ctx) => {
-      // Undersea temple masonry wall
       ctx.fillStyle = '#042f2e';
       ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#0f766e';
       for (let y = 0; y < size; y += 16) {
         ctx.fillRect(0, y, size, 2);
       }
+      ctx.fillStyle = '#14b8a6';
+      ctx.fillRect(10, 20, 6, 20);
     },
     '#06b6d4'
   );
 
-  // 4. DUNGEON AR: Celestial opalescent marble mosaic with gold filigree
+  // 7. DUNGEON AR: Celestial opalescent marble mosaic with gold filigree
   const dungeonAr = createCombatSet(
     (ctx) => {
-      // Sky blue backing
       ctx.fillStyle = '#0369a1';
       ctx.fillRect(0, 0, size, size);
-
-      // Polished white marble paver
       ctx.fillStyle = '#e0f2fe';
       ctx.fillRect(3, 3, size - 6, size - 6);
-
       ctx.fillStyle = '#f8fafc';
       ctx.fillRect(6, 6, size - 12, size - 12);
-
-      // Gold inlay borders
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(8, 8, size - 16, size - 16);
-
-      // Celestial central cross
       ctx.fillStyle = '#fbbf24';
       ctx.fillRect(size * 0.5 - 4, size * 0.5 - 1, 8, 2);
       ctx.fillRect(size * 0.5 - 1, size * 0.5 - 4, 2, 8);
-
-      // Marble vein streaks
-      ctx.strokeStyle = '#bae6fd';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(12, 20);
-      ctx.lineTo(24, 32);
-      ctx.lineTo(36, 26);
-      ctx.stroke();
     },
     (ctx) => {
-      // White column marble wall
       ctx.fillStyle = '#cbd5e1';
       ctx.fillRect(0, 0, size, size);
       ctx.fillStyle = '#f59e0b';
@@ -1786,62 +2442,54 @@ export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTexture
     '#38bdf8'
   );
 
-  // 5. DUNGEON TERRA: Heavy weathered granite flagstone with crystal veins
-  const dungeonTerra = createCombatSet(
+  // 8. DUNGEON FINAL / TEMPLO DO CAOS: Corrupted void obsidian with reality rifts
+  const dungeonFinal = createCombatSet(
     (ctx) => {
-      // Subterranean earth base
-      ctx.fillStyle = '#292524';
+      ctx.fillStyle = '#05030a';
       ctx.fillRect(0, 0, size, size);
-
-      // Granite paver bevel
-      ctx.fillStyle = '#44403c';
+      ctx.fillStyle = '#1e112a';
       ctx.fillRect(3, 3, size - 6, size - 6);
-
-      ctx.fillStyle = '#57534e';
-      ctx.fillRect(6, 6, size - 12, size - 12);
-
-      // Chisel grooves & fractures
-      ctx.strokeStyle = '#1c1917';
+      ctx.strokeStyle = '#9333ea';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(10, 14);
-      ctx.lineTo(30, 24);
-      ctx.lineTo(44, 18);
-      ctx.lineTo(54, 38);
+      ctx.moveTo(0, size * 0.25);
+      ctx.lineTo(size * 0.5, size * 0.55);
+      ctx.lineTo(size, size * 0.75);
       ctx.stroke();
-
-      // Embedded crystal flecks
-      ctx.fillStyle = '#a3e635';
-      ctx.fillRect(18, 40, 3, 3);
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(42, 12, 3, 3);
-
-      // Moss creeping in from edges
-      ctx.fillStyle = '#3f6212';
-      ctx.fillRect(4, 4, 6, 2);
-      ctx.fillRect(size - 10, 4, 6, 2);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(2, size * 0.25);
+      ctx.lineTo(size * 0.5, size * 0.55);
+      ctx.lineTo(size - 2, size * 0.75);
+      ctx.stroke();
+      ctx.fillStyle = '#c084fc';
+      ctx.fillRect(size - 12, 10, 4, 4);
     },
     (ctx) => {
-      // Stratified bedrock wall
-      ctx.fillStyle = '#1c1917';
+      ctx.fillStyle = '#020005';
       ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#44403c';
-      for (let y = 0; y < size; y += 14) {
-        ctx.fillRect(0, y, size, 2);
-        for (let x = (y % 28 === 0 ? 0 : 14); x < size; x += 28) {
-          ctx.fillRect(x, y, 2, 14);
-        }
-      }
+      ctx.fillStyle = '#271238';
+      ctx.fillRect(2, 2, size - 4, size - 4);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(size * 0.5 - 4, 16, 3, 4);
+      ctx.fillRect(size * 0.5 + 2, 16, 3, 4);
+      ctx.strokeStyle = '#d946ef';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(size * 0.5, 24);
+      ctx.lineTo(size * 0.5, size);
+      ctx.stroke();
     },
-    '#ca8a04'
+    '#c084fc'
   );
 
   return {
     OVERWORLD: overworld,
-    DUNGEON_PRELUDIO_1: dungeonTerra,
-    DUNGEON_PRELUDIO_2: dungeonTerra,
-    DUNGEON_DESAFIO_1: dungeonAr,
-    DUNGEON_DESAFIO_2: dungeonAr,
+    DUNGEON_PRELUDIO_1: dungeonPreludio,
+    DUNGEON_PRELUDIO_2: dungeonPreludio,
+    DUNGEON_DESAFIO_1: dungeonDesafio,
+    DUNGEON_DESAFIO_2: dungeonDesafio,
     TOWN_CORNELIA: overworld,
     TOWN_PRAVOCA: overworld,
     TOWN_GAIA: overworld,
@@ -1866,9 +2514,9 @@ export const generateCombatTextures = (): Record<MapId, CombatEnvironmentTexture
     DUNGEON_AR_1: dungeonAr,
     DUNGEON_AR_2: dungeonAr,
     DUNGEON_AR_3: dungeonAr,
-    DUNGEON_FINAL_1: dungeonFogo,
-    DUNGEON_FINAL_2: dungeonFogo,
-    DUNGEON_FINAL_3: dungeonFogo,
+    DUNGEON_FINAL_1: dungeonFinal,
+    DUNGEON_FINAL_2: dungeonFinal,
+    DUNGEON_FINAL_3: dungeonFinal,
     DUNGEON_FOGO: dungeonFogo,
     DUNGEON_AGUA: dungeonAgua,
     DUNGEON_AR: dungeonAr,

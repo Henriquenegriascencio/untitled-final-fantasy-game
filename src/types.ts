@@ -1,4 +1,4 @@
-export type GameState = 'START_MENU' | 'CHARACTER_CREATION' | 'STORY_CRAWL' | 'EXPLORATION' | 'COMBAT' | 'SHOP' | 'GAME_OVER' | 'VICTORY' | 'ENCOUNTER_TRANSITION';
+export type GameState = 'LOADING' | 'START_MENU' | 'CHARACTER_CREATION' | 'STORY_CRAWL' | 'EXPLORATION' | 'COMBAT' | 'SHOP' | 'GAME_OVER' | 'VICTORY' | 'ENCOUNTER_TRANSITION';
 
 export type MapId = 
   | 'OVERWORLD'
@@ -178,6 +178,6 @@ export type CombatUnit = {
   enemyType?: EnemyType;
 };
 
-export type MapTile = '.' | 'M' | '~' | 'W' | 'C' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | 'F' | '<' | '>' | 'X' | 'G' | '@' | 'T' | 'D' | 'S' | 'B' | 'H' | 'P' | 'E' | 'I' | 'N'; 
-// . = Grass/Path, M = Mountain, ~ = Water, W = Wall, C = City, 0..6 = Dungeons, F = Final Portal, < = Stairs Up / Exit, > = Stairs Down, X = Chest, G = Gate / Guard, @ = Boss/Artifact, T = Forest, D = Desert, S = Swamp, B = Bridge, H = House, P = Item Shop, E = Equipment/Toolsmith, I = Inn, N = NPC
+export type MapTile = '.' | 'M' | '~' | 'W' | 'C' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | 'F' | '<' | '>' | 'X' | 'G' | '@' | 'T' | 'D' | 'S' | 'B' | 'H' | 'P' | 'E' | 'I' | 'N' | 'L'; 
+// . = Grass/Path, M = Mountain, ~ = Water, W = Wall, C = City, 0..6 = Dungeons, F = Final Portal, < = Stairs Up / Exit, > = Stairs Down, X = Chest, G = Gate / Guard / Garden, @ = Boss/Artifact, T = Forest / Table, D = Desert, S = Swamp, B = Bridge / Bookshelf, H = House / Hearth, P = Item Shop, E = Equipment/Toolsmith/Forge, I = Inn/Bed, N = NPC, L = Lantern
 

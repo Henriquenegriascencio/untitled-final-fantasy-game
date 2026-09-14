@@ -123,17 +123,60 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
           }
         }
 
-        // Draw Landmarks / POIs
+        // Draw Landmarks / POIs on Overworld Radar
         for (let y = startTileY; y < endTileY; y++) {
           for (let x = startTileX; x < endTileX; x++) {
             const tile = currentMap[y]?.[x];
             const dx = (x - startTileX) * tileW + tileW / 2;
             const dy = (y - startTileY) * tileH + tileH / 2;
 
-            if (['0', '1', '2', '3', '4', '5', '6', 'F', 'C'].includes(tile as string)) {
-              ctx.fillStyle = tile === 'C' ? '#facc15' : '#f87171';
+            if (tile === 'C') {
+              // Town
+              ctx.fillStyle = '#facc15';
               ctx.beginPath();
-              ctx.arc(dx, dy, Math.max(3, tileW * 0.7), 0, Math.PI * 2);
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '0') {
+              // Caverna do Preludio
+              ctx.fillStyle = '#38bdf8';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '6') {
+              // Cidadela dos Desafios
+              ctx.fillStyle = '#fbbf24';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '1') {
+              // Templo da Terra
+              ctx.fillStyle = '#22c55e';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '2') {
+              // Monte Gulg - Fogo
+              ctx.fillStyle = '#ea580c';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '3') {
+              // Santuario Submerso - Agua
+              ctx.fillStyle = '#06b6d4';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '4') {
+              // Torre da Miragem - Ar
+              ctx.fillStyle = '#a855f7';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '5' || tile === 'F') {
+              // Templo do Caos
+              ctx.fillStyle = '#ef4444';
+              ctx.beginPath();
+              ctx.arc(dx, dy, Math.max(3.5, tileW * 0.75), 0, Math.PI * 2);
               ctx.fill();
             }
           }
@@ -190,7 +233,7 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
             ctx.fillStyle = getTileColor(tile, mapId);
             ctx.fillRect(dx, dy, tileScale + 0.4, tileScale + 0.4);
 
-            // Special POI Icons
+            // Special POI Icons on Full View
             if (tile === '<') {
               // Stairs Up / Exit
               ctx.fillStyle = '#38bdf8';
@@ -206,19 +249,84 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
               ctx.fillStyle = isOpened ? '#78350f' : '#facc15';
               ctx.fillRect(dx + tileScale * 0.2, dy + tileScale * 0.2, tileScale * 0.6, tileScale * 0.6);
             } else if (tile === '@') {
-              // Boss / Altar
-              ctx.fillStyle = '#ef4444';
+              // Boss / Altar with elemental colors
+              if (mapId.startsWith('DUNGEON_FOGO')) {
+                ctx.fillStyle = '#ef4444';
+              } else if (mapId.startsWith('DUNGEON_AGUA')) {
+                ctx.fillStyle = '#06b6d4';
+              } else if (mapId.startsWith('DUNGEON_TERRA')) {
+                ctx.fillStyle = '#22c55e';
+              } else if (mapId.startsWith('DUNGEON_AR')) {
+                ctx.fillStyle = '#fde047';
+              } else if (mapId.startsWith('DUNGEON_PRELUDIO')) {
+                ctx.fillStyle = '#38bdf8';
+              } else if (mapId.startsWith('DUNGEON_DESAFIO')) {
+                ctx.fillStyle = '#f59e0b';
+              } else {
+                ctx.fillStyle = '#dc2626';
+              }
               ctx.fillRect(dx + tileScale * 0.1, dy + tileScale * 0.1, tileScale * 0.8, tileScale * 0.8);
-            } else if (['0', '1', '2', '3', '4', '5', '6', 'F', 'C'].includes(tile as string)) {
-              // Landmark / Portal
+            } else if (tile === 'C') {
+              // Town Entrance
               ctx.fillStyle = '#facc15';
               ctx.beginPath();
-              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.4, 0, Math.PI * 2);
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
               ctx.fill();
-            } else if (['P', 'E', 'I', 'H', 'D', 'M'].includes(tile as string)) {
-              // Town building
-              ctx.fillStyle = '#fb923c';
-              ctx.fillRect(dx + tileScale * 0.2, dy + tileScale * 0.2, tileScale * 0.6, tileScale * 0.6);
+            } else if (tile === '0') {
+              ctx.fillStyle = '#38bdf8';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '6') {
+              ctx.fillStyle = '#fbbf24';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '1') {
+              ctx.fillStyle = '#22c55e';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '2') {
+              ctx.fillStyle = '#ea580c';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '3') {
+              ctx.fillStyle = '#06b6d4';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '4') {
+              ctx.fillStyle = '#a855f7';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === '5' || tile === 'F') {
+              ctx.fillStyle = '#ef4444';
+              ctx.beginPath();
+              ctx.arc(dx + tileScale / 2, dy + tileScale / 2, tileScale * 0.45, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (tile === 'P') {
+              // Potion Shop
+              ctx.fillStyle = '#38bdf8';
+              ctx.fillRect(dx + tileScale * 0.15, dy + tileScale * 0.15, tileScale * 0.7, tileScale * 0.7);
+            } else if (tile === 'E') {
+              // Toolsmith
+              ctx.fillStyle = '#f97316';
+              ctx.fillRect(dx + tileScale * 0.15, dy + tileScale * 0.15, tileScale * 0.7, tileScale * 0.7);
+            } else if (tile === 'I') {
+              // Inn
+              ctx.fillStyle = '#22c55e';
+              ctx.fillRect(dx + tileScale * 0.15, dy + tileScale * 0.15, tileScale * 0.7, tileScale * 0.7);
+            } else if (tile === 'H') {
+              // House
+              ctx.fillStyle = '#818cf8';
+              ctx.fillRect(dx + tileScale * 0.15, dy + tileScale * 0.15, tileScale * 0.7, tileScale * 0.7);
+            } else if (tile === 'L') {
+              // Lantern
+              ctx.fillStyle = '#fde047';
+              ctx.fillRect(dx + tileScale * 0.25, dy + tileScale * 0.25, tileScale * 0.5, tileScale * 0.5);
             }
           }
         }
@@ -360,8 +468,8 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
           </div>
 
           {/* Legend and Info Bar */}
-          <div className="px-4 py-2 bg-black/60 border-t border-blue-400/30 flex flex-wrap items-center justify-between gap-3 text-[10px] md:text-xs">
-            <div className="flex flex-wrap items-center gap-4 text-slate-200">
+          <div className="px-4 py-2.5 bg-black/60 border-t border-blue-400/30 flex flex-wrap items-center justify-between gap-3 text-[10px] md:text-xs">
+            <div className="flex flex-wrap items-center gap-3 md:gap-4 text-slate-200">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-yellow-400 border border-white shadow-sm inline-block animate-pulse" />
                 <span className="font-bold">JOGADOR</span>
@@ -376,7 +484,7 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 bg-cyan-400 inline-block rounded-xs" />
-                <span className="font-bold">ESCADA / SAIDA</span>
+                <span className="font-bold">ESCADA OU SAIDA</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 bg-purple-400 inline-block rounded-xs" />
@@ -384,12 +492,20 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 bg-red-600 inline-block rounded-xs" />
-                <span className="font-bold">CHEFE / GUARDIAO</span>
+                <span className="font-bold">CHEFE OU ALTAR</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 bg-orange-500 inline-block rounded-xs" />
+                <span className="font-bold">LAVA OU AGUA OU NUVEM</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 bg-amber-600 inline-block rounded-xs" />
+                <span className="font-bold">CONSTRUCOES</span>
               </div>
             </div>
 
             <div className="text-cyan-300 font-bold uppercase tracking-wider text-[10px]">
-              Pressione TAB ou N para alternar
+              TECLA TAB OU N PARA ALTERNAR
             </div>
           </div>
         </div>
@@ -417,7 +533,7 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
             <button
               onClick={() => setMode('expanded')}
               className="text-[10px] px-2 py-0.5 bg-blue-700/80 hover:bg-blue-600 text-white rounded font-black border border-blue-300/80 uppercase cursor-pointer"
-              title="Expandir Mapa Geral - TAB"
+              title="Expandir Mapa Geral - TECLA TAB"
             >
               +
             </button>
@@ -464,54 +580,172 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({
   );
 };
 
-// Helper to determine pixel tile colors
+// Helper to determine pixel tile colors that accurately reflect tile textures
 function getTileColor(tile: string | undefined, mapId: string): string {
   if (!tile) return '#0f172a';
 
+  // 1. ELEMENTAL DUNGEONS
+  if (mapId.startsWith('DUNGEON_FOGO')) {
+    // Volcanic Mountain Gulg
+    if (tile === 'M' || tile === 'W') return '#270e0e'; // Obsidian basalt wall
+    if (tile === '.') return '#7f1d1d'; // Magma stone floor
+    if (tile === '~') return '#ea580c'; // Active molten lava
+    if (tile === '@') return '#ef4444'; // Boss altar
+    if (tile === '<') return '#fde047';
+    if (tile === '>') return '#f97316';
+    if (tile === 'X') return '#facc15';
+    return '#450a0a';
+  }
+
+  if (mapId.startsWith('DUNGEON_AGUA')) {
+    // Submerged Aquatic Shrine
+    if (tile === 'M' || tile === 'W') return '#082f49'; // Oceanic reef wall
+    if (tile === '.') return '#0e3a47'; // Submerged sea floor
+    if (tile === '~') return '#0284c7'; // Deep ocean trench
+    if (tile === '@') return '#06b6d4'; // Kraken ocean altar
+    if (tile === '<') return '#38bdf8';
+    if (tile === '>') return '#0284c7';
+    if (tile === 'X') return '#facc15';
+    return '#0c4a6e';
+  }
+
+  if (mapId.startsWith('DUNGEON_TERRA')) {
+    // Earth Sanctuary
+    if (tile === 'M' || tile === 'W') return '#142911'; // Ancient bedrock moss wall
+    if (tile === '.') return '#2d4a22'; // Mossy earthen stone floor
+    if (tile === '~') return '#166534'; // Moss mire / mud
+    if (tile === '@') return '#22c55e'; // Earth lich altar
+    if (tile === '<') return '#86efac';
+    if (tile === '>') return '#15803d';
+    if (tile === 'X') return '#facc15';
+    return '#1b4317';
+  }
+
+  if (mapId.startsWith('DUNGEON_AR')) {
+    // Mirage Wind Tower
+    if (tile === 'M' || tile === 'W') return '#475569'; // Sky citadel column wall
+    if (tile === '.') return '#cbd5e1'; // Celestial cloud marble
+    if (tile === '~') return '#e0f2fe'; // Sky clouds / celestial mist
+    if (tile === '@') return '#fde047'; // Golden wind altar
+    if (tile === '<') return '#facc15';
+    if (tile === '>') return '#94a3b8';
+    if (tile === 'X') return '#facc15';
+    return '#64748b';
+  }
+
+  if (mapId.startsWith('DUNGEON_FINAL')) {
+    // Chaos Void Temple
+    if (tile === 'M' || tile === 'W') return '#18052e'; // Void abyssal wall
+    if (tile === '.') return '#3b0764'; // Obsidian void plate
+    if (tile === '~') return '#9333ea'; // Chaotic void energy rift
+    if (tile === '@') return '#dc2626'; // Chaos throne
+    if (tile === '<') return '#c084fc';
+    if (tile === '>') return '#7e22ce';
+    if (tile === 'X') return '#facc15';
+    return '#2e1065';
+  }
+
+  if (mapId.startsWith('DUNGEON_PRELUDIO')) {
+    // Prelude Cavern
+    if (tile === 'M' || tile === 'W') return '#0f172a'; // Underground rock wall
+    if (tile === '.') return '#334155'; // Cool gray slate floor
+    if (tile === '~') return '#0369a1'; // Cavern spring
+    if (tile === '@') return '#38bdf8'; // Gargoyle altar
+    if (tile === '<') return '#38bdf8';
+    if (tile === '>') return '#0284c7';
+    if (tile === 'X') return '#facc15';
+    return '#1e293b';
+  }
+
+  if (mapId.startsWith('DUNGEON_DESAFIO')) {
+    // Challenge Citadel
+    if (tile === 'M' || tile === 'W') return '#451a03'; // Fortified bronze wall
+    if (tile === '.') return '#b45309'; // Golden flagstone
+    if (tile === '~') return '#d97706'; // Trial fire pit
+    if (tile === '@') return '#f59e0b'; // Trial altar
+    if (tile === '<') return '#fde047';
+    if (tile === '>') return '#92400e';
+    if (tile === 'X') return '#facc15';
+    return '#78350f';
+  }
+
+  // 2. INTERIOR MAPS (Houses, Shops, Inns, Toolsmiths)
+  if (mapId.startsWith('INTERIOR_')) {
+    if (tile === 'W') return '#451a03'; // Mahogany wood wall
+    if (tile === '.') return '#78350f'; // Polished wooden floor
+    if (tile === 'T') return '#92400e'; // Wooden counter or table
+    if (tile === 'I') return '#38bdf8'; // Bed
+    if (tile === 'B') return '#b45309'; // Bookshelf
+    if (tile === 'H') return '#ea580c'; // Fireplace hearth
+    if (tile === 'E') return '#dc2626'; // Blacksmith anvil forge
+    if (tile === '<') return '#10b981'; // Exit door
+    if (tile === 'N') return '#fde047'; // NPC
+    if (tile === 'X') return '#facc15'; // Chest
+    return '#78350f';
+  }
+
+  // 3. TOWN MAPS (Cornelia, Pravoca, Gaia)
+  if (mapId.startsWith('TOWN_')) {
+    if (tile === 'W') return '#334155'; // City stone rampart
+    if (tile === '.') return '#64748b'; // Cobblestone street
+    if (tile === 'T') return '#15803d'; // Town green trees
+    if (tile === '~') return '#38bdf8'; // Fountain / Water canal
+    if (tile === 'G') return '#22c55e'; // Flower garden / Lawn
+    if (tile === 'L') return '#fde047'; // Lantern light
+    if (tile === 'B') return '#92400e'; // Wooden canal bridge
+    if (tile === 'P') return '#38bdf8'; // Potion shop
+    if (tile === 'E') return '#f97316'; // Toolsmith
+    if (tile === 'I') return '#22c55e'; // Inn
+    if (tile === 'H') return '#818cf8'; // House
+    if (tile === 'N') return '#fde047'; // Town citizen
+    if (tile === '<') return '#10b981'; // City gate exit
+    if (tile === 'X') return '#facc15'; // Chest
+    return '#475569';
+  }
+
+  // 4. OVERWORLD MAP (Eldoria)
   switch (tile) {
-    case 'M': // Mountain or Rock Wall
-      return mapId === 'OVERWORLD' ? '#334155' : '#1e293b';
-    case 'W': // Brick/Stone Wall
-      return '#334155';
-    case '.': // Floor / Ground
-      if (mapId === 'OVERWORLD') return '#15803d'; // Green grass
-      if (mapId.startsWith('TOWN')) return '#475569'; // Town cobblestone
-      return '#64748b'; // Dungeon path
-    case '~': // Water / Ocean
-      return '#0284c7';
-    case 'T': // Forest / Trees
+    case '.': // Green Plains / Grass
+      return '#16a34a';
+    case 'T': // Dense Forest
       return '#14532d';
-    case 'B': // Bridge / Plank
-      return '#78350f';
-    case '<': // Stairs Up
-      return '#38bdf8';
-    case '>': // Stairs Down
-      return '#a855f7';
-    case 'X': // Treasure Chest
+    case 'D': // Desert Dunes
+      return '#d97706';
+    case 'S': // Swamp / Marsh
+      return '#4d5431';
+    case 'M': // Mountain Peaks
+      return '#64748b';
+    case '~': // Ocean / River Water
+      return '#0284c7';
+    case 'B': // Wooden Bridge
+      return '#92400e';
+    case 'G': // Wild Flower Meadow
+      return '#ec4899';
+    case 'C': // Town / City
       return '#facc15';
-    case '@': // Boss / Altar
-      return '#ef4444';
-    case 'C': // Town Entrance
+    case '0': // Caverna do Preludio
+      return '#38bdf8';
+    case '6': // Cidadela dos Desafios
       return '#fbbf24';
-    case 'H': // House
-      return '#3b82f6';
-    case 'P': // Potion Shop
-      return '#fb923c';
-    case 'E': // Equipment Shop
+    case '1': // Santuario da Terra
+      return '#22c55e';
+    case '2': // Monte Gulg - Fogo
       return '#ea580c';
-    case 'I': // Inn
+    case '3': // Santuario Submerso - Agua
       return '#06b6d4';
-    case 'N': // NPC
-      return '#a3e635';
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
+    case '4': // Torre da Miragem - Ar
+      return '#a855f7';
     case '5':
-    case '6':
-    case 'F':
-      return '#f87171'; // Dungeon entry point
+    case 'F': // Templo do Caos
+      return '#ef4444';
+    case '<':
+      return '#38bdf8';
+    case '>':
+      return '#a855f7';
+    case 'X':
+      return '#facc15';
+    case '@':
+      return '#ef4444';
     default:
       return '#475569';
   }

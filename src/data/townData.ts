@@ -26,75 +26,75 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
   TOWN_CORNELIA: {
     id: 'TOWN_CORNELIA',
     name: 'Cidade de Cornelia',
-    subtitle: 'Capital da Esperanca e Berco dos Herois',
-    welcomeMessage: 'Bem-vindo a Cidade de Cornelia! O comercio esta ativo e os anciaos estao a disposicao.',
+    subtitle: 'Tres Casas e Meia Arvore no Meio do Nada',
+    welcomeMessage: 'Bem-vindo a Cornelia! A cidade mais generica e reciclada de todo o continente.',
     innCost: 0,
     npcs: [
       {
         id: 'cornelia_elder',
         name: 'Lord Aldus',
-        role: 'Anciao de Cornelia',
+        role: 'Anciao Desocupado',
         avatar: '',
-        x: 4,
-        y: 6,
+        x: 8,
+        y: 7,
         dialogue: [
-          'Saudacoes, valorosos guerreiros! Nosso mundo esta em grande perigo.',
-          'A leste destas terras fica a Caverna do Preludio, a primeira de duas masmorras guardias ancestrais.',
-          'A fera que habita o segundo andar da caverna guarda o Selo de Cobre!',
-          'Sem esse selo, a Guarda Real mantem a ponte leste trancada e ninguem pode viajar para a Cidade de Pravoca.',
-          'Derrotem a criatura na Caverna do Preludio e tragam o Selo de Cobre para abrir o caminho!'
+          'Saudacoes, bando de adolescentes armados! Nosso reino corre perigo mortal.',
+          'Em vez de chamar o exercito real ou a policia, vou mandar voces quatro que acabaram de brotar na grama.',
+          'Vao ate a Caverna do Preludio no leste matar um monstro generico e pegar o Selo de Cobre.',
+          'A guarda trancou a ponte leste e so libera com esse selo. Seguranca publica de altissima qualidade!',
+          'Tragam o selo pra ca e talvez eu libere o resto desse jogo barato para voces.'
         ]
       },
       {
         id: 'cornelia_house_resident',
         name: 'Dona Marta',
-        role: 'Moradora de Cornelia',
+        role: 'Moradora Conformada',
         avatar: '',
         x: 3,
-        y: 2,
+        y: 4,
         dialogue: [
-          'Ola, aventureiros! Esta e a minha humilde residencia.',
-          'Dizem que no canto sudoeste da cidade, a Estalagem oferece camas macias e recupera toda a forca sem cobrar moedas.',
-          'Se forem para a Caverna do Preludio, comprem varias Pocoes na Loja de Itens ao norte!'
+          'Entrem sem bater na porta, claro! Todo protagonista de RPG acha que a casa dos outros e dominio publico.',
+          'Tem um bau no canto da minha sala. Podem pilhar minhas economias a vontade, ninguem aqui liga pra propriedade privada.',
+          'A estalagem ali perto cura ferimentos mortais em dois segundos e de graca. Fisica e medicina mandaram lembrancas.'
         ]
       },
       {
         id: 'cornelia_guard',
         name: 'Sir Ronald',
-        role: 'Guarda da Praca',
+        role: 'Guarda Decorativo',
         avatar: '',
-        x: 9,
-        y: 12,
+        x: 8,
+        y: 10,
         dialogue: [
-          'Eu vigio o portao de Cornelia! O mundo la fora e dez vezes mais vasto do que parece.',
-          'Visitem o Ferramenteiro no canto sudeste da cidade para comprar laminas afiadas e arcos.',
-          'E a Loja de Itens no nordeste vende Pocoes e Eteres para curar sua equipe durante as jornadas.'
+          'Eu fico parado nesta mesma coordenada o dia inteiro fingindo que vigio a entrada da cidade.',
+          'O mundo la fora tem monstros a cada tres passos, mas eu tenho ordens estritas de nao sair deste quadrado.',
+          'Comprem espadas no ferramenteiro do sul. Elas custam os olhos da cara, mas o dano sobe tres pontinhos!'
         ]
       },
       {
         id: 'cornelia_scholar',
         name: 'Mestra Elena',
-        role: 'Erudita dos Cristais',
+        role: 'Erudita do Copia e Cola',
         avatar: '',
-        x: 15,
-        y: 6,
+        x: 18,
+        y: 7,
         dialogue: [
-          'Minhas pesquisas revelam que existem duas masmorras nao-elementais primordiais: a Caverna do Preludio e a Cidadela dos Desafios.',
-          'Elas foram erguidas pelos povos antigos como provacoes obrigatorias para proteger o acesso as grandes cidades e aos Templos Elementais.',
-          'Superem ambas as masmorras antes de tentar desafiar os Quatro Cristais!'
+          'Passei anos estudando os arquivos deste jogo e descobri a verdade: o enredo foi copiado de Final Fantasy de mil novecentos e oitenta e sete.',
+          'Primeiro uma caverna boba, depois uma cidadela de teste, e no final quatro templos elementais com cristais de plastico.',
+          'Superem essa burocracia de masmorras logo para ver se esse roteiro melhora no final!'
         ]
       },
       {
         id: 'cornelia_citizen',
         name: 'Tobias',
-        role: 'Cidadao Viajante',
+        role: 'Turista Perdido',
         avatar: '',
-        x: 10,
-        y: 12,
+        x: 18,
+        y: 10,
         dialogue: [
-          'O Templo de Chaos fica em uma ilha isolada no extremo noroeste do mundo, cercada por montanhas colossais e mares profundos.',
-          'Ninguem consegue alcanca-lo sem antes reunir o poder dos quatro templos elementais.',
-          'Descansem sempre na Estalagem a oeste para recuperar todo o HP e MP da equipe sem custos!'
+          'Dizem que o chefao do mal mora numa ilha isolada no noroeste, sentado num trono esperando a gente subir de nivel.',
+          'Por que esses viloes nunca atacam a cidade enquanto a gente ainda esta no nivel um? Falta de nocao estrategica total.',
+          'Enfim, durmam na estalagem de graca antes que o desenvolvedor decida cobrar pelo pernoite.'
         ]
       }
     ],
@@ -119,71 +119,71 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
   TOWN_PRAVOCA: {
     id: 'TOWN_PRAVOCA',
     name: 'Cidade de Pravoca',
-    subtitle: 'Porto Maritimo do Oceano Oriental',
-    welcomeMessage: 'Bem-vindo ao Porto de Pravoca! A brisa marinha refresca os marinheiros e aventureiros.',
+    subtitle: 'Onde Barcos Nunca Saem do Lugar',
+    welcomeMessage: 'Bem-vindo ao Porto de Pravoca! Nao repare nos navios parados, a mecanica de velejar nao foi feita.',
     innCost: 0,
     npcs: [
       {
         id: 'pravoca_captain',
         name: 'Capitao Drake',
-        role: 'Comandante do Porto',
+        role: 'Pirata Aposentado a Forca',
         avatar: '',
-        x: 4,
-        y: 6,
+        x: 8,
+        y: 7,
         dialogue: [
-          'Ahoy! Vejo que voces trazem o Selo de Cobre da Caverna do Preludio! Sejam bem-vindos a Pravoca.',
-          'Nossos navios estao atracados porque as aguas do Santuario Submerso ao largo da costa ficaram violentas.',
-          'Se pretendem subir as montanhas rumo a Cidade de Gaia, preparem-se para o maior teste de suas vidas!'
+          'Ahoy! Vejo que voces trouxeram o Selo de Cobre da caverna dos novatos! Sejam bem-vindos a Pravoca.',
+          'Nossos navios estao atracados ha decadas porque o programador ainda nao implementou a mecanica de navegar.',
+          'Se pretendem subir as montanhas rumo a Gaia, preparem-se para a Cidadela dos Desafios e seus corredores cinzas repetidos!'
         ]
       },
       {
         id: 'pravoca_house_resident',
         name: 'Mestre Barnaby',
-        role: 'Construtor Naval',
+        role: 'Construtor Frustrado',
         avatar: '',
         x: 3,
-        y: 2,
+        y: 4,
         dialogue: [
-          'Ola, marujos! Aqui guardo minhas cartas nauticas e madeira tratada.',
-          'Dizem que no canto sudoeste da cidade, atras das velhas caixas do porto, ha um bau com tesouro escondido!',
-          'Explorem com cuidado cada viela da cidade!'
+          'Ola marujos! Sou o construtor naval mais frustrado do mundo. Construo barcos lindos que servem apenas de enfeite estatico.',
+          'Escondi um bau no canto sudoeste da cidade atras de caixas velhas. Pelo menos os baus funcionam nesse jogo!',
+          'Cuidado com os monstros do mar... brincadeira, nem monstros marinhos tem aqui por falta de memoria de video!'
         ]
       },
       {
         id: 'pravoca_sage',
         name: 'Erudito Valerius',
-        role: 'Sabio do Desfiladeiro',
+        role: 'Sabio da Parede Invisivel',
         avatar: '',
-        x: 15,
-        y: 6,
+        x: 18,
+        y: 7,
         dialogue: [
-          'A estrada norte para a Cidade de Gaia esta selada pela Barreira Ancestral.',
-          'Apenas aqueles que conquistarem a Cidadela dos Desafios - nossa segunda masmorra ancestral nao-elemental - receberao o Amuleto dos Sabios!',
-          'A Cidadela fica no planalto central entre as montanhas. O Cavaleiro Sombrio la dentro e impiedoso!'
+          'A estrada norte para a Cidade de Gaia esta selada por uma barreira magica invisivel. Classica desculpa de RPG linear!',
+          'Apenas aqueles que conquistarem a Cidadela dos Desafios receberao o Amuleto dos Sabios para liberar a passagem.',
+          'O Cavaleiro Sombrio la dentro veste armadura preta e fala grosso, mas morre com tres magias bem encaixadas.'
         ]
       },
       {
         id: 'pravoca_blacksmith',
         name: 'Ferreiro Thorne',
-        role: 'Armeiro Naval',
+        role: 'Armeiro Oportunista',
         avatar: '',
-        x: 14,
-        y: 12,
+        x: 18,
+        y: 10,
         dialogue: [
-          'Forjei pecas reforcadas em aco temperado! Venha ao Ferramenteiro renovar suas armas antes de subir para a Cidadela dos Desafios.',
-          'Criaturas blindadas habitam aquela fortaleza de pedra.'
+          'Forjei pecas de aco novinhas! Sao o mesmo sprite da espada de ferro com uma cor diferente, mas o ataque e maior.',
+          'Passem todo o seu ouro no meu balcao antes de subir para a Cidadela dos Desafios!'
         ]
       },
       {
         id: 'pravoca_sailor',
         name: 'Jack Marinheiro',
-        role: 'Navegador Veterano',
+        role: 'Observador do Vazio',
         avatar: '',
-        x: 9,
-        y: 12,
+        x: 8,
+        y: 10,
         dialogue: [
-          'Mais ao sul de nosso porto fica o ardente Monte Gulg, onde o magma consome tudo.',
-          'Mas nada se compara ao frio da Cidadela dos Desafios. Sem o Amuleto dos Sabios, ninguem pisa no norte!'
+          'Fico olhando para esse mar azul o dia todo pensando por que a agua nao tem animacao de ondas.',
+          'Ao sul do nosso porto fica o ardente Monte Gulg. Um vulcao inteiro de lava so pra derreter a sola dos sapatos dos herois.'
         ]
       }
     ],
@@ -209,35 +209,35 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
   TOWN_GAIA: {
     id: 'TOWN_GAIA',
     name: 'Cidade de Gaia',
-    subtitle: 'Santuario dos Sabios nas Alturas',
-    welcomeMessage: 'Bem-vindo a Gaia! Os ventos sagrados sopram sobre o refugio dos mestres elementais.',
+    subtitle: 'No Topo do Mundo Onde o FPS Cai',
+    welcomeMessage: 'Bem-vindo a Gaia! A cidade sagrada onde os itens custam uma fortuna absurda.',
     innCost: 0,
     npcs: [
       {
         id: 'gaia_archmage',
         name: 'Arquimago Zephyr',
-        role: 'Patriarca de Gaia',
+        role: 'Patriarca do Roteiro',
         avatar: '',
-        x: 4,
-        y: 6,
+        x: 8,
+        y: 7,
         dialogue: [
-          'Voces superaram a Caverna do Preludio e a Cidadela dos Desafios! O Amuleto dos Sabios resplandece com voces.',
-          'Agora, a barreira esta aberta e os caminhos para os Quatro Templos Elementais estao liberados:',
-          'O Templo da Terra a oeste, o Monte Gulg a sudeste, o Santuario Submerso nos mares, e a Torre da Miragem a oeste daqui!',
-          'Reunam os 4 Cristais Sagrados para dissipar as trevas que cercam o Templo de Chaos no noroeste!'
+          'Inacreditavel! Voces realmente perderam tempo completando aquelas duas masmorras iniciais!',
+          'Agora que a barreira do norte sumiu como num truque de magica, temos que inventar mais quatro tarefas para esticar o jogo.',
+          'Templo da Terra a oeste, Monte Gulg a sudeste, Santuario da Agua nos mares e a Torre da Miragem nas nuvens!',
+          'Juntem os Quatro Cristais para ver se o vilao supremo finalmente para de enrolar no noroeste.'
         ]
       },
       {
         id: 'gaia_house_resident',
         name: 'Hermita Nicholas',
-        role: 'Hermita da Montanha',
+        role: 'Hermita Antissocial',
         avatar: '',
         x: 3,
-        y: 2,
+        y: 4,
         dialogue: [
-          'Paz e serenidade a voces, viajantes das estrelas.',
-          'As fontes termais de Gaia acalmam qualquer ferida de batalha.',
-          'No centro de nossa vila, a fonte sagrada emana pureza primordial.'
+          'Paz e serenidade. Moro isolado no topo desta montanha para fugir dos cliches de RPG, mas voces me acharam mesmo assim.',
+          'A fonte da vila solta um barulho relaxante, mas e so um arquivo de audio curto em loop eterno.',
+          'Peguem o item do meu bau e me deixem em paz meditando sobre o enredo sem nexo deste continente.'
         ]
       },
       {
@@ -245,23 +245,24 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
         name: 'Lyanna dos Astros',
         role: 'Observadora Celeste',
         avatar: '',
-        x: 15,
-        y: 6,
+        x: 18,
+        y: 7,
         dialogue: [
-          'A Torre da Miragem toca os ceus a oeste de nosso vale. La reside o Tiamat e o Cristal do Ar.',
-          'Nossa forja em Gaia e a mais avancada do mundo. Compre armas lendarias com nosso mestre ferramenteiro antes das batalhas finais!'
+          'A Torre da Miragem flutua a oeste. Quem constroi uma torre voadora sem colocar para-raios e escada de incendio?',
+          'Nossa loja aqui em Gaia vende armas lendarias com nomes pomposos como Excalibur e Masamune.',
+          'Custam um absurdo de moedas, mas voce pode pagar vendendo garras de morcego pro ferreiro da esquina!'
         ]
       },
       {
         id: 'gaia_monk',
         name: 'Irmao Kael',
-        role: 'Guardiao da Paz',
+        role: 'Monge do Grind',
         avatar: '',
-        x: 9,
-        y: 12,
+        x: 8,
+        y: 10,
         dialogue: [
-          'O mundo aguardava por campeoes como voces. As duas masmorras guardias provaram sua forca e sabedoria.',
-          'Descansem sempre na nossa Estalagem antes de encarar cada um dos quatro lordes elementais.'
+          'Parabens por chegarem a cidade mais alta do mapa! Aqui os monstros dao o dobro de dano para forcar a equipe a farmar nivel.',
+          'Se a equipe inteira for derrotada, nao culpe o desenvolvedor: culpe quem esqueceu de comprar trinta pocoes de cura!'
         ]
       }
     ],
@@ -286,21 +287,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_CORNELIA_HOUSE',
     name: 'Residencia de Cornelia',
     subtitle: 'Casa de Dona Marta',
-    welcomeMessage: 'Voce entrou na residencia aconchegante de Dona Marta.',
+    welcomeMessage: 'Voce invadiu a residencia de Dona Marta como se fosse sua casa.',
     innCost: 0,
     npcs: [
       {
         id: 'cornelia_house_marta',
         name: 'Dona Marta',
-        role: 'Moradora Acolhedora',
+        role: 'Moradora Paciente',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 5,
         dialogue: [
-          'Bem-vindos a minha humilde casa em Cornelia!',
-          'Fico muito feliz em receber aventureiros tao nobres e dedicados.',
-          'Meu bau no canto tem um suprimento guardado, podem pegar livremente!',
-          'Lembrem de visitar o Ferramenteiro e a Loja de Magias ao lado para estarem prontos.'
+          'Ja disse que podem revirar meus armarios e meu bau! Privacidade nao existe em jogos de aventura.',
+          'Fico impressionada como quatro guerreiros armados entram na casa de uma idosa e ninguem chama a policia.',
+          'Pelo menos fechem a porta quando sairem, porque o vento apaga o fogo da lareira!'
         ]
       }
     ],
@@ -312,20 +312,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_CORNELIA_SHOP',
     name: 'Loja de Itens e Magias',
     subtitle: 'Emporio Comercial de Cornelia',
-    welcomeMessage: 'Bem-vindo a Loja de Itens e Magias de Cornelia!',
+    welcomeMessage: 'Bem-vindo ao emporio de pocoes e artigos superfaturados de Cornelia!',
     innCost: 0,
     npcs: [
       {
         id: 'cornelia_shop_merchant',
         name: 'Mestre Barnabe',
-        role: 'Vendedor de Pocoes e Magias',
+        role: 'Vendedor Mercenario',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 3,
         dialogue: [
-          'Ola viajantes! Bem-vindos ao Emporio de Cornelia.',
-          'Aqui temos as melhores Pocoes de cura, Eteres e Magias para a sua equipe.',
-          'Interajam com o balcao ou comigo para abrir o catalogo de compras e vendas!'
+          'Ola aventureiros! Bem-vindos a minha loja de curas milagrosas.',
+          'Quer reviver um amigo que levou um golpe de machado na cabeca? Uma peninha de fenix resolve no mesmo instante!',
+          'Interajam com o balcao e gastem todo o seu ouro antes que os monstros fiquem fortes demais!'
         ]
       }
     ],
@@ -343,20 +343,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_CORNELIA_TOOLSMITH',
     name: 'Forja e Ferramenteiro',
     subtitle: 'Oficina Real de Cornelia',
-    welcomeMessage: 'O calor da forja e o som do martelo ecoam pela oficina.',
+    welcomeMessage: 'O ferreiro passa o dia batendo ferro frio na bigorna para parecer ocupado.',
     innCost: 0,
     npcs: [
       {
         id: 'cornelia_toolsmith_vorn',
         name: 'Ferreiro Vorn',
-        role: 'Mestre Armeiro',
+        role: 'Mestre da Obsolescencia',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 3,
         dialogue: [
           'Saudacoes guerreiros! Bem-vindos a Forja Real de Cornelia.',
-          'Trabalho com aco e ferro temperado de primeira qualidade.',
-          'Aproximem-se do balcao para equipar seus combatentes com novas armas!'
+          'Passei semanas forjando espadas de ferro que voces vao jogar fora assim que chegarem na proxima cidade.',
+          'Aproximem-se do balcao para equipar armas basicas antes da Caverna do Preludio!'
         ]
       }
     ],
@@ -376,20 +376,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_CORNELIA_INN',
     name: 'Estalagem de Cornelia',
     subtitle: 'Repouso dos Guerreiros da Luz',
-    welcomeMessage: 'O ambiente calmo e acolhedor da estalagem revigora os espiritos.',
+    welcomeMessage: 'Um hotel cinco estrelas totalmente gratuito porque o desenvolvedor esqueceu de programar taxas.',
     innCost: 0,
     npcs: [
       {
         id: 'cornelia_inn_cedric',
         name: 'Taberneiro Cedric',
-        role: 'Hospedeiro de Cornelia',
+        role: 'Hospedeiro Caridoso',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 4,
         dialogue: [
           'Sejam bem-vindos a Estalagem de Cornelia!',
-          'Aqui a estadia e gratuita para os nobres guerreiros da profecia.',
-          'Falem comigo no balcao ou deitem-se nas camas para recuperar todo o HP e MP!'
+          'Aqui a estadia e zero moedas porque a economia deste jogo nao faz o menor sentido.',
+          'Falem comigo no balcao ou cliquem nas camas para recuperar todo o HP e MP em meio segundo!'
         ]
       }
     ],
@@ -402,20 +402,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_PRAVOCA_HOUSE',
     name: 'Residencia de Pravoca',
     subtitle: 'Casa de Mestre Barnaby',
-    welcomeMessage: 'Plantas nauticas e maquetes de caravelas decoram a sala.',
+    welcomeMessage: 'Projetos de barcos estao espalhados pela sala acumulando poeira ha anos.',
     innCost: 0,
     npcs: [
       {
         id: 'pravoca_house_barnaby',
         name: 'Mestre Barnaby',
-        role: 'Construtor Naval Veterano',
+        role: 'Construtor Teotetico',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 5,
         dialogue: [
-          'Ahoy aventureiros! Bem-vindos ao meu estudio naval.',
-          'Aqui desenho as quilhas dos navios mais velozes do oceano oriental.',
-          'Ha um bau de provisao no canto da sala se precisarem de ajuda na jornada!'
+          'Entrem no meu barraco naval! Podem admirar meus mapas e surrupiar o bau no canto sem cerimonia.',
+          'Um dia ainda vou programar uma jangada que navega de verdade pela agua. Ate la, continuem andando a pe!',
+          'Pelo menos a Cidadela dos Desafios fica em terra firme. Boa sorte com aquele cavaleiro sombrio!'
         ]
       }
     ],
@@ -427,20 +427,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_PRAVOCA_SHOP',
     name: 'Loja de Itens do Porto',
     subtitle: 'Emporio Maritimo de Pravoca',
-    welcomeMessage: 'Frascos de pocoes aromaticas e pergaminhos preenchem as prateleiras.',
+    welcomeMessage: 'Pocoes importadas que vieram da mesma fabrica de Cornelia, apenas com etiquetas mais caras.',
     innCost: 0,
     npcs: [
       {
         id: 'pravoca_shop_silas',
         name: 'Mercador Silas',
-        role: 'Comerciante do Porto',
+        role: 'Comerciante Esperto',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 3,
         dialogue: [
-          'Bons ventos os tragam ao Mercado do Porto de Pravoca!',
-          'Temos elixires e itens magicos trazidos pelas caravelas do mar do sul.',
-          'Interajam com o balcao para negociar seus suprimentos de viagem!'
+          'Bons ventos tragam o seu ouro ao Mercado do Porto de Pravoca!',
+          'Dizem que os elixires vieram das caravelas do sul, mas na verdade comprei no atacado de Cornelia e dobrei o preco.',
+          'Venham ao balcao negociar seus suprimentos antes que o estoque esgote!'
         ]
       }
     ],
@@ -459,7 +459,7 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_PRAVOCA_TOOLSMITH',
     name: 'Forja dos Mares',
     subtitle: 'Oficina de Armas de Pravoca',
-    welcomeMessage: 'Fagulhas brilhantes saltam da bigorna do armeiro naval.',
+    welcomeMessage: 'Fagulhas saltam da bigorna enquanto o ferreiro finge trabalhar arduamente.',
     innCost: 0,
     npcs: [
       {
@@ -467,12 +467,12 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
         name: 'Ferreiro Thorne',
         role: 'Armeiro Naval',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 3,
         dialogue: [
           'Bem-vindos a Forja Naval de Pravoca!',
-          'Minhas laminas flamejantes e arcos longos resistem aos monstros marinhos.',
-          'Aproximem-se do balcao para forjar seu novo equipamento de batalha!'
+          'Vendo espadas flamejantes e tridentes sagrados. Nao me pergunte como uma lamina pega fogo debaixo d agua!',
+          'Aproximem-se do balcao para torrar suas moedas em equipamentos de combate!'
         ]
       }
     ],
@@ -492,7 +492,7 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_PRAVOCA_INN',
     name: 'Estalagem do Marinheiro',
     subtitle: 'Repouso dos Navegantes de Pravoca',
-    welcomeMessage: 'O perfume de madeira polida e a lareira confortavel acolhem os viajantes.',
+    welcomeMessage: 'O perfume de madeira polida e a lareira confortavel acolhem os cansados da caminhada.',
     innCost: 0,
     npcs: [
       {
@@ -500,12 +500,12 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
         name: 'Taberneira Wendy',
         role: 'Estalajadeira dos Mares',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 4,
         dialogue: [
           'Bem-vindos a Estalagem do Marinheiro de Pravoca!',
-          'Nossas camas sao confortaveis e o repouso aqui renova todo o seu vigor.',
-          'Falem comigo no balcao para descansar a equipe sem custos!'
+          'Nossas camas sao macias e curam fraturas, envenenamento e cegueira em um piscar de olhos.',
+          'Falem comigo no balcao ou usem os colchoes para renovar toda a forca da trupe sem custos!'
         ]
       }
     ],
@@ -518,20 +518,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_GAIA_HOUSE',
     name: 'Retiro da Montanha',
     subtitle: 'Casa de Hermita Nicholas',
-    welcomeMessage: 'O silencio sagrado da montanha traz serenidade absoluta.',
+    welcomeMessage: 'Mais uma casa privada sendo invadida por estranhos armados ate os dentes.',
     innCost: 0,
     npcs: [
       {
         id: 'gaia_house_nicholas',
         name: 'Hermita Nicholas',
-        role: 'Sabio da Montanha',
+        role: 'Sabio Exausto',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 5,
         dialogue: [
-          'A paz das alturas esteja com voces em meu retiro de Gaia.',
-          'Medito diariamente sobre a harmonia dos Quatro Elementos Sagrados.',
-          'Um tesouro ancestral descansa no bau ao fundo para ajudar os nobres campeoes.'
+          'Mais invasores de domicilio! Por que o criador deste jogo nao colocou trancas nas portas das casas?',
+          'O bau esta ali no fundo, peguem logo o item e me deixem em paz com meus pensamentos profundos.',
+          'E boa sorte escalando a Torre da Miragem, voces vao precisar de muita paciencia!'
         ]
       }
     ],
@@ -543,20 +543,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_GAIA_SHOP',
     name: 'Loja Celestial de Gaia',
     subtitle: 'Emporio Arcano dos Sabios',
-    welcomeMessage: 'Vapores magicos e frascos celestiais brilham na penumbra.',
+    welcomeMessage: 'Frascos magicos brilhantes com rotulos caros para arrancar todo o ouro da equipe.',
     innCost: 0,
     npcs: [
       {
         id: 'gaia_shop_orion',
         name: 'Sabio Orion',
-        role: 'Alquimista Celestial',
+        role: 'Alquimista Extorsivo',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 3,
         dialogue: [
-          'Saudacoes celestes! Bem-vindos ao Emporio Arcano de Gaia.',
-          'Dispomos de Elixires Divinos e Penas de Fenix de pureza incomparavel.',
-          'Interajam com o balcao para adquirir suprimentos supremos!'
+          'Saudacoes celestes! Bem-vindos ao Emporio Arcano das Alturas.',
+          'Colocamos a palavra Celestial na frente de cada pocao e cobramos o triplo do preco normal.',
+          'Interajam com o balcao e comprem elixires antes que os quatro lordes elementais aniquilem voces!'
         ]
       }
     ],
@@ -573,20 +573,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_GAIA_TOOLSMITH',
     name: 'Forja Lendaria de Gaia',
     subtitle: 'Oficina Sagrada dos Sabios',
-    welcomeMessage: 'O fogo sagrado desta forja queima com a forca dos quatro elementos.',
+    welcomeMessage: 'O fogo sagrado desta forja consome barras de metal e o saldo bancario dos aventureiros.',
     innCost: 0,
     npcs: [
       {
         id: 'gaia_toolsmith_hephaestus',
         name: 'Mestre Hephaestus',
-        role: 'Armeiro dos Sabios',
+        role: 'Armeiro Mitologico',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 3,
         dialogue: [
           'Bem-vindos a Forja Sagrada das Alturas!',
-          'Aqui forjamos pecas lendarias como a gloriosa Excalibur e a katana Masamune.',
-          'Aproximem-se do balcao para empunhar as melhores armas de todo o reino!'
+          'Aqui temos a lendaria espada Excalibur e a katana Masamune juntas na mesma prateleira de aldeia.',
+          'Como duas armas de mitologias completamente diferentes vieram parar aqui? Nao faca perguntas dificeis, apenas passe o ouro!'
         ]
       }
     ],
@@ -605,20 +605,20 @@ export const TOWNS_CONFIG: Record<string, TownData> = {
     id: 'INTERIOR_GAIA_INN',
     name: 'Estalagem das Alturas',
     subtitle: 'Santuario do Repouso de Gaia',
-    welcomeMessage: 'Agua benta e canticos de monges proporcionam a cura perfeita.',
+    welcomeMessage: 'Agua mineral e oracoes sagradas que curam ate a dor de cabeca de quem joga ha horas.',
     innCost: 0,
     npcs: [
       {
         id: 'gaia_inn_alistair',
         name: 'Guardiao Alistair',
-        role: 'Sacerdote do Repouso',
+        role: 'Sacerdote do Descanso',
         avatar: '',
-        x: 5,
-        y: 2,
+        x: 10,
+        y: 4,
         dialogue: [
           'Bem-vindos ao Santuario do Repouso de Gaia.',
-          'Nossas preces restauram plenamente a forca e a magia de toda a sua equipe.',
-          'Falem comigo no balcao ou deitem-se nas camas sagradas para descanso total!'
+          'Nossas camas sao tao abencoadas que restauram a saude fisica, a magia e a paciencia do jogador.',
+          'Falem comigo no balcao ou deitem-se nas camas para recuperar toda a tropa antes do confronto final!'
         ]
       }
     ],

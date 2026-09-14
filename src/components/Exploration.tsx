@@ -48,6 +48,8 @@ export const Exploration: React.FC<ExplorationProps> = ({
   useEffect(() => {
     if (mapId === 'OVERWORLD') {
       setIsTilted(true);
+    } else {
+      setIsTilted(false);
     }
   }, [mapId]);
 
@@ -177,13 +179,13 @@ export const Exploration: React.FC<ExplorationProps> = ({
     const tile = currentMap[y][x];
 
     if (mapId.startsWith('INTERIOR_')) {
-      if (tile === 'W' || tile === 'T' || tile === 'I' || tile === 'B' || tile === 'H' || tile === 'E' || tile === 'N' || tile === 'X' || tile === '@') {
+      if (tile === 'W' || tile === 'T' || tile === 'I' || tile === 'B' || tile === 'H' || tile === 'E' || tile === 'N' || tile === 'X') {
         return false;
       }
       return true;
     }
 
-    if (tile === 'M' || tile === '~' || tile === 'W' || tile === 'P' || tile === 'E' || tile === 'I' || tile === 'H' || tile === 'N' || tile === 'X' || tile === '@') {
+    if (tile === 'M' || tile === '~' || tile === 'W' || tile === 'P' || tile === 'E' || tile === 'I' || tile === 'H' || tile === 'N' || tile === 'X') {
       return false;
     }
     if (enemies.some(e => e.x === x && e.y === y)) {
@@ -430,7 +432,38 @@ export const Exploration: React.FC<ExplorationProps> = ({
           const drawX = x * TILE_SIZE - offsetX;
           const drawY = y * TILE_SIZE - offsetY;
 
-          let texture = mapId.startsWith('INTERIOR_')
+          // Detect active dungeon theme for distinct floor and wall rendering
+          const dungeonTheme = mapId.startsWith('DUNGEON_PRELUDIO')
+            ? 'PRELUDIO'
+            : mapId.startsWith('DUNGEON_DESAFIO')
+            ? 'DESAFIO'
+            : mapId.startsWith('DUNGEON_TERRA')
+            ? 'TERRA'
+            : mapId.startsWith('DUNGEON_FOGO')
+            ? 'FOGO'
+            : mapId.startsWith('DUNGEON_AGUA')
+            ? 'AGUA'
+            : mapId.startsWith('DUNGEON_AR')
+            ? 'AR'
+            : mapId.startsWith('DUNGEON_FINAL')
+            ? 'FINAL'
+            : null;
+
+          let texture = dungeonTheme === 'PRELUDIO'
+            ? textures.floorPreludio
+            : dungeonTheme === 'DESAFIO'
+            ? textures.floorDesafio
+            : dungeonTheme === 'TERRA'
+            ? textures.floorTerra
+            : dungeonTheme === 'FOGO'
+            ? textures.floorFogo
+            : dungeonTheme === 'AGUA'
+            ? textures.floorAgua
+            : dungeonTheme === 'AR'
+            ? textures.floorAr
+            : dungeonTheme === 'FINAL'
+            ? textures.floorFinal
+            : mapId.startsWith('INTERIOR_')
             ? textures.interiorWoodFloor
             : mapId.startsWith('TOWN_')
             ? textures.cobble
@@ -461,6 +494,57 @@ export const Exploration: React.FC<ExplorationProps> = ({
               } else {
                 texture = textures.npcResident;
               }
+            } else if (tile === 'X') {
+              const chestKey = `${mapId}_${mapX}_${mapY}`;
+              const isOpened = player.openedChests?.includes(chestKey);
+              texture = isOpened ? textures.chestOpen : textures.chest;
+            }
+          } else if (dungeonTheme) {
+            // DISTINCT THEMATIC TILES FOR EACH ELEMENTAL DUNGEON
+            if (tile === 'M' || tile === 'W') {
+              texture = dungeonTheme === 'PRELUDIO'
+                ? textures.wallPreludio
+                : dungeonTheme === 'DESAFIO'
+                ? textures.wallDesafio
+                : dungeonTheme === 'TERRA'
+                ? textures.wallTerra
+                : dungeonTheme === 'FOGO'
+                ? textures.wallFogo
+                : dungeonTheme === 'AGUA'
+                ? textures.wallAgua
+                : dungeonTheme === 'AR'
+                ? textures.wallAr
+                : textures.wallFinal;
+            } else if (tile === '~') {
+              texture = dungeonTheme === 'FOGO'
+                ? textures.lavaFloor
+                : dungeonTheme === 'AGUA'
+                ? textures.waterDeep
+                : dungeonTheme === 'AR'
+                ? textures.cloudsFloor
+                : dungeonTheme === 'FINAL'
+                ? textures.voidFloor
+                : dungeonTheme === 'TERRA'
+                ? textures.floorTerra
+                : textures.waterFrames[Math.floor((timestamp / 110) % textures.waterFrames.length)] || textures.water;
+            } else if (tile === '@') {
+              texture = dungeonTheme === 'PRELUDIO'
+                ? textures.bossAltarPreludio
+                : dungeonTheme === 'DESAFIO'
+                ? textures.bossAltarDesafio
+                : dungeonTheme === 'TERRA'
+                ? textures.bossAltarTerra
+                : dungeonTheme === 'FOGO'
+                ? textures.bossAltarFogo
+                : dungeonTheme === 'AGUA'
+                ? textures.bossAltarAgua
+                : dungeonTheme === 'AR'
+                ? textures.bossAltarAr
+                : textures.bossAltarFinal;
+            } else if (tile === '<') {
+              texture = textures.stairsUp;
+            } else if (tile === '>') {
+              texture = textures.stairsDown;
             } else if (tile === 'X') {
               const chestKey = `${mapId}_${mapX}_${mapY}`;
               const isOpened = player.openedChests?.includes(chestKey);
@@ -717,6 +801,111 @@ export const Exploration: React.FC<ExplorationProps> = ({
           index
         );
       });
+
+      // 5. DUNGEON ATMOSPHERIC LIGHTING & THEMATIC PARTICLES
+      if (mapId.startsWith('DUNGEON_')) {
+        const screenW = viewW * TILE_SIZE;
+        const screenH = viewH * TILE_SIZE;
+        const leadPos = visualPositionsRef.current[0] || { x: cameraX, y: cameraY };
+        const leadScreenX = (leadPos.x - cameraX) * TILE_SIZE + TILE_SIZE / 2;
+        const leadScreenY = (leadPos.y - cameraY) * TILE_SIZE + TILE_SIZE / 2;
+
+        if (mapId.startsWith('DUNGEON_FOGO')) {
+          // Volcanic heat ambience & floating embers
+          const heatFlicker = Math.sin(timestamp * 0.004) * 0.03 + 0.09;
+          ctx.fillStyle = `rgba(234, 88, 12, ${heatFlicker})`;
+          ctx.fillRect(0, 0, screenW, screenH);
+
+          // Fiery embers rising
+          for (let i = 0; i < 18; i++) {
+            const seed = (i * 997 + Math.floor(timestamp * 0.04)) % 1000;
+            const px = ((i * 59 + seed * 1.3) % screenW);
+            const py = (screenH - ((timestamp * 0.06 + i * 47) % screenH));
+            const size = (i % 3) + 1.5;
+            ctx.fillStyle = i % 2 === 0 ? '#f97316' : '#fef08a';
+            ctx.fillRect(px, py, size, size);
+          }
+        } else if (mapId.startsWith('DUNGEON_AGUA')) {
+          // Submerged aquatic caustic glow & bubbles
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+          ctx.fillRect(0, 0, screenW, screenH);
+
+          // Rising bubbles
+          for (let i = 0; i < 16; i++) {
+            const bx = ((i * 73 + timestamp * 0.015) % screenW);
+            const by = (screenH - ((timestamp * 0.045 + i * 53) % screenH));
+            const bRad = (i % 3) + 1.5;
+            ctx.strokeStyle = 'rgba(153, 246, 228, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(bx + Math.sin(timestamp * 0.003 + i) * 8, by, bRad, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        } else if (mapId.startsWith('DUNGEON_AR')) {
+          // Celestial wind mist & floating breeze wisps
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.06)';
+          ctx.fillRect(0, 0, screenW, screenH);
+
+          // Drifting celestial mist streaks
+          for (let i = 0; i < 10; i++) {
+            const mx = ((i * 110 + timestamp * 0.07) % (screenW + 120)) - 60;
+            const my = (i * 75 + Math.sin(timestamp * 0.002 + i) * 20) % screenH;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+            ctx.beginPath();
+            ctx.ellipse(mx, my, 28 + (i % 4) * 8, 4 + (i % 2) * 2, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (mapId.startsWith('DUNGEON_FINAL')) {
+          // Apocalyptic void chaos energy
+          const voidPulse = Math.sin(timestamp * 0.003) * 0.04 + 0.10;
+          ctx.fillStyle = `rgba(147, 51, 234, ${voidPulse})`;
+          ctx.fillRect(0, 0, screenW, screenH);
+
+          // Chaotic purple & crimson void motes
+          for (let i = 0; i < 20; i++) {
+            const vx = (i * 53 + Math.sin(timestamp * 0.005 + i) * 40) % screenW;
+            const vy = (i * 41 + Math.cos(timestamp * 0.004 + i) * 40) % screenH;
+            ctx.fillStyle = i % 2 === 0 ? 'rgba(192, 132, 252, 0.7)' : 'rgba(239, 68, 68, 0.6)';
+            ctx.fillRect(vx, vy, 2.5, 2.5);
+          }
+        } else if (mapId.startsWith('DUNGEON_TERRA')) {
+          // Earth sanctuary emerald spore motes
+          ctx.fillStyle = 'rgba(34, 197, 94, 0.06)';
+          ctx.fillRect(0, 0, screenW, screenH);
+
+          for (let i = 0; i < 15; i++) {
+            const sx = (i * 67 + Math.sin(timestamp * 0.002 + i) * 30) % screenW;
+            const sy = (screenH - ((timestamp * 0.025 + i * 59) % screenH));
+            ctx.fillStyle = 'rgba(74, 222, 128, 0.55)';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (mapId.startsWith('DUNGEON_DESAFIO')) {
+          // Golden arena glints
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.06)';
+          ctx.fillRect(0, 0, screenW, screenH);
+
+          for (let i = 0; i < 14; i++) {
+            const gx = (i * 79 + Math.cos(timestamp * 0.003 + i) * 25) % screenW;
+            const gy = (i * 61 + Math.sin(timestamp * 0.003 + i) * 25) % screenH;
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.65)';
+            ctx.fillRect(gx, gy, 2, 2);
+          }
+        } else if (mapId.startsWith('DUNGEON_PRELUDIO')) {
+          // Subterranean torchlight halo around party
+          const torchRadius = 140 + Math.sin(timestamp * 0.006) * 6;
+          const torchGrad = ctx.createRadialGradient(
+            leadScreenX, leadScreenY, 15,
+            leadScreenX, leadScreenY, torchRadius
+          );
+          torchGrad.addColorStop(0, 'rgba(251, 191, 36, 0.18)');
+          torchGrad.addColorStop(0.6, 'rgba(245, 158, 11, 0.08)');
+          torchGrad.addColorStop(1, 'rgba(15, 23, 42, 0.35)');
+          ctx.fillStyle = torchGrad;
+          ctx.fillRect(0, 0, screenW, screenH);
+        }
+      }
 
       ctx.restore(); // Restore zoom scale
 

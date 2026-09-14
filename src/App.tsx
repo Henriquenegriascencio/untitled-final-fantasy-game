@@ -15,12 +15,13 @@ import { PrologueIntro } from './components/PrologueIntro';
 import { TownDialogModal } from './components/TownDialogModal';
 import { ToolsmithModal } from './components/ToolsmithModal';
 import { InnModal } from './components/InnModal';
+import { LoadingScreen } from './components/LoadingScreen';
 import { MapTransitionOverlay, MAP_TITLES } from './components/MapTransitionOverlay';
 import { TOWNS_CONFIG, TownNPC } from './data/townData';
 import { soundFX, bgm } from './utils/audio';
 
 export default function App() {
-  const [gameState, setGameState] = useState<GameState>('START_MENU');
+  const [gameState, setGameState] = useState<GameState>('LOADING');
   const stepsSinceEncounter = useRef(0);
   const [saveMessage, setSaveMessage] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -63,8 +64,10 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  const saveGame = () => {
-    const data = { player, mapId, overworldPos, artifacts, totalSteps, playTimeSeconds };
+  const saveGame = (customPlayer?: Player, customMapId?: MapId) => {
+    const p = customPlayer || player;
+    const m = customMapId || mapId;
+    const data = { player: p, mapId: m, overworldPos, artifacts, totalSteps, playTimeSeconds };
     localStorage.setItem('eldoria_save', JSON.stringify(data));
     setHasSave(true);
     soundFX.playSave();
@@ -110,17 +113,26 @@ export default function App() {
     if (data) {
       const parsed = JSON.parse(data);
       const loadedParty = ensurePartyNames(parsed.player?.party || []);
-      setPlayer({
+      const loadedPlayer: Player = {
         ...parsed.player,
-        party: loadedParty
-      });
+        party: loadedParty,
+        storyFlags: parsed.player?.storyFlags || {},
+        artifacts: parsed.player?.artifacts || parsed.artifacts || [],
+        openedChests: parsed.player?.openedChests || []
+      };
+      setPlayer(loadedPlayer);
       setMapId(parsed.mapId);
       setOverworldPos(parsed.overworldPos);
-      setArtifacts(parsed.artifacts);
+      
+      const groundArtifacts = (parsed.artifacts || []).filter(
+        (a: any) => !loadedPlayer.artifacts.includes(a.id)
+      );
+      setArtifacts(groundArtifacts);
+
       if (parsed.totalSteps !== undefined) setTotalSteps(parsed.totalSteps);
       if (parsed.playTimeSeconds !== undefined) setPlayTimeSeconds(parsed.playTimeSeconds);
       stepsSinceEncounter.current = 0;
-      spawnForMap(parsed.mapId);
+      spawnForMap(parsed.mapId, loadedPlayer);
       setGameState('EXPLORATION');
     }
   };
@@ -143,6 +155,10 @@ export default function App() {
   // Background Music (BGM) playback based on GameState
   useEffect(() => {
     switch (gameState) {
+      case 'LOADING':
+        // A musica permanece pausada durante a tela de carregamento para preparar os buffers
+        bgm.stop();
+        break;
       case 'START_MENU':
       case 'CHARACTER_CREATION':
       case 'STORY_CRAWL':
@@ -250,34 +266,37 @@ export default function App() {
   }, [gameState, player.storyFlags]);
 
   // Spawn logic based on map
-  const spawnForMap = (mId: MapId) => {
+  const spawnForMap = (mId: MapId, playerOverride?: Player) => {
+    const p = playerOverride || player;
     let newEnemies: Enemy[] = [];
     if (mId === 'DUNGEON_PRELUDIO_2') {
-      if (!player.storyFlags?.['boss_preludio_defeated']) {
+      if (!p.storyFlags?.['boss_preludio_defeated'] && !p.storyFlags?.['boss_preludio']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_PRELUDIO_2'));
       }
     } else if (mId === 'DUNGEON_DESAFIO_2') {
-      if (!player.storyFlags?.['cidadela_desafios_defeated']) {
+      if (!p.storyFlags?.['cidadela_desafios_defeated'] && !p.storyFlags?.['boss_desafio_defeated']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_DESAFIO_2'));
       }
     } else if (mId === 'DUNGEON_TERRA_2') {
-      if (!player.artifacts?.includes('Terra')) {
+      if (!p.artifacts?.includes('Terra') && !p.storyFlags?.['boss_terra_defeated']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_TERRA_2'));
       }
     } else if (mId === 'DUNGEON_FOGO_2') {
-      if (!player.artifacts?.includes('Fogo')) {
+      if (!p.artifacts?.includes('Fogo') && !p.storyFlags?.['boss_fogo_defeated']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_FOGO_2'));
       }
     } else if (mId === 'DUNGEON_AGUA_2') {
-      if (!player.artifacts?.includes('Agua')) {
+      if (!p.artifacts?.includes('Agua') && !p.storyFlags?.['boss_agua_defeated']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_AGUA_2'));
       }
     } else if (mId === 'DUNGEON_AR_3') {
-      if (!player.artifacts?.includes('Ar')) {
+      if (!p.artifacts?.includes('Ar') && !p.storyFlags?.['boss_ar_defeated']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_AR_3'));
       }
     } else if (mId === 'DUNGEON_FINAL_3') {
-      newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_FINAL_3'));
+      if (!p.storyFlags?.['boss_chaos_defeated'] && !p.storyFlags?.['chaos_defeated']) {
+        newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_FINAL_3'));
+      }
     } else if (mId.startsWith('TOWN_')) {
       newEnemies = [];
     }
@@ -303,10 +322,10 @@ export default function App() {
     
     // Set Artifacts locations on boss floors
     setArtifacts([
-      { id: 'Terra', mapId: 'DUNGEON_TERRA_2', x: 8, y: 5, emoji: '' },
-      { id: 'Fogo', mapId: 'DUNGEON_FOGO_2', x: 7, y: 5, emoji: '' },
-      { id: 'Agua', mapId: 'DUNGEON_AGUA_2', x: 7, y: 5, emoji: '' },
-      { id: 'Ar', mapId: 'DUNGEON_AR_3', x: 7, y: 5, emoji: '' }
+      { id: 'Terra', mapId: 'DUNGEON_TERRA_2', x: 11, y: 8, emoji: '' },
+      { id: 'Fogo', mapId: 'DUNGEON_FOGO_2', x: 11, y: 8, emoji: '' },
+      { id: 'Agua', mapId: 'DUNGEON_AGUA_2', x: 11, y: 8, emoji: '' },
+      { id: 'Ar', mapId: 'DUNGEON_AR_3', x: 11, y: 8, emoji: '' }
     ]);
     
     spawnForMap('OVERWORLD');
@@ -338,8 +357,11 @@ export default function App() {
         setOverworldPos({ x: player.x, y: player.y });
       }
       setMapId(newMapId);
-      setPlayer(prev => ({ ...prev, x: startX, y: startY }));
-      spawnForMap(newMapId);
+      setPlayer(prev => {
+        const nextPlayer = { ...prev, x: startX, y: startY };
+        spawnForMap(newMapId, nextPlayer);
+        return nextPlayer;
+      });
 
       setTimeout(() => {
         setTransitionInfo({ isVisible: false });
@@ -461,11 +483,11 @@ export default function App() {
             }
             if (tile === 'B') {
               soundFX.playSelect();
-              let bookLore = 'Tratados antigos sobre a harmonia dos Quatro Cristais Sagrados e as lendas de Cornelia.';
+              let bookLore = 'Manual de Roteiro: Como reciclar a historia de Final Fantasy mudando apenas os nomes dos lugares.';
               if (mapId.includes('PRAVOCA')) {
-                bookLore = 'Mapas nauticos e cronicas sobre os segredos das profundezas oceanicas.';
+                bookLore = 'Cronicas do Pirata: Esperando o desenvolvedor programar um barco navegavel desde mil novecentos e noventa.';
               } else if (mapId.includes('GAIA')) {
-                bookLore = 'Manuscritos milenares dos Sabios das Alturas descrevendo os segredos da magia pura.';
+                bookLore = 'Tratado dos Sabios: Por que o vilao supremo fica esperando no topo da torre em vez de acabar com o jogo logo no inicio.';
               }
               setTreasureModal({
                 title: 'ESTANTE DE LIVROS',
@@ -476,24 +498,24 @@ export default function App() {
             if (tile === 'H') {
               soundFX.playSelect();
               setTreasureModal({
-                title: 'LAREIRA ACONCHEGANTE',
-                message: 'O fogo queima calmamente aquecendo todo o interior da residencia.'
+                title: 'LAREIRA DE PIXELS',
+                message: 'O fogo e feito de quadradinhos laranjas piscando. Voce tenta se esquentar mas so sente calor da sua placa de video.'
               });
               return;
             }
             if (tile === '<') {
               const parentTown: MapId = mapId.includes('CORNELIA') ? 'TOWN_CORNELIA' : mapId.includes('PRAVOCA') ? 'TOWN_PRAVOCA' : 'TOWN_GAIA';
               let exitX = 3;
-              let exitY = 3;
+              let exitY = 5;
               if (mapId.includes('_SHOP')) {
-                exitX = 16;
-                exitY = 3;
+                exitX = 19;
+                exitY = 5;
               } else if (mapId.includes('_TOOLSMITH')) {
-                exitX = 16;
-                exitY = 11;
+                exitX = 19;
+                exitY = 12;
               } else if (mapId.includes('_INN')) {
                 exitX = 3;
-                exitY = 11;
+                exitY = 12;
               }
               changeMap(parentTown, exitX, exitY, 'door');
               return;
@@ -514,7 +536,7 @@ export default function App() {
             soundFX.playCursor();
             setTreasureModal({
               title: 'BAU VAZIO',
-              message: 'O bau esta vazio!'
+              message: 'O bau esta completamente vazio! Alguem chegou antes ou o desenvolvedor esqueceu de colocar loot.'
             });
             return;
           }
@@ -578,11 +600,11 @@ export default function App() {
       
       // Solid tiles that block walking
       if (mapId.startsWith('INTERIOR_')) {
-        if (tile === 'W' || tile === 'T' || tile === 'I' || tile === 'B' || tile === 'H' || tile === 'E' || tile === 'N' || tile === 'X' || tile === '@') {
+        if (tile === 'W' || tile === 'T' || tile === 'I' || tile === 'B' || tile === 'H' || tile === 'E' || tile === 'N' || tile === 'X') {
           return prev;
         }
       } else {
-        if (tile === 'M' || tile === '~' || tile === 'W' || tile === 'P' || tile === 'E' || tile === 'I' || tile === 'H' || tile === 'N' || tile === 'X' || tile === '@') {
+        if (tile === 'M' || tile === '~' || tile === 'W' || tile === 'P' || tile === 'E' || tile === 'I' || tile === 'H' || tile === 'N' || tile === 'X') {
           return prev;
         }
       }
@@ -597,19 +619,19 @@ export default function App() {
       setTotalSteps(s => s + 1);
 
       // Interior exit doorway (< or bottom edge)
-      if (mapId.startsWith('INTERIOR_') && (tile === '<' || newY >= 7)) {
+      if (mapId.startsWith('INTERIOR_') && (tile === '<' || newY >= 14)) {
         const parentTown: MapId = mapId.includes('CORNELIA') ? 'TOWN_CORNELIA' : mapId.includes('PRAVOCA') ? 'TOWN_PRAVOCA' : 'TOWN_GAIA';
         let exitX = 3;
-        let exitY = 3;
+        let exitY = 5;
         if (mapId.includes('_SHOP')) {
-          exitX = 16;
-          exitY = 3;
+          exitX = 19;
+          exitY = 5;
         } else if (mapId.includes('_TOOLSMITH')) {
-          exitX = 16;
-          exitY = 11;
+          exitX = 19;
+          exitY = 12;
         } else if (mapId.includes('_INN')) {
           exitX = 3;
-          exitY = 11;
+          exitY = 12;
         }
         changeMap(parentTown, exitX, exitY, 'door');
         return prev;
@@ -617,28 +639,28 @@ export default function App() {
 
       // Town building doorways
       if (mapId.startsWith('TOWN_')) {
-        // Step into House doorway at (3, 2)
-        if (newX === 3 && newY === 2) {
+        // Step into House doorway at (3, 4)
+        if (newX === 3 && newY === 4) {
           const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_HOUSE' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_HOUSE' : 'INTERIOR_GAIA_HOUSE';
-          changeMap(interiorMap, 5, 5, 'door');
+          changeMap(interiorMap, 9, 13, 'door');
           return prev;
         }
-        // Step into Shop doorway at (16, 2)
-        if (newX === 16 && newY === 2) {
+        // Step into Shop doorway at (19, 4)
+        if (newX === 19 && newY === 4) {
           const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_SHOP' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_SHOP' : 'INTERIOR_GAIA_SHOP';
-          changeMap(interiorMap, 5, 5, 'door');
+          changeMap(interiorMap, 9, 13, 'door');
           return prev;
         }
-        // Step into Inn doorway at (3, 10)
-        if (newX === 3 && newY === 10) {
+        // Step into Inn doorway at (3, 13)
+        if (newX === 3 && newY === 13) {
           const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_INN' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_INN' : 'INTERIOR_GAIA_INN';
-          changeMap(interiorMap, 5, 5, 'door');
+          changeMap(interiorMap, 9, 13, 'door');
           return prev;
         }
-        // Step into Toolsmith doorway at (16, 10)
-        if (newX === 16 && newY === 10) {
+        // Step into Toolsmith doorway at (19, 13)
+        if (newX === 19 && newY === 13) {
           const interiorMap: MapId = mapId === 'TOWN_CORNELIA' ? 'INTERIOR_CORNELIA_TOOLSMITH' : mapId === 'TOWN_PRAVOCA' ? 'INTERIOR_PRAVOCA_TOOLSMITH' : 'INTERIOR_GAIA_TOOLSMITH';
-          changeMap(interiorMap, 5, 5, 'door');
+          changeMap(interiorMap, 9, 13, 'door');
           return prev;
         }
       }
@@ -648,9 +670,8 @@ export default function App() {
          setOverworldPos({ x: prev.x, y: prev.y });
          saveGame();
          const distCornelia = Math.abs(newX - 36) + Math.abs(newY - 84);
-         const distPravoca = Math.abs(newX - 110) + Math.abs(newY - 76);
-         const distGaia = Math.abs(newX - 96) + Math.abs(newY - 24);
-
+         const distPravoca = Math.abs(newX - 108) + Math.abs(newY - 84);
+         const distGaia = Math.abs(newX - 84) + Math.abs(newY - 24);
          let targetTown: MapId = 'TOWN_CORNELIA';
          if (distCornelia <= distPravoca && distCornelia <= distGaia) {
            targetTown = 'TOWN_CORNELIA';
@@ -660,7 +681,7 @@ export default function App() {
            targetTown = 'TOWN_GAIA';
          }
          setCurrentTownId(targetTown);
-         changeMap(targetTown, 10, 13, 'door');
+         changeMap(targetTown, 11, 15, 'door');
          return prev;
       }
 
@@ -672,118 +693,110 @@ export default function App() {
 
       // Overworld Dungeon Entrances
       if (tile === '0') {
-         changeMap('DUNGEON_PRELUDIO_1', 7, 10, 'stairs');
+         changeMap('DUNGEON_PRELUDIO_1', 11, 15, 'stairs');
          triggerCutscene('enter_preludio');
          return prev;
       } else if (tile === '6') {
-         changeMap('DUNGEON_DESAFIO_1', 7, 10, 'stairs');
+         changeMap('DUNGEON_DESAFIO_1', 11, 15, 'stairs');
          triggerCutscene('enter_desafio');
          return prev;
       } else if (tile === '1') {
          if (!prev.storyFlags?.['boss_preludio_defeated']) {
            setTreasureModal({
              title: 'ENTRADA BLOQUEADA',
-             message: 'A Caverna da Terra esta selada! Derrote o guardiao da Caverna do Preludio primeiro.'
+             message: 'A Caverna da Terra esta selada! Este jogo e linear, entao complete a Caverna do Preludio primeiro.'
            });
            return prev;
          }
          if (!prev.storyFlags?.['cidadela_desafios_defeated']) {
            setTreasureModal({
              title: 'ENTRADA BLOQUEADA',
-             message: 'O Santuario da Terra esta selado por runas da Cidadela dos Desafios! Conquiste o Amuleto dos Sabios na Cidadela primeiro.'
+             message: 'O Santuario da Terra exige o Amuleto dos Sabios! Va sofrer na Cidadela dos Desafios primeiro.'
            });
            return prev;
          }
-         changeMap('DUNGEON_TERRA_1', 7, 10, 'stairs');
+         changeMap('DUNGEON_TERRA_1', 11, 15, 'stairs');
          triggerCutscene('enter_terra');
          return prev;
       } else if (tile === '2') {
          if (!prev.artifacts.includes('Terra')) {
            setTreasureModal({
              title: 'ENTRADA BLOQUEADA',
-             message: 'O calor abrasador bloqueia a passagem! Obtenha o Cristal da Terra primeiro.'
+             message: 'Calor insuportavel! O roteiro exige que voce conquiste o Cristal da Terra antes de vir queimar os pes no magma.'
            });
            return prev;
          }
-         changeMap('DUNGEON_FOGO_1', 7, 10, 'stairs');
+         changeMap('DUNGEON_FOGO_1', 11, 15, 'stairs');
          triggerCutscene('enter_fogo');
          return prev;
       } else if (tile === '3') {
          if (!prev.artifacts.includes('Fogo')) {
            setTreasureModal({
              title: 'ENTRADA BLOQUEADA',
-             message: 'As ondas caoticas barram a entrada! Obtenha o Cristal de Fogo primeiro.'
+             message: 'Ondas violentas barram a passagem! O programador exige o Cristal de Fogo antes de liberar a fase da agua.'
            });
            return prev;
          }
-         changeMap('DUNGEON_AGUA_1', 7, 10, 'stairs');
+         changeMap('DUNGEON_AGUA_1', 11, 15, 'stairs');
          triggerCutscene('enter_agua');
          return prev;
       } else if (tile === '4') {
          if (!prev.artifacts.includes('Agua')) {
            setTreasureModal({
              title: 'ENTRADA BLOQUEADA',
-             message: 'Os ventos cortantes barram sua ascensao! Obtenha o Cristal da Agua primeiro.'
+             message: 'Ventos cortantes! Pegue o Cristal da Agua antes de tentar escalar a torre flutuante.'
            });
            return prev;
          }
-         changeMap('DUNGEON_AR_1', 7, 10, 'stairs');
+         changeMap('DUNGEON_AR_1', 11, 15, 'stairs');
          triggerCutscene('enter_ar');
          return prev;
       } else if (tile === '5' || tile === 'F') {
          if (prev.artifacts.length < 4) {
            setTreasureModal({
              title: 'PORTAL SELADO',
-             message: `O Portal de Chaos exige os 4 Cristais Elementais! Voce reuniu apenas ${prev.artifacts.length} de 4.`
+             message: `O Portal de Chaos exige os 4 Cristais Elementais! Voce reuniu apenas ${prev.artifacts.length} de 4. Nada de pular fases!`
            });
            return prev;
          }
-         changeMap('DUNGEON_FINAL_1', 9, 12, 'door');
+         changeMap('DUNGEON_FINAL_1', 11, 15, 'door');
          triggerCutscene('enter_final');
          return prev;
       } else if (tile === 'G') {
-         // Cornelia Royal Bridge Guard
+         // Cornelia Royal Bridge Checkpoint
          if (newX >= 80 && newX <= 92 && newY >= 72 && newY <= 84) {
-           if (!prev.storyFlags?.['boss_preludio_defeated']) {
-             setTreasureModal({
-               title: 'PONTE REAL TRANCADA',
-               message: 'O Guarda Real barra a passagem: Alto la! O caminho para a Cidade de Pravoca esta infestado de perigos. Apenas quem derrotar a ameaca na Caverna do Preludio e obtiver o Selo de Cobre podera avancar!'
-             });
-             return prev;
-           }
-         }
-         // Mystic Mountain Barrier to Gaia
-         if (newX >= 74 && newX <= 86 && newY >= 36 && newY <= 48) {
-           if (!prev.storyFlags?.['cidadela_desafios_defeated']) {
-             setTreasureModal({
-               title: 'BARREIRA ANCESTRAL',
-               message: 'Uma barreira magica bloqueia o vale: A passagem para a Cidade de Gaia e para os Quatro Templos Elementais so se abrira para quem conquistar a Cidadela dos Desafios e trouxer o Amuleto dos Sabios!'
-             });
-             return prev;
-           }
+           setTreasureModal({
+             title: 'POSTO REAL DE FRONTEIRA',
+             message: 'O Guarda Real avisa com deboche: A estrada esta livre para exploracao! O desenvolvedor removeu as paredes invisiveis. Mas se tentar invadir masmorras avancadas sem os cristais exigidos pela historia, vai levar uma surra!'
+           });
+         } else {
+           setTreasureModal({
+             title: 'MARCADOR ANCESTRAL',
+             message: 'Um monolito magico zune em tom ironico: Terras abertas para exploracao livre! Lembre-se: o mapa e aberto, mas a progressao das masmorras continua estritamente linear!'
+           });
          }
       } else if (tile === '>') {
          // Stairs down
-         if (mapId === 'DUNGEON_PRELUDIO_1') { changeMap('DUNGEON_PRELUDIO_2', 3, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_DESAFIO_1') { changeMap('DUNGEON_DESAFIO_2', 7, 7, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_TERRA_1') { changeMap('DUNGEON_TERRA_2', 3, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_FOGO_1') { changeMap('DUNGEON_FOGO_2', 3, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_AGUA_1') { changeMap('DUNGEON_AGUA_2', 3, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_AR_1') { changeMap('DUNGEON_AR_2', 3, 1, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_AR_2') { changeMap('DUNGEON_AR_3', 3, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_FINAL_1') { changeMap('DUNGEON_FINAL_2', 3, 1, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_FINAL_2') { changeMap('DUNGEON_FINAL_3', 3, 11, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_PRELUDIO_1') { changeMap('DUNGEON_PRELUDIO_2', 19, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_DESAFIO_1') { changeMap('DUNGEON_DESAFIO_2', 19, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_TERRA_1') { changeMap('DUNGEON_TERRA_2', 19, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FOGO_1') { changeMap('DUNGEON_FOGO_2', 19, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AGUA_1') { changeMap('DUNGEON_AGUA_2', 19, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_1') { changeMap('DUNGEON_AR_2', 19, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_2') { changeMap('DUNGEON_AR_3', 3, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_1') { changeMap('DUNGEON_FINAL_2', 11, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_2') { changeMap('DUNGEON_FINAL_3', 20, 3, 'stairs'); return prev; }
       } else if (tile === '<') {
          // Stairs up / exit
-         if (mapId === 'DUNGEON_PRELUDIO_2') { changeMap('DUNGEON_PRELUDIO_1', 11, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_DESAFIO_2') { changeMap('DUNGEON_DESAFIO_1', 7, 8, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_TERRA_2') { changeMap('DUNGEON_TERRA_1', 11, 3, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_FOGO_2') { changeMap('DUNGEON_FOGO_1', 11, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_AGUA_2') { changeMap('DUNGEON_AGUA_1', 11, 9, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_AR_3') { changeMap('DUNGEON_AR_2', 11, 1, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_AR_2') { changeMap('DUNGEON_AR_1', 11, 7, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_FINAL_3') { changeMap('DUNGEON_FINAL_2', 13, 1, 'stairs'); return prev; }
-         if (mapId === 'DUNGEON_FINAL_2') { changeMap('DUNGEON_FINAL_1', 13, 11, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_PRELUDIO_2') { changeMap('DUNGEON_PRELUDIO_1', 17, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_DESAFIO_2') { changeMap('DUNGEON_DESAFIO_1', 17, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_TERRA_2') { changeMap('DUNGEON_TERRA_1', 17, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FOGO_2') { changeMap('DUNGEON_FOGO_1', 17, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AGUA_2') { changeMap('DUNGEON_AGUA_1', 17, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_3') { changeMap('DUNGEON_AR_2', 3, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_AR_2') { changeMap('DUNGEON_AR_1', 17, 4, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_3') { changeMap('DUNGEON_FINAL_2', 20, 3, 'stairs'); return prev; }
+         if (mapId === 'DUNGEON_FINAL_2') { changeMap('DUNGEON_FINAL_1', 11, 4, 'stairs'); return prev; }
          changeMap('OVERWORLD', overworldPos.x, overworldPos.y + 1, 'door');
          return prev;
       }
@@ -832,103 +845,127 @@ export default function App() {
      const defeatedBoss = combatEnemies.find(e => e.type === 'boss' || e.id === 'boss' || e.id.startsWith('boss_'));
      if (defeatedBoss) {
         if (defeatedBoss.id === 'boss_chaos' || defeatedBoss.id === 'boss') {
+           setPlayer(p => ({
+              ...p,
+              storyFlags: { ...(p.storyFlags || {}), 'boss_chaos_defeated': true, 'chaos_defeated': true }
+           }));
            setGameState('VICTORY');
            return;
         }
         if (defeatedBoss.id === 'boss_preludio') {
-           setPlayer(p => ({
-              ...p,
-              storyFlags: { ...(p.storyFlags || {}), 'boss_preludio_defeated': true }
-           }));
            setTreasureModal({
               title: 'SELO DE COBRE OBTIDO!',
               message: 'Voce derrotou a Gargula do Preludio e obteve o Selo de Cobre! A Guarda Real na Ponte de Cornelia agora permitira sua passagem para Pravoca!'
            });
         } else if (defeatedBoss.id === 'boss_desafio') {
-           setPlayer(p => {
-              const promotedParty = p.party.map(h => {
-                 const currentClass = h.heroClass;
-                 let newClass = currentClass;
-                 if (currentClass === 'Guerreiro') newClass = 'Cavaleiro';
-                 else if (currentClass === 'Ladrao') newClass = 'Ninja';
-                 else if (currentClass === 'Monge') newClass = 'Mestre';
-                 else if (currentClass === 'Mago Branco') newClass = 'Mago Branco Superior';
-                 else if (currentClass === 'Mago Negro') newClass = 'Mago Negro Superior';
-                 else if (currentClass === 'Mago Vermelho') newClass = 'Mago Vermelho Superior';
-                 else if (currentClass === 'Cavalheiro') newClass = 'Cavaleiro';
-                 else if (currentClass === 'Arqueiro') newClass = 'Ninja';
-                 else if (currentClass === 'Lutador') newClass = 'Mestre';
-                 else if (currentClass === 'Mago') newClass = 'Mago Negro Superior';
-                 else if (currentClass === 'Alquimista') newClass = 'Mago Vermelho Superior';
-
-                 const upgradedMaxHp = h.stats.maxHp + 30;
-                 const upgradedMaxMp = h.stats.maxMp + 20;
-                 const upgradedVigor = (h.stats.vigor || 16) + 4;
-                 const upgradedMagPwr = (h.stats.magPwr || 12) + 4;
-                 const upgradedDef = (h.stats.def || 14) + 4;
-                 const upgradedMagDef = (h.stats.magDef || 12) + 4;
-                 const upgradedVel = (h.stats.vel || 10) + 2;
-                 const upgradedBatPwr = (h.stats.batPwr || 20) + 6;
-
-                 return {
-                    ...h,
-                    heroClass: newClass,
-                    stats: {
-                       ...h.stats,
-                       hp: upgradedMaxHp,
-                       maxHp: upgradedMaxHp,
-                       mp: upgradedMaxMp,
-                       maxMp: upgradedMaxMp,
-                       vigor: upgradedVigor,
-                       magPwr: upgradedMagPwr,
-                       def: upgradedDef,
-                       magDef: upgradedMagDef,
-                       vel: upgradedVel,
-                       batPwr: upgradedBatPwr,
-                       for: upgradedVigor,
-                       int: upgradedMagPwr
-                    }
-                 };
-              });
-
-              return {
-                 ...p,
-                 party: promotedParty,
-                 storyFlags: { ...(p.storyFlags || {}), 'cidadela_desafios_defeated': true, 'class_promoted': true }
-              };
-           });
-
            soundFX.playSave();
            setTreasureModal({
               title: 'EVOLUCAO DE CLASSES CONQUISTADA!',
               message: 'Voce conquistou o Amuleto dos Sabios na Cidadela dos Desafios! A energia dos antigos despertou em seus herois: Guerreiro vira Cavaleiro, Ladrao vira Ninja, Monge vira Mestre, Mago Branco vira Mago Branco Superior, Mago Negro vira Mago Negro Superior e Mago Vermelho vira Mago Vermelho Superior! Todas as novas habilidades e poderes foram liberados!'
            });
         } else if (defeatedBoss.id === 'boss_terra') {
-           setPlayer(p => ({
-              ...p,
-              artifacts: p.artifacts.includes('Terra') ? p.artifacts : [...p.artifacts, 'Terra']
-           }));
+           setArtifacts(curr => curr.filter(a => a.id !== 'Terra'));
+           setTreasureModal({
+              title: 'CRISTAL DA TERRA RESTAURADO!',
+              message: 'Voce derrotou o Lich da Terra e purificou o Cristal da Terra! A energia telurica volta a nutrir o continente!'
+           });
         } else if (defeatedBoss.id === 'boss_fogo') {
-           setPlayer(p => ({
-              ...p,
-              artifacts: p.artifacts.includes('Fogo') ? p.artifacts : [...p.artifacts, 'Fogo']
-           }));
+           setArtifacts(curr => curr.filter(a => a.id !== 'Fogo'));
+           setTreasureModal({
+              title: 'CRISTAL DE FOGO RESTAURADO!',
+              message: 'Voce derrotou Marilith e purificou o Cristal de Fogo! As chamas caoticas do Vulcao de Gulg foram acalmadas!'
+           });
         } else if (defeatedBoss.id === 'boss_agua') {
-           setPlayer(p => ({
-              ...p,
-              artifacts: p.artifacts.includes('Agua') ? p.artifacts : [...p.artifacts, 'Agua']
-           }));
+           setArtifacts(curr => curr.filter(a => a.id !== 'Agua'));
+           setTreasureModal({
+              title: 'CRISTAL DA AGUA RESTAURADO!',
+              message: 'Voce derrotou Kraken e purificou o Cristal da Agua! Os oceanos e mares de Gaia voltam a fluir limpos!'
+           });
         } else if (defeatedBoss.id === 'boss_ar') {
-           setPlayer(p => ({
-              ...p,
-              artifacts: p.artifacts.includes('Ar') ? p.artifacts : [...p.artifacts, 'Ar']
-           }));
+           setArtifacts(curr => curr.filter(a => a.id !== 'Ar'));
+           setTreasureModal({
+              title: 'CRISTAL DO AR RESTAURADO!',
+              message: 'Voce derrotou Tiamat e purificou o Cristal do Ar! Os ventos celestes voltam a soprar em harmonia!'
+           });
         }
      }
 
      let anyLeveledUp = false;
      setPlayer(prev => {
-        const updatedParty = prev.party.map((hero, i) => {
+        let currentStoryFlags = { ...(prev.storyFlags || {}) };
+        let currentArtifacts = [...prev.artifacts];
+
+        if (defeatedBoss) {
+           currentStoryFlags[`${defeatedBoss.id}_defeated`] = true;
+           if (defeatedBoss.id === 'boss_preludio') {
+              currentStoryFlags['boss_preludio_defeated'] = true;
+           } else if (defeatedBoss.id === 'boss_desafio') {
+              currentStoryFlags['cidadela_desafios_defeated'] = true;
+              currentStoryFlags['class_promoted'] = true;
+           } else if (defeatedBoss.id === 'boss_terra') {
+              currentStoryFlags['boss_terra_defeated'] = true;
+              if (!currentArtifacts.includes('Terra')) currentArtifacts.push('Terra');
+           } else if (defeatedBoss.id === 'boss_fogo') {
+              currentStoryFlags['boss_fogo_defeated'] = true;
+              if (!currentArtifacts.includes('Fogo')) currentArtifacts.push('Fogo');
+           } else if (defeatedBoss.id === 'boss_agua') {
+              currentStoryFlags['boss_agua_defeated'] = true;
+              if (!currentArtifacts.includes('Agua')) currentArtifacts.push('Agua');
+           } else if (defeatedBoss.id === 'boss_ar') {
+              currentStoryFlags['boss_ar_defeated'] = true;
+              if (!currentArtifacts.includes('Ar')) currentArtifacts.push('Ar');
+           }
+        }
+
+        let workingParty = prev.party;
+        if (defeatedBoss && defeatedBoss.id === 'boss_desafio') {
+           workingParty = workingParty.map(h => {
+              const currentClass = h.heroClass;
+              let newClass = currentClass;
+              if (currentClass === 'Guerreiro') newClass = 'Cavaleiro';
+              else if (currentClass === 'Ladrao') newClass = 'Ninja';
+              else if (currentClass === 'Monge') newClass = 'Mestre';
+              else if (currentClass === 'Mago Branco') newClass = 'Mago Branco Superior';
+              else if (currentClass === 'Mago Negro') newClass = 'Mago Negro Superior';
+              else if (currentClass === 'Mago Vermelho') newClass = 'Mago Vermelho Superior';
+              else if (currentClass === 'Cavalheiro') newClass = 'Cavaleiro';
+              else if (currentClass === 'Arqueiro') newClass = 'Ninja';
+              else if (currentClass === 'Lutador') newClass = 'Mestre';
+              else if (currentClass === 'Mago') newClass = 'Mago Negro Superior';
+              else if (currentClass === 'Alquimista') newClass = 'Mago Vermelho Superior';
+
+              const upgradedMaxHp = h.stats.maxHp + 30;
+              const upgradedMaxMp = h.stats.maxMp + 20;
+              const upgradedVigor = (h.stats.vigor || 16) + 4;
+              const upgradedMagPwr = (h.stats.magPwr || 12) + 4;
+              const upgradedDef = (h.stats.def || 14) + 4;
+              const upgradedMagDef = (h.stats.magDef || 12) + 4;
+              const upgradedVel = (h.stats.vel || 10) + 2;
+              const upgradedBatPwr = (h.stats.batPwr || 20) + 6;
+
+              return {
+                 ...h,
+                 heroClass: newClass,
+                 stats: {
+                    ...h.stats,
+                    hp: upgradedMaxHp,
+                    maxHp: upgradedMaxHp,
+                    mp: upgradedMaxMp,
+                    maxMp: upgradedMaxMp,
+                    vigor: upgradedVigor,
+                    magPwr: upgradedMagPwr,
+                    def: upgradedDef,
+                    magDef: upgradedMagDef,
+                    vel: upgradedVel,
+                    batPwr: upgradedBatPwr,
+                    for: upgradedVigor,
+                    int: upgradedMagPwr
+                 }
+              };
+           });
+        }
+
+        const updatedParty = workingParty.map((hero, i) => {
            let newExp = hero.exp + expGain;
            let newLevel = hero.level;
            let newStats = { ...hero.stats };
@@ -973,12 +1010,32 @@ export default function App() {
 
         const invToUse = finalInv ? { items: finalInv } : prev.inventory;
 
-        return {
+        const updatedPlayer: Player = {
            ...prev,
            gold: prev.gold + reward,
            party: updatedParty,
-           inventory: invToUse
+           inventory: invToUse,
+           storyFlags: currentStoryFlags,
+           artifacts: currentArtifacts
         };
+
+        // Persist victory state immediately
+        try {
+           const dataToSave = {
+              player: updatedPlayer,
+              mapId,
+              overworldPos,
+              artifacts: artifacts.filter(a => !currentArtifacts.includes(a.id)),
+              totalSteps,
+              playTimeSeconds
+           };
+           localStorage.setItem('eldoria_save', JSON.stringify(dataToSave));
+           setHasSave(true);
+        } catch (e) {
+           console.error('Auto save error:', e);
+        }
+
+        return updatedPlayer;
      });
      setGameState('EXPLORATION');
   };
@@ -1135,6 +1192,12 @@ export default function App() {
       <div className="relative bg-slate-950 overflow-hidden" style={{ width: 1024, height: 768, transform: `scale(${scale})`, transformOrigin: 'center' }}>
       <AnimatePresence mode="wait">
       
+      {gameState === 'LOADING' && (
+        <motion.div key="loading" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0">
+          <LoadingScreen onComplete={() => setGameState('START_MENU')} />
+        </motion.div>
+      )}
+
       {gameState === 'START_MENU' && (
         <motion.div key="start" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }} className="absolute inset-0">
           <TitleScreen
