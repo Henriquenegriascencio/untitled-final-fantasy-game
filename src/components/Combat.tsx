@@ -264,8 +264,389 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   const [dragTool, setDragTool] = useState<'orbit' | 'pan'>('orbit');
   const [envScenery, setEnvScenery] = useState<{x:number, y:number, propType: 'tree' | 'rock' | 'crystal' | 'spire'}[]>([]);
 
-  // Requirement 2: First Combat humorous dialogue with turn-based tips
-  const [combatTutorialStep, setCombatTutorialStep] = useState<number | null>(() => {
+  // Requirement 2 & 6: Combat Intro Cinematic Dialogues for First Battle and Bosses
+  const isBossFight = useMemo(() => {
+    return enemyUnits.some(e => 
+      e.type === 'boss' || 
+      e.id.includes('boss') || 
+      (e.name && (
+        e.name.toLowerCase().includes('garland') || 
+        e.name.toLowerCase().includes('gargula') || 
+        e.name.toLowerCase().includes('cavaleiro') || 
+        e.name.toLowerCase().includes('lich') || 
+        e.name.toLowerCase().includes('marilith') || 
+        e.name.toLowerCase().includes('kraken') || 
+        e.name.toLowerCase().includes('tiamat') || 
+        e.name.toLowerCase().includes('chaos')
+      ))
+    );
+  }, [enemyUnits]);
+
+  const currentBossUnit = useMemo(() => {
+    return enemyUnits.find(e => 
+      e.type === 'boss' || 
+      e.id.includes('boss') || 
+      (e.name && (
+        e.name.toLowerCase().includes('garland') || 
+        e.name.toLowerCase().includes('gargula') || 
+        e.name.toLowerCase().includes('cavaleiro') || 
+        e.name.toLowerCase().includes('lich') || 
+        e.name.toLowerCase().includes('marilith') || 
+        e.name.toLowerCase().includes('kraken') || 
+        e.name.toLowerCase().includes('tiamat') || 
+        e.name.toLowerCase().includes('chaos')
+      ))
+    ) || enemyUnits[0];
+  }, [enemyUnits]);
+
+  const introDialogueLines = useMemo(() => {
+    const p1 = playerUnits[0] || { name: 'Caelen', heroClass: 'Guerreiro' };
+    const p2 = playerUnits[1] || { name: 'Lyra', heroClass: 'Mago' };
+    const p3 = playerUnits[2] || { name: 'Rowan', heroClass: 'Arqueiro' };
+    const p4 = playerUnits[3] || { name: 'Elira', heroClass: 'Lutador' };
+
+    if (isBossFight && currentBossUnit) {
+      const bossNameLower = (currentBossUnit.name || '').toLowerCase();
+      const bossId = (currentBossUnit.id || '').toLowerCase();
+
+      // 1. Gargula do Preludio
+      if (bossId.includes('preludio') || bossNameLower.includes('gargula')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Gargula do Preludio',
+            role: 'Chefe Alado da Caverna',
+            text: 'Quem ousa perturbar o sono da Gargula do Preludio? Sentirao o peso das minhas garras de pedra!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p1.name || 'Guerreiro',
+            role: p1.heroClass || 'Guerreiro',
+            text: 'Olha so, o chefe da primeira masmorra tem asas mas prefere ficar parado no chao esperando levar porrada!',
+            isBoss: false,
+            speakerUnitId: p1.id,
+            speakerClass: p1.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p2.name || 'Mago',
+            role: p2.heroClass || 'Mago',
+            text: 'Vamos acabar logo com essa estatua de pedra para abrir a ponte de Cornelia. Empunhem as armas!',
+            isBoss: false,
+            speakerUnitId: p2.id,
+            speakerClass: p2.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // 2. Cavaleiro Sombrio (Cidadela dos Desafios)
+      if (bossId.includes('desafio') || bossNameLower.includes('cavaleiro')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Cavaleiro Sombrio',
+            role: 'Guardiao dos Campeoes',
+            text: 'Voces buscam a prova dos campeoes? Minha armadura de aco antigo jamais foi arranhada por aventureiros amadores!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p1.name || 'Guerreiro',
+            role: p1.heroClass || 'Guerreiro',
+            text: 'Uma armadura tao pesada e ele ainda tenta falar em tom dramatico. Sera que da pra devolver se estiver enferrujada?',
+            isBoss: false,
+            speakerUnitId: p1.id,
+            speakerClass: p1.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p3.name || 'Arqueiro',
+            role: p3.heroClass || 'Arqueiro',
+            text: 'Preparem suas melhores tecnicas! Vamos quebrar essa lata velha em pedacos!',
+            isBoss: false,
+            speakerUnitId: p3.id,
+            speakerClass: p3.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // 3. Lich da Terra
+      if (bossId.includes('terra') || bossNameLower.includes('lich')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Lich da Terra',
+            role: 'Lorde dos Mortos',
+            text: 'Tolos mortais... O poder do Cristal da Terra pertence a mim! Suas almas serao sepultadas no barro eterno!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p2.name || 'Mago',
+            role: p2.heroClass || 'Mago',
+            text: 'Um esqueleto de manto com discurso de fim do mundo. Que falta faz um pouco de vitamina D nesse santuario!',
+            isBoss: false,
+            speakerUnitId: p2.id,
+            speakerClass: p2.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p1.name || 'Guerreiro',
+            role: p1.heroClass || 'Guerreiro',
+            text: 'Foco total no combate! Magias de fogo e ataques certeiros vao transformar essa ossada em cinzas!',
+            isBoss: false,
+            speakerUnitId: p1.id,
+            speakerClass: p1.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // 4. Marilith de Fogo
+      if (bossId.includes('fogo') || bossNameLower.includes('marilith')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Marilith de Fogo',
+            role: 'Senhora do Magma',
+            text: 'Sentem o calor do magma ardente? Minhas seis laminas vao transformar seus corpos em cinzas incandescentes!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p3.name || 'Arqueiro',
+            role: p3.heroClass || 'Arqueiro',
+            text: 'Seis espadas e seis bracos... Deve ser um pesadelo na hora de comprar luvas na loja de equipamentos!',
+            isBoss: false,
+            speakerUnitId: p3.id,
+            speakerClass: p3.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p4.name || 'Lutador',
+            role: p4.heroClass || 'Lutador',
+            text: 'Usem magias de gelo e protejam-se das chamas. A cobra gigante nao vai passar daqui!',
+            isBoss: false,
+            speakerUnitId: p4.id,
+            speakerClass: p4.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // 5. Kraken Abissal
+      if (bossId.includes('agua') || bossNameLower.includes('kraken')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Kraken Abissal',
+            role: 'Terror dos Mares',
+            text: 'O oceano profundo e a minha morada! Ninguem escapa dos meus tentaculos vorazes nas profundezas das aguas!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p3.name || 'Arqueiro',
+            role: p3.heroClass || 'Arqueiro',
+            text: 'Um polvo gigante que acha que manda no mar. Ja estou imaginando a quantidade de espetinhos que vamos assar!',
+            isBoss: false,
+            speakerUnitId: p3.id,
+            speakerClass: p3.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p2.name || 'Mago',
+            role: p2.heroClass || 'Mago',
+            text: 'Raios eletricos nele! A agua conduz eletricidade e esse monstro marinho vai fritar agora mesmo!',
+            isBoss: false,
+            speakerUnitId: p2.id,
+            speakerClass: p2.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // 6. Tiamat dos Ceus
+      if (bossId.includes('ar') || bossNameLower.includes('tiamat')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Tiamat dos Ceus',
+            role: 'Draco-Imperatriz dos Ventos',
+            text: 'Eu governo os ventos e tempestades do infinito! Vermes rastejantes jamais alcancarao as alturas celestes!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p3.name || 'Arqueiro',
+            role: p3.heroClass || 'Arqueiro',
+            text: 'Voce fica parada no topo da torre esperando desafiantes em vez de usar as asas para voar. Pura pose de chefe!',
+            isBoss: false,
+            speakerUnitId: p3.id,
+            speakerClass: p3.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p1.name || 'Guerreiro',
+            role: p1.heroClass || 'Guerreiro',
+            text: 'Flechas e magias pontiagudas vao cortar essas asas celestes. Para a batalha!',
+            isBoss: false,
+            speakerUnitId: p1.id,
+            speakerClass: p1.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // 7. Chaos Supremo
+      if (bossId.includes('chaos') || bossNameLower.includes('chaos')) {
+        return [
+          {
+            speaker: currentBossUnit.name || 'Chaos Supremo',
+            role: 'Lorde do Ciclo Temporal',
+            text: 'Eu sou o principio e o fim de todas as eras! O ciclo do caos e infinito e sua jornada termina no vazio eterno!',
+            isBoss: true,
+            speakerUnitId: currentBossUnit.id,
+            speakerClass: undefined,
+            speakerEnemyType: currentBossUnit.enemyType || 'boss'
+          },
+          {
+            speaker: p1.name || 'Guerreiro',
+            role: p1.heroClass || 'Guerreiro',
+            text: 'Chegamos ao fim da linha, vilao dos chifres pontudos! Ja ouvimos discursos melhores em tabernas baratas!',
+            isBoss: false,
+            speakerUnitId: p1.id,
+            speakerClass: p1.heroClass,
+            speakerEnemyType: undefined
+          },
+          {
+            speaker: p2.name || 'Mago',
+            role: p2.heroClass || 'Mago',
+            text: 'Todo mundo preparado com pocoes e magias supremas. Vamos salvar Eldoria e encerrar essa batalha agora mesmo!',
+            isBoss: false,
+            speakerUnitId: p2.id,
+            speakerClass: p2.heroClass,
+            speakerEnemyType: undefined
+          }
+        ];
+      }
+
+      // Chefe Generico / Mini-Chefe
+      return [
+        {
+          speaker: currentBossUnit.name || 'Chefe Inimigo',
+          role: 'Lider dos Inimigos',
+          text: 'Voces cometeram um erro fatal ao pisar no meu territorio. Nao sairao vivos deste tabuleiro!',
+          isBoss: true,
+          speakerUnitId: currentBossUnit.id,
+          speakerClass: undefined,
+          speakerEnemyType: currentBossUnit.enemyType || 'boss'
+        },
+        {
+          speaker: p1.name || 'Guerreiro',
+          role: p1.heroClass || 'Guerreiro',
+          text: 'Mais um monstro que fala demais antes da luta. Vamos ver se bate tao forte quanto ameaca!',
+          isBoss: false,
+          speakerUnitId: p1.id,
+          speakerClass: p1.heroClass,
+          speakerEnemyType: undefined
+        },
+        {
+          speaker: p2.name || 'Mago',
+          role: p2.heroClass || 'Mago',
+          text: 'Posicao de batalha! Mantenham o foco e ataquem com tudo!',
+          isBoss: false,
+          speakerUnitId: p2.id,
+          speakerClass: p2.heroClass,
+          speakerEnemyType: undefined
+        }
+      ];
+    }
+
+    // Primeira Batalha (Tutorial / Humor dos Protagonistas)
+    return [
+      {
+        speaker: p1.name || 'Guerreiro',
+        role: p1.heroClass || 'Lider',
+        text: 'Monstros bloquearam nosso caminho! Empunhem suas armas e preparem-se para a luta!',
+        isBoss: false,
+        speakerUnitId: p1.id,
+        speakerClass: p1.heroClass,
+        speakerEnemyType: undefined
+      },
+      {
+        speaker: p2.name || 'Mago',
+        role: p2.heroClass || 'Mago',
+        text: 'Espera ai... por que todo mundo congelou? Por que a gente nao corre e ataca todo mundo de uma vez?',
+        isBoss: false,
+        speakerUnitId: p2.id,
+        speakerClass: p2.heroClass,
+        speakerEnemyType: undefined
+      },
+      {
+        speaker: p3.name || 'Arqueiro',
+        role: p3.heroClass || 'Arqueiro',
+        text: 'Sao as leis sagradas do combate por turnos! Voce anda no grid, escolhe Atacar, Tecnica ou Magia, e depois espera pacientemente enquanto o monstro pensa!',
+        isBoss: false,
+        speakerUnitId: p3.id,
+        speakerClass: p3.heroClass,
+        speakerEnemyType: undefined
+      },
+      {
+        speaker: p4.name || 'Lutador',
+        role: p4.heroClass || 'Lutador',
+        text: 'Que cavalheirismo absurdo... Entao quem tiver mais Velocidade VEL comeca primeiro?',
+        isBoss: false,
+        speakerUnitId: p4.id,
+        speakerClass: p4.heroClass,
+        speakerEnemyType: undefined
+      },
+      {
+        speaker: p1.name || 'Guerreiro',
+        role: p1.heroClass || 'Lider',
+        text: 'Exato! Olhem a ordem na barra superior. E prestem atencao: subir em Terreno Alto em plataformas elevadas reduz em 35 de dano recebido!',
+        isBoss: false,
+        speakerUnitId: p1.id,
+        speakerClass: p1.heroClass,
+        speakerEnemyType: undefined
+      },
+      {
+        speaker: p2.name || 'Mago',
+        role: p2.heroClass || 'Mago',
+        text: 'E se a coisa apertar, o comando Fugir esta no menu... sem vergonha, apenas retirada tatica! Vamos a vitoria!',
+        isBoss: false,
+        speakerUnitId: p2.id,
+        speakerClass: p2.heroClass,
+        speakerEnemyType: undefined
+      }
+    ];
+  }, [isBossFight, currentBossUnit, playerUnits]);
+
+  const [combatIntroStep, setCombatIntroStep] = useState<number | null>(() => {
+    const isBoss = enemyUnits.some(e => 
+      e.type === 'boss' || 
+      e.id.includes('boss') || 
+      (e.name && (
+        e.name.toLowerCase().includes('garland') || 
+        e.name.toLowerCase().includes('gargula') || 
+        e.name.toLowerCase().includes('cavaleiro') || 
+        e.name.toLowerCase().includes('lich') || 
+        e.name.toLowerCase().includes('marilith') || 
+        e.name.toLowerCase().includes('kraken') || 
+        e.name.toLowerCase().includes('tiamat') || 
+        e.name.toLowerCase().includes('chaos')
+      ))
+    );
+    if (isBoss) return 0;
     try {
       const seen = localStorage.getItem('eldoria_seen_first_combat_dialogue');
       return seen === 'true' ? null : 0;
@@ -273,46 +654,6 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
       return null;
     }
   });
-
-  const tutorialHeroes = playerUnits.length >= 4 ? playerUnits : [
-    { name: playerUnits[0]?.name || 'Guerreiro', heroClass: 'Lider' },
-    { name: playerUnits[1]?.name || 'Mago', heroClass: 'Mago' },
-    { name: playerUnits[2]?.name || 'Arqueiro', heroClass: 'Arqueiro' },
-    { name: playerUnits[3]?.name || 'Lutador', heroClass: 'Lutador' }
-  ];
-
-  const COMBAT_TUTORIAL_LINES = [
-    {
-      speaker: tutorialHeroes[0]?.name || 'Lider',
-      role: tutorialHeroes[0]?.heroClass || 'Lider',
-      text: 'Monstros bloquearam nosso caminho! Empunhem suas armas e preparem-se para a luta!'
-    },
-    {
-      speaker: tutorialHeroes[1]?.name || 'Mago',
-      role: tutorialHeroes[1]?.heroClass || 'Mago',
-      text: 'Espera ai... por que todo mundo congelou? Por que a gente nao corre e ataca todo mundo de uma vez?'
-    },
-    {
-      speaker: tutorialHeroes[2]?.name || 'Arqueiro',
-      role: tutorialHeroes[2]?.heroClass || 'Arqueiro',
-      text: 'Sao as leis sagradas do combate por turnos! Voce anda no grid, escolhe Atacar, Tecnica ou Magia, e depois espera pacientemente enquanto o monstro pensa!'
-    },
-    {
-      speaker: tutorialHeroes[3]?.name || 'Lutador',
-      role: tutorialHeroes[3]?.heroClass || 'Lutador',
-      text: 'Que cavalheirismo absurdo... Entao quem tiver mais Velocidade VEL comeca primeiro?'
-    },
-    {
-      speaker: tutorialHeroes[0]?.name || 'Lider',
-      role: tutorialHeroes[0]?.heroClass || 'Lider',
-      text: 'Exato! Olhem a ordem na barra superior. E prestem atencao: subir em Terreno Alto em plataformas elevadas reduz em 35 de dano recebido!'
-    },
-    {
-      speaker: tutorialHeroes[1]?.name || 'Mago',
-      role: tutorialHeroes[1]?.heroClass || 'Mago',
-      text: 'E se a coisa apertar, o comando Fugir esta no menu... sem vergonha, apenas retirada tatica! Vamos a vitoria!'
-    }
-  ];
 
   // Camera State: Auto Tracking & Free Camera
   const [isFreeCamera, setIsFreeCamera] = useState(false);
@@ -370,28 +711,6 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     setRotX(65);
   };
 
-  useEffect(() => {
-    if (combatTutorialStep === null) return;
-    const handleTutorialKey = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        if (combatTutorialStep < COMBAT_TUTORIAL_LINES.length - 1) {
-          setCombatTutorialStep(prev => (prev !== null ? prev + 1 : null));
-        } else {
-          localStorage.setItem('eldoria_seen_first_combat_dialogue', 'true');
-          setCombatTutorialStep(null);
-          showActionText('Dica: Suba em Terreno Alto para reduzir 35 de dano!');
-        }
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        localStorage.setItem('eldoria_seen_first_combat_dialogue', 'true');
-        setCombatTutorialStep(null);
-        showActionText('Dica: Suba em Terreno Alto para reduzir 35 de dano!');
-      }
-    };
-    window.addEventListener('keydown', handleTutorialKey);
-    return () => window.removeEventListener('keydown', handleTutorialKey);
-  }, [combatTutorialStep]);
   const [selectedAction, setSelectedAction] = useState<'MOVE' | 'ATTACK' | 'MAGIC' | 'ITEM' | 'SKILL' | null>(null);
   const [actionMenu, setActionMenu] = useState<'MAIN' | 'SKILLS' | 'MAGIC' | 'ITEM'>('MAIN');
   const [selectedSubItem, setSelectedSubItem] = useState<string | null>(null);
@@ -473,6 +792,71 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     setIsFreeCamera(false);
     setActionZoomMultiplier(1);
   }, [units, activeUnitId, getCameraOffset]);
+
+  // Handle intro dialogue advance / skip
+  const handleAdvanceIntro = useCallback(() => {
+    if (combatIntroStep === null) return;
+    if (combatIntroStep < introDialogueLines.length - 1) {
+      soundFX.playSelect();
+      setCombatIntroStep(prev => (prev !== null ? prev + 1 : null));
+    } else {
+      soundFX.playSelect();
+      localStorage.setItem('eldoria_seen_first_combat_dialogue', 'true');
+      setCombatIntroStep(null);
+      snapToActiveUnit();
+      showActionText(isBossFight ? 'Batalha Contra Chefe Iniciada!' : 'Combate Iniciado!');
+    }
+  }, [combatIntroStep, introDialogueLines.length, isBossFight, snapToActiveUnit]);
+
+  const handleSkipIntro = useCallback(() => {
+    soundFX.playCancel();
+    localStorage.setItem('eldoria_seen_first_combat_dialogue', 'true');
+    setCombatIntroStep(null);
+    snapToActiveUnit();
+    showActionText(isBossFight ? 'Batalha Contra Chefe Iniciada!' : 'Combate Iniciado!');
+  }, [isBossFight, snapToActiveUnit]);
+
+  // Keyboard navigation for dialogue
+  useEffect(() => {
+    if (combatIntroStep === null) return;
+    const handleIntroKey = (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        handleAdvanceIntro();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleSkipIntro();
+      }
+    };
+    window.addEventListener('keydown', handleIntroKey);
+    return () => window.removeEventListener('keydown', handleIntroKey);
+  }, [combatIntroStep, handleAdvanceIntro, handleSkipIntro]);
+
+  // Camera closeup during cinematic dialogues
+  useEffect(() => {
+    if (combatIntroStep === null || units.length === 0) return;
+    const currentLine = introDialogueLines[combatIntroStep];
+    if (!currentLine) return;
+
+    if (currentLine.isBoss) {
+      const boss = units.find(u => !u.isPlayer && (u.type === 'boss' || u.id.includes('boss') || u.id === currentLine.speakerUnitId)) || units.find(u => !u.isPlayer);
+      if (boss) {
+        focusOnGrid(boss.x, boss.y, 1.45);
+      }
+    } else {
+      const hero = units.find(u => u.isPlayer && (u.id === currentLine.speakerUnitId || u.name === currentLine.speaker || u.heroClass === currentLine.role)) || units.find(u => u.isPlayer);
+      if (hero) {
+        focusOnGrid(hero.x, hero.y, 1.45);
+      } else {
+        const playerUnitsAlive = units.filter(u => u.isPlayer);
+        if (playerUnitsAlive.length > 0) {
+          const avgX = playerUnitsAlive.reduce((acc, p) => acc + p.x, 0) / playerUnitsAlive.length;
+          const avgY = playerUnitsAlive.reduce((acc, p) => acc + p.y, 0) / playerUnitsAlive.length;
+          focusOnGrid(avgX, avgY, 1.35);
+        }
+      }
+    }
+  }, [combatIntroStep, units, introDialogueLines, focusOnGrid]);
 
   const nudgeCamera = (dx: number, dy: number) => {
     if (!isFreeCamera) {
@@ -856,7 +1240,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   };
 
   const nextTurn = () => {
-    if (isTurnTransitioning || combatTutorialStep !== null) return;
+    if (isTurnTransitioning || combatIntroStep !== null) return;
 
     setSelectedAction(null);
     setActionMenu('MAIN');
@@ -916,7 +1300,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   };
 
   const handleEscape = () => {
-    if (isActionBusy || isTurnTransitioning || combatTutorialStep !== null) return;
+    if (isActionBusy || isTurnTransitioning || combatIntroStep !== null) return;
     soundFX.playSelect();
     const isBossFight = enemyUnits.some(e => e.id === 'boss' || e.type === 'boss' || (e.name && e.name.toLowerCase().includes('chefe')));
     if (isBossFight) {
@@ -960,9 +1344,34 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
     }
   };
 
+  const processedDebuffTurnRef = useRef<string>('');
+
+  // Synchronize unitsRef with state whenever units update to guarantee persistence across SOS and turns
+  useEffect(() => {
+    unitsRef.current = units;
+  }, [units]);
+
   // Process debuffs on turn start and guard against softlocks when units die from debuffs
   useEffect(() => {
     if (!activeUnitId) return;
+
+    const turnKey = `${activeUnitId}_${turnQueue.slice(0, 3).join('_')}`;
+    if (processedDebuffTurnRef.current === turnKey) return;
+
+    const currentUnit = units.find(u => u.id === activeUnitId);
+    if (!currentUnit || !currentUnit.debuffs || currentUnit.debuffs.length === 0 || currentUnit.stats.hp <= 0) return;
+
+    const activeDebuffs = currentUnit.debuffs.filter(d => d.duration > 0);
+    if (activeDebuffs.length === 0) {
+      setUnits(prev => {
+        const next = prev.map(u => u.id === activeUnitId ? { ...u, debuffs: [] } : u);
+        unitsRef.current = next;
+        return next;
+      });
+      return;
+    }
+
+    processedDebuffTurnRef.current = turnKey;
 
     let unitDied = false;
     let updatedSnapshot: CombatUnit[] = [];
@@ -975,32 +1384,41 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           let newHp = u.stats.hp;
           let remainingDebuffs = [];
           for (const d of u.debuffs) {
-            if (d.type === 'burn') {
-               newHp -= 10;
-               showActionText(`${u.name || 'Combatente'} sofre dano de Queimadura!`);
-               const effId = Date.now() + Math.floor(Math.random() * 50);
-               setVisualEffects(v => [...v, { id: effId, unitId: u.id, type: 'hit', value: '-10 FOGO', x: u.x, y: u.y }]);
-               setTimeout(() => setVisualEffects(v => v.filter(item => item.id !== effId)), 1000);
-            } else if (d.type === 'poison') {
-               newHp -= 5;
-               showActionText(`${u.name || 'Combatente'} sofre dano de Veneno!`);
-               const effId = Date.now() + Math.floor(Math.random() * 50);
-               setVisualEffects(v => [...v, { id: effId, unitId: u.id, type: 'hit', value: '-5 VENENO', x: u.x, y: u.y }]);
-               setTimeout(() => setVisualEffects(v => v.filter(item => item.id !== effId)), 1000);
-            }
-            if (d.duration > 1) {
-               remainingDebuffs.push({ ...d, duration: d.duration - 1 });
+            if (d.duration > 0) {
+              if (d.type === 'burn') {
+                 newHp -= 10;
+                 showActionText(`${u.name || 'Combatente'} sofre dano de Queimadura!`);
+                 const effId = Date.now() + Math.floor(Math.random() * 50);
+                 setVisualEffects(v => [...v, { id: effId, unitId: u.id, type: 'hit', value: '-10 FOGO', x: u.x, y: u.y }]);
+                 setTimeout(() => setVisualEffects(v => v.filter(item => item.id !== effId)), 1000);
+              } else if (d.type === 'poison') {
+                 newHp -= 5;
+                 showActionText(`${u.name || 'Combatente'} sofre dano de Veneno!`);
+                 const effId = Date.now() + Math.floor(Math.random() * 50);
+                 setVisualEffects(v => [...v, { id: effId, unitId: u.id, type: 'hit', value: '-5 VENENO', x: u.x, y: u.y }]);
+                 setTimeout(() => setVisualEffects(v => v.filter(item => item.id !== effId)), 1000);
+              }
+              const nextDur = d.duration - 1;
+              if (nextDur > 0) {
+                 remainingDebuffs.push({ ...d, duration: nextDur });
+              } else {
+                 showActionText(`O efeito de ${d.type === 'burn' ? 'Queimadura' : d.type === 'poison' ? 'Veneno' : 'Congelamento'} em ${u.name || 'Combatente'} passou!`);
+              }
             }
           }
           newHp = Math.max(0, newHp);
           if (newHp <= 0) {
             unitDied = true;
+            remainingDebuffs = [];
           }
           return { ...u, stats: { ...u.stats, hp: newHp }, debuffs: remainingDebuffs };
         }
         return u;
       });
       updatedSnapshot = changed ? next : prev;
+      if (changed) {
+        unitsRef.current = next;
+      }
       return changed ? next : prev;
     });
 
@@ -1021,7 +1439,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   };
 
   const handleUseItem = (item: Item) => {
-    if (isActionBusy || combatTutorialStep !== null || activeUnit?.hasActed || !activeUnit) return;
+    if (isActionBusy || combatIntroStep !== null || activeUnit?.hasActed || !activeUnit) return;
     if (!item || (item.count || 0) <= 0) {
       soundFX.playCancel();
       showActionText('Item esgotado!');
@@ -1127,7 +1545,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
   };
 
   const handleCellClick = (x: number, y: number) => {
-    if (combatTutorialStep !== null || hasDraggedRef.current || isDragging) return;
+    if (combatIntroStep !== null || hasDraggedRef.current || isDragging) return;
     if (isTurnTransitioning || isActionBusy || !activeUnit || !activeUnit.isPlayer) return;
 
     if (selectedAction === 'MOVE' && !activeUnit.hasMoved) {
@@ -1497,7 +1915,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
 
   // AI Turn Implementation with camera follow, zoom in on attack, and pacing delays
   useEffect(() => {
-    if (combatTutorialStep === null && !isTurnTransitioning && activeUnit && !activeUnit.isPlayer) {
+    if (combatIntroStep === null && !isTurnTransitioning && activeUnit && !activeUnit.isPlayer) {
        // Safety: if enemy is dead, immediately advance turn to prevent softlock
        if (activeUnit.stats.hp <= 0) {
           nextTurn();
@@ -1564,17 +1982,33 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
 
              const newEnemyHp = Math.round((activeUnit.stats.maxHp || 50) * 0.85);
              const newEnemy: CombatUnit = {
-                ...activeUnit,
                 id: newId,
                 name: `${activeUnit.name ? activeUnit.name.split(' ')[0] : 'Inimigo'} Reforco`,
+                enemyType: (activeUnit as any).enemyType || (activeUnit as any).type || 'goblin',
+                heroClass: activeUnit.heroClass,
+                emoji: activeUnit.emoji || '👾',
+                weapon: activeUnit.weapon ? { ...activeUnit.weapon } : { id: 'w_enemy', name: 'Garra', type: 'espada', damage: 8, range: 1 },
                 stats: { 
-                  ...activeUnit.stats, 
-                  hp: newEnemyHp, 
-                  maxHp: newEnemyHp,
-                  vel: Math.max(5, (activeUnit.stats.vel || 10) - 1)
+                  maxHp: newEnemyHp, 
+                  hp: newEnemyHp,
+                  mp: activeUnit.stats.maxMp || 20,
+                  maxMp: activeUnit.stats.maxMp || 20,
+                  sp: 0,
+                  maxSp: 100,
+                  vigor: activeUnit.stats.vigor || 16,
+                  magPwr: activeUnit.stats.magPwr || 12,
+                  def: activeUnit.stats.def || 10,
+                  magDef: activeUnit.stats.magDef || 10,
+                  mBlock: activeUnit.stats.mBlock || 0,
+                  vel: Math.max(5, (activeUnit.stats.vel || 10) - 1),
+                  mov: activeUnit.stats.mov || 2,
+                  batPwr: activeUnit.stats.batPwr || 18,
+                  for: activeUnit.stats.for || 16,
+                  int: activeUnit.stats.int || 12
                 },
                 x: spawnX, 
                 y: spawnY,
+                isPlayer: false,
                 hasActed: false, 
                 hasMoved: false,
                 debuffs: []
@@ -1860,7 +2294,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
        runAi();
        return () => { isCancelled = true; };
     }
-  }, [activeUnitId, combatTutorialStep, isTurnTransitioning]);
+  }, [activeUnitId, combatIntroStep, isTurnTransitioning]);
 
   // Safety check: if player unit is dead at turn start, advance immediately
   useEffect(() => {
@@ -2010,7 +2444,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
               />
             </div>
 
-            {/* Character Avatar Token standing upright with celebration bounce */}
+            {/* Character Avatar Token standing upright with celebration bounce or talking animation */}
             {isVictoryCelebration && unit.isPlayer ? (
               <motion.div
                 animate={{
@@ -2032,66 +2466,97 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
                   hideBadge={true}
                 />
               </motion.div>
-            ) : (
-              <div 
-                className={`relative flex items-center justify-center transition-all ${
-                  isSos
-                    ? 'animate-pulse'
-                    : isNextUpcoming 
-                      ? 'scale-110' 
-                      : ''
-                }`}
-              >
-                {/* Visual Debuff Auras & Effects around Avatar (No CSS filter blur to preserve 3D upright orientation) */}
-                {unit.debuffs?.some(d => d.type === 'burn') && (
-                  <>
-                    <div className="absolute -inset-1.5 rounded-lg border border-red-500 bg-red-600/25 pointer-events-none z-20 shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
-                    <div className="absolute -inset-3 pointer-events-none z-20 flex justify-between items-end px-0.5">
-                      <span className="text-xs">🔥</span>
-                      <span className="text-xs">🔥</span>
-                    </div>
-                  </>
-                )}
-                {unit.debuffs?.some(d => d.type === 'poison') && (
-                  <>
-                    <div className="absolute -inset-1.5 rounded-lg border border-purple-500 bg-purple-700/25 pointer-events-none z-20 shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex items-center justify-center">
-                      <span className="text-xs text-purple-300">☠</span>
-                    </div>
-                  </>
-                )}
-                {unit.debuffs?.some(d => d.type === 'freeze') && (
-                  <>
-                    <div className="absolute -inset-1.5 rounded-lg border-2 border-cyan-300 bg-cyan-400/25 shadow-[0_0_12px_rgba(6,182,212,0.8)] pointer-events-none z-20" />
-                    <div className="absolute -top-2.5 -left-1 pointer-events-none z-20">
-                      <span className="text-xs text-cyan-200">❄</span>
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 pointer-events-none z-20">
-                      <span className="text-xs text-blue-300">❄</span>
-                    </div>
-                  </>
-                )}
+            ) : (() => {
+              const currentLine = combatIntroStep !== null ? introDialogueLines[combatIntroStep] : null;
+              const isSpeakingInIntro = !!currentLine && (
+                (currentLine.speakerUnitId === unit.id) ||
+                (currentLine.isBoss && !unit.isPlayer && (unit.type === 'boss' || unit.id.includes('boss') || unit.name === currentLine.speaker)) ||
+                (!currentLine.isBoss && unit.isPlayer && (unit.name === currentLine.speaker || unit.heroClass === currentLine.role))
+              );
 
-                <UnitAvatar 
-                  unit={unit} 
-                  className={`w-8 h-8 md:w-9 md:h-9 rounded shadow-md border-2 overflow-hidden pointer-events-none ${
-                    isSos
-                      ? 'border-red-500 ring-2 ring-amber-400'
-                      : isNextUpcoming 
-                        ? 'border-yellow-300 ring-1 ring-cyan-300' 
-                        : unit.isPlayer 
-                          ? 'border-slate-100' 
-                          : 'border-red-400'
-                  }`} 
-                  hideBadge={true}
-                />
-                {isBuff && <div className="absolute inset-0 bg-yellow-400/40 rounded-full animate-ping pointer-events-none z-30" />}
-                {isHit && <div className="absolute inset-0 bg-red-500/70 rounded-full animate-ping pointer-events-none z-30" />}
-                {isNextUpcoming && (
-                  <span className="absolute text-lg -top-1.5 -right-1.5 animate-spin text-yellow-200 pointer-events-none z-20">✦</span>
-                )}
-              </div>
-            )}
+              return (
+                <div 
+                  className={`relative flex items-center justify-center transition-all ${
+                    isSpeakingInIntro
+                      ? 'animate-bounce scale-125 z-40'
+                      : isSos
+                        ? 'animate-pulse'
+                        : isNextUpcoming 
+                          ? 'scale-110' 
+                          : ''
+                  }`}
+                >
+                  {/* Speech Bubble for Intro Dialogue */}
+                  {isSpeakingInIntro && (
+                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center pointer-events-none animate-pulse">
+                      <div className={`px-1.5 py-0.5 rounded text-[8px] md:text-[9px] font-black uppercase font-mono shadow-lg border whitespace-nowrap ${
+                        unit.isPlayer 
+                          ? 'bg-blue-600 text-cyan-200 border-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.8)]' 
+                          : 'bg-red-900 text-yellow-300 border-yellow-400 shadow-[0_0_8px_rgba(239,68,68,0.8)]'
+                      }`}>
+                        FALANDO
+                      </div>
+                      <div className={`w-0 h-0 border-x-4 border-x-transparent border-t-4 ${
+                        unit.isPlayer ? 'border-t-blue-600' : 'border-t-red-900'
+                      }`} />
+                    </div>
+                  )}
+
+                  {/* Visual Debuff Auras & Effects around Avatar (No CSS filter blur to preserve 3D upright orientation) */}
+                  {unit.debuffs?.some(d => d.type === 'burn') && (
+                    <>
+                      <div className="absolute -inset-1.5 rounded-lg border border-red-500 bg-red-600/25 pointer-events-none z-20 shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
+                      <div className="absolute -inset-3 pointer-events-none z-20 flex justify-between items-end px-0.5">
+                        <span className="text-xs">🔥</span>
+                        <span className="text-xs">🔥</span>
+                      </div>
+                    </>
+                  )}
+                  {unit.debuffs?.some(d => d.type === 'poison') && (
+                    <>
+                      <div className="absolute -inset-1.5 rounded-lg border border-purple-500 bg-purple-700/25 pointer-events-none z-20 shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex items-center justify-center">
+                        <span className="text-xs text-purple-300">☠</span>
+                      </div>
+                    </>
+                  )}
+                  {unit.debuffs?.some(d => d.type === 'freeze') && (
+                    <>
+                      <div className="absolute -inset-1.5 rounded-lg border-2 border-cyan-300 bg-cyan-400/25 shadow-[0_0_12px_rgba(6,182,212,0.8)] pointer-events-none z-20" />
+                      <div className="absolute -top-2.5 -left-1 pointer-events-none z-20">
+                        <span className="text-xs text-cyan-200">❄</span>
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 pointer-events-none z-20">
+                        <span className="text-xs text-blue-300">❄</span>
+                      </div>
+                    </>
+                  )}
+
+                  <UnitAvatar 
+                    unit={unit} 
+                    className={`w-8 h-8 md:w-9 md:h-9 rounded shadow-md border-2 overflow-hidden pointer-events-none ${
+                      isSpeakingInIntro
+                        ? unit.isPlayer
+                          ? 'border-yellow-300 ring-2 ring-cyan-300 shadow-[0_0_12px_rgba(6,182,212,1)]'
+                          : 'border-yellow-300 ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,1)]'
+                        : isSos
+                          ? 'border-red-500 ring-2 ring-amber-400'
+                          : isNextUpcoming 
+                            ? 'border-yellow-300 ring-1 ring-cyan-300' 
+                            : unit.isPlayer 
+                              ? 'border-slate-100' 
+                              : 'border-red-400'
+                    }`} 
+                    hideBadge={true}
+                  />
+                  {isBuff && <div className="absolute inset-0 bg-yellow-400/40 rounded-full animate-ping pointer-events-none z-30" />}
+                  {isHit && <div className="absolute inset-0 bg-red-500/70 rounded-full animate-ping pointer-events-none z-30" />}
+                  {isNextUpcoming && (
+                    <span className="absolute text-lg -top-1.5 -right-1.5 animate-spin text-yellow-200 pointer-events-none z-20">✦</span>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       );
@@ -2579,7 +3044,7 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
       >
         {/* Turn Order Queue Ribbon (FF6 Action Menu Style) */}
         <div 
-          className="absolute top-3 left-3 z-50 flex items-center gap-1.5 p-1 md:p-1.5 rounded-lg border-2 md:border-[3px] border-slate-200 shadow-[inset_0_0_0_1px_#000,0_3px_5px_rgba(0,0,0,0.5)] max-w-[80vw] overflow-x-auto custom-scrollbar font-mono uppercase font-black select-none pointer-events-auto"
+          className="absolute top-3 left-3 z-30 flex items-center gap-1.5 p-1 md:p-1.5 rounded-lg border-2 md:border-[3px] border-slate-200 shadow-[inset_0_0_0_1px_#000,0_3px_5px_rgba(0,0,0,0.5)] max-w-[42vw] md:max-w-[48vw] overflow-x-auto custom-scrollbar font-mono uppercase font-black select-none pointer-events-auto"
           style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
         >
           <div className="flex items-center gap-1 text-[11px] md:text-xs text-cyan-300 mr-1 tracking-wider whitespace-nowrap">
@@ -2623,71 +3088,79 @@ export const Combat: React.FC<CombatProps> = ({ mapId, playerUnits, enemyUnits, 
           })}
         </div>
 
-        {/* Combat Action Log & Tutorial Dialogue */}
-        {combatTutorialStep !== null ? (
-          <div 
-            className="absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-50 pointer-events-auto max-w-xl md:max-w-2xl w-[92%] cursor-pointer select-none"
-            onClick={() => {
-              if (combatTutorialStep < COMBAT_TUTORIAL_LINES.length - 1) {
-                setCombatTutorialStep(prev => (prev !== null ? prev + 1 : null));
-              } else {
-                localStorage.setItem('eldoria_seen_first_combat_dialogue', 'true');
-                setCombatTutorialStep(null);
-                showActionText('Combate Iniciado! Dica: Terreno Alto reduz dano!');
-              }
-            }}
-          >
-            <div 
-              className="rounded-lg border-[4px] border-slate-200 p-3 md:p-4 shadow-[inset_0_0_0_2px_#000,0_8px_20px_rgba(0,0,0,0.8)] backdrop-blur-md animate-fade-in-down font-mono flex flex-col gap-2"
-              style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
-            >
-              {/* Speaker Tag + Counter + Skip */}
-              <div className="flex items-center justify-between border-b border-blue-400/40 pb-1.5 text-xs md:text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-cyan-300 font-black uppercase tracking-wider text-sm md:text-base">
-                    {COMBAT_TUTORIAL_LINES[combatTutorialStep].speaker}
-                  </span>
-                  <span className="text-slate-400 text-xs font-bold uppercase">
-                    - {COMBAT_TUTORIAL_LINES[combatTutorialStep].role}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400 text-xs font-bold">
-                    {combatTutorialStep + 1} de {COMBAT_TUTORIAL_LINES.length}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      localStorage.setItem('eldoria_seen_first_combat_dialogue', 'true');
-                      setCombatTutorialStep(null);
-                      showActionText('Combate Iniciado! Dica: Terreno Alto reduz dano!');
-                    }}
-                    className="text-[10px] md:text-xs text-slate-300 hover:text-white px-1.5 py-0.5 rounded border border-slate-500/80 bg-black/40 hover:bg-white/20 uppercase font-black"
-                  >
-                    Pular - ESC
-                  </button>
-                </div>
-              </div>
-
-              {/* Dialogue Text */}
-              <div className="text-white text-sm md:text-base font-black uppercase leading-snug tracking-wide py-0.5">
-                {COMBAT_TUTORIAL_LINES[combatTutorialStep].text}
-              </div>
-
-              {/* Advance Hint */}
-              <div className="flex justify-end items-center text-[10px] md:text-xs text-cyan-300 font-black uppercase tracking-wider gap-1">
-                <span>Clique ou ESPACO para avancar</span>
-                <span className="animate-bounce">▶</span>
-              </div>
-            </div>
-          </div>
-        ) : actionText ? (
-          <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-             <div className="rounded-lg border-[4px] border-slate-200 text-white text-2xl md:text-3xl p-4 shadow-[inset_0_0_0_2px_#000,0_4px_6px_rgba(0,0,0,0.5)] backdrop-blur-md animate-fade-in-down font-black uppercase tracking-widest" style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}>
+        {/* Combat Action Log (Positioned below top bars to avoid overlapping Order or Camera controls) */}
+        {actionText && (
+          <div className="absolute top-16 md:top-14 left-1/2 transform -translate-x-1/2 z-40 pointer-events-none max-w-[85vw] md:max-w-lg w-full flex justify-center">
+             <div className="rounded-lg border-[3px] md:border-[4px] border-slate-200 text-white text-base md:text-xl px-4 py-2 shadow-[inset_0_0_0_2px_#000,0_6px_12px_rgba(0,0,0,0.7)] backdrop-blur-md animate-fade-in-down font-black uppercase tracking-widest text-center" style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}>
                 {actionText.text}
              </div>
           </div>
-        ) : null}
+        )}
+
+        {/* Cinematic Combat Dialogue Box (Blocks action until finished or skipped) */}
+        {combatIntroStep !== null && introDialogueLines[combatIntroStep] && (() => {
+          const currentLine = introDialogueLines[combatIntroStep];
+          const speakerUnit = currentLine.isBoss
+            ? units.find(u => !u.isPlayer && (u.type === 'boss' || u.id.includes('boss') || u.name === currentLine.speaker)) || units.find(u => !u.isPlayer)
+            : units.find(u => u.isPlayer && (u.name === currentLine.speaker || u.heroClass === currentLine.role)) || units.find(u => u.isPlayer);
+
+          return (
+            <div 
+              className="absolute bottom-60 md:bottom-64 left-1/2 transform -translate-x-1/2 z-50 pointer-events-auto max-w-xl md:max-w-2xl w-[94%] cursor-pointer select-none"
+              onClick={handleAdvanceIntro}
+            >
+              <div 
+                className="rounded-lg border-[4px] border-slate-200 p-3 md:p-4 shadow-[inset_0_0_0_2px_#000,0_10px_25px_rgba(0,0,0,0.9)] backdrop-blur-md animate-fade-in-up font-mono flex flex-col gap-2.5"
+                style={{ background: 'linear-gradient(to bottom, #1e3a8a 0%, #000000 100%)' }}
+              >
+                {/* Header: Speaker Name + Subtitle + Dialogue Counter + Skip Button */}
+                <div className="flex items-center justify-between border-b border-blue-400/40 pb-2">
+                  <div className="flex items-center gap-2.5">
+                    {speakerUnit && (
+                      <div className="w-9 h-9 rounded border-2 border-white shadow-[0_0_8px_rgba(255,255,255,0.6)] overflow-hidden flex-shrink-0">
+                        <UnitAvatar unit={speakerUnit} className="w-full h-full" hideBadge={true} />
+                      </div>
+                    )}
+                    <div>
+                      <div className={`font-black uppercase tracking-wider text-sm md:text-base ${currentLine.isBoss ? 'text-red-400' : 'text-yellow-300'}`}>
+                        {currentLine.speaker}
+                      </div>
+                      <div className="text-slate-300 text-[10px] md:text-xs font-bold uppercase">
+                        - {currentLine.role}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-300 text-xs font-bold font-mono">
+                      {combatIntroStep + 1} de {introDialogueLines.length}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSkipIntro();
+                      }}
+                      className="text-[10px] md:text-xs text-slate-200 hover:text-white px-2 py-1 rounded border border-slate-400 bg-black/60 hover:bg-white/20 uppercase font-black tracking-wider transition-colors"
+                    >
+                      Pular - ESC
+                    </button>
+                  </div>
+                </div>
+
+                {/* Speech Text */}
+                <div className="text-white text-base md:text-lg font-black uppercase leading-snug tracking-wide py-1 px-1">
+                  {currentLine.text}
+                </div>
+
+                {/* Footer: Progress hint */}
+                <div className="flex justify-end items-center text-[10px] md:text-xs text-cyan-300 font-black uppercase tracking-wider gap-1.5 pt-0.5 border-t border-blue-400/20">
+                  <span>Clique ou ESPACO para avancar</span>
+                  <span className="animate-bounce text-sm">▶</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Camera and View Controls (FF6 Action Menu Style) */}
         <div 

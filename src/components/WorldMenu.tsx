@@ -4,8 +4,9 @@ import { HeroPortrait } from './HeroPortrait';
 import { soundFX, bgm } from '../utils/audio';
 import { STARTER_EQUIPMENT_CATALOG, getDefaultHeroEquipment, calculateHeroFF6Stats } from '../utils/equipmentData';
 import { SPELLS_CATALOG, getMagicDotBadge, getSpellByIdOrName, SpellDefinition } from '../utils/magicData';
+import { BestiaryMenu } from './BestiaryMenu';
 
-type MenuCommand = 'Item' | 'Skills' | 'Equip' | 'Status' | 'Config' | 'Save';
+type MenuCommand = 'Item' | 'Skills' | 'Equip' | 'Status' | 'Bestiary' | 'Config' | 'Save';
 
 interface WorldMenuProps {
   player: Player;
@@ -106,7 +107,7 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
   // Only use player created party
   const party: Hero[] = player.party || [];
 
-  const commands: MenuCommand[] = ['Item', 'Skills', 'Equip', 'Status', 'Config', 'Save'];
+  const commands: MenuCommand[] = ['Item', 'Skills', 'Equip', 'Status', 'Bestiary', 'Config', 'Save'];
 
   // Rare / Quest Items
   const rareItems = [
@@ -2046,8 +2047,13 @@ export const WorldMenu: React.FC<WorldMenuProps> = ({
         {/* ================= DEDICATED FF6 EQUIP SUB-VIEW ================= */}
         {subView === 'Equip' && renderEquipMenu()}
 
+        {/* ================= DEDICATED FF6 BESTIARY SUB-VIEW ================= */}
+        {subView === 'Bestiary' && (
+          <BestiaryMenu onBack={() => setSubView(null)} />
+        )}
+
         {/* ================= OTHER MODAL SUB-VIEWS (STATUS & CONFIG) ================= */}
-        {subView && subView !== 'Item' && subView !== 'Skills' && subView !== 'Equip' && (
+        {subView && subView !== 'Item' && subView !== 'Skills' && subView !== 'Equip' && subView !== 'Bestiary' && (
           <div 
             id="ff6_subview_modal"
             className="absolute inset-0 rounded-lg border-[3px] border-[#cbd5e1] p-3 md:p-5 z-40 flex flex-col shadow-[inset_0_0_0_2px_#050518,0_4px_8px_rgba(0,0,0,0.6)] font-mono uppercase font-black overflow-hidden"

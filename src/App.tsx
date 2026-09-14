@@ -297,7 +297,7 @@ export default function App() {
       if (!p.storyFlags?.['boss_chaos_defeated'] && !p.storyFlags?.['chaos_defeated']) {
         newEnemies.push(GET_DUNGEON_BOSS('DUNGEON_FINAL_3'));
       }
-    } else if (mId.startsWith('TOWN_')) {
+    } else if (mId.startsWith('TOWN_') || mId.startsWith('INTERIOR_')) {
       newEnemies = [];
     }
     setEnemies(newEnemies);
@@ -389,18 +389,20 @@ export default function App() {
       { x: player.x + 1, y: player.y },
     ];
 
-    // 1. Check Living Bosses / Enemies on Map
-    for (const coord of checkCoords) {
-      const hitEnemy = enemies.find(e => e.x === coord.x && e.y === coord.y);
-      if (hitEnemy) {
-        soundFX.playSelect();
-        const encounterGroup = generateCombatEnemies(mapId, player.party, true, hitEnemy);
-        setCombatEnemies(encounterGroup);
-        setGameState('ENCOUNTER_TRANSITION');
-        setTimeout(() => {
-          setGameState('COMBAT');
-        }, 1200);
-        return;
+    // 1. Check Living Bosses / Enemies on Map (Never in towns or interiors)
+    if (!mapId.startsWith('TOWN_') && !mapId.startsWith('INTERIOR_')) {
+      for (const coord of checkCoords) {
+        const hitEnemy = enemies.find(e => e.x === coord.x && e.y === coord.y);
+        if (hitEnemy) {
+          soundFX.playSelect();
+          const encounterGroup = generateCombatEnemies(mapId, player.party, true, hitEnemy);
+          setCombatEnemies(encounterGroup);
+          setGameState('ENCOUNTER_TRANSITION');
+          setTimeout(() => {
+            setGameState('COMBAT');
+          }, 1200);
+          return;
+        }
       }
     }
 
@@ -801,10 +803,11 @@ export default function App() {
          return prev;
       }
 
-      // Random Encounter Logic (Plains, forests, deserts, swamps, bridges)
+      // Random Encounter Logic (Only in Overworld or Dungeon Areas)
       stepsSinceEncounter.current += 1;
       
-      const isWildTile = !mapId.startsWith('TOWN_') && ['.', 'T', 'D', 'S', 'B'].includes(tile);
+      const isWildArea = mapId === 'OVERWORLD' || mapId.startsWith('DUNGEON_');
+      const isWildTile = isWildArea && ['.', 'T', 'D', 'S', 'B'].includes(tile);
       const encounterRateMultiplier = tile === 'S' ? 0.75 : tile === 'T' ? 0.6 : tile === 'D' ? 0.5 : tile === 'B' ? 0.2 : 0.45;
       const safeSteps = 48;
       const baseChance = Math.max(0, (stepsSinceEncounter.current - safeSteps) * 0.0035);
@@ -988,19 +991,18 @@ export default function App() {
               newStats.int += 3;
               newStats.def += 2;
               newStats.vel += 1;
-              currentHp = newStats.maxHp;
-              currentMp = newStats.maxMp;
            }
 
-           // Defeated team member recovers with at least 1 HP
-           const recoveredHp = currentHp <= 0 ? 1 : Math.min(newStats.maxHp, currentHp + 20);
+           // Defeated team member recovers with at least 1 HP, preserving exact combat HP without auto-healing
+           const finalHp = currentHp <= 0 ? 1 : Math.min(newStats.maxHp, currentHp);
+           const finalMp = Math.min(newStats.maxMp, currentMp);
 
            return {
               ...hero,
               exp: newExp,
               level: newLevel,
-              stats: { ...newStats, hp: recoveredHp, mp: currentMp },
-              debuffs: currentDebuffs
+              stats: { ...newStats, hp: finalHp, mp: finalMp },
+              debuffs: currentDebuffs || []
            };
         });
 
@@ -1182,7 +1184,8 @@ export default function App() {
           ...hero.stats,
           hp: hero.stats.maxHp,
           mp: hero.stats.maxMp
-        }
+        },
+        debuffs: []
       }))
     }));
   };

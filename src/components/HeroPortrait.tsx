@@ -282,6 +282,12 @@ export interface EnemyPortraitProps {
   className?: string;
 }
 
+export interface EnemyPortraitProps {
+  enemyType?: EnemyType | string;
+  emoji?: string;
+  className?: string;
+}
+
 export const EnemyPortrait: React.FC<EnemyPortraitProps> = ({
   enemyType = 'slime',
   emoji = '',
@@ -289,6 +295,132 @@ export const EnemyPortrait: React.FC<EnemyPortraitProps> = ({
 }) => {
   const renderEnemyArt = () => {
     switch (enemyType) {
+      case 'cactuar_fugitivo':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#064e3b" />
+            <rect x="26" y="16" width="12" height="34" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+            <rect x="14" y="24" width="12" height="8" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+            <rect x="14" y="16" width="8" height="12" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+            <rect x="38" y="32" width="12" height="8" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+            <rect x="42" y="36" width="8" height="12" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+            <circle cx="29" cy="24" r="2" fill="#000" />
+            <circle cx="35" cy="24" r="2" fill="#000" />
+            <ellipse cx="32" cy="34" rx="2.5" ry="4" fill="#000" />
+            {/* Agulhas */}
+            <line x1="30" y1="12" x2="30" y2="16" stroke="#facc15" strokeWidth="2" />
+            <line x1="34" y1="10" x2="34" y2="16" stroke="#facc15" strokeWidth="2" />
+          </svg>
+        );
+
+      case 'tonberry_cozinha':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#1c1917" />
+            {/* Roupao */}
+            <path d="M 18 24 Q 32 16 46 24 L 52 56 L 12 56 Z" fill="#78350f" stroke="#451a03" strokeWidth="1.5" />
+            {/* Cabeca verde */}
+            <circle cx="32" cy="24" r="12" fill="#86efac" stroke="#16a34a" strokeWidth="1.5" />
+            <circle cx="28" cy="22" r="2.5" fill="#facc15" />
+            <circle cx="36" cy="22" r="2.5" fill="#facc15" />
+            {/* Faca de cozinha */}
+            <rect x="44" y="36" width="12" height="3" fill="#cbd5e1" stroke="#475569" strokeWidth="1" />
+            <rect x="40" y="37" width="5" height="4" fill="#451a03" />
+            {/* Lanterna */}
+            <rect x="14" y="36" width="8" height="10" fill="#fde047" stroke="#ca8a04" strokeWidth="1" />
+            <circle cx="18" cy="41" r="2.5" fill="#ffffff" />
+          </svg>
+        );
+
+      case 'mimico_bau':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#450a0a" />
+            {/* Bau aberto com dentes */}
+            <path d="M 12 24 L 52 16 L 48 8 L 8 16 Z" fill="#b45309" stroke="#78350f" strokeWidth="1.5" />
+            <rect x="10" y="28" width="44" height="24" fill="#d97706" stroke="#78350f" strokeWidth="1.5" />
+            <rect x="28" y="34" width="8" height="12" fill="#facc15" stroke="#78350f" strokeWidth="1.5" />
+            {/* Dentes */}
+            <polygon points="14,28 18,36 22,28" fill="#fff" />
+            <polygon points="24,28 28,36 32,28" fill="#fff" />
+            <polygon points="34,28 38,36 42,28" fill="#fff" />
+            <polygon points="44,28 48,36 52,28" fill="#fff" />
+            {/* Olhos de monstro */}
+            <circle cx="22" cy="22" r="3" fill="#ef4444" />
+            <circle cx="42" cy="22" r="3" fill="#ef4444" />
+            {/* Lingua */}
+            <path d="M 26 38 Q 32 48 38 38" fill="#dc2626" stroke="#991b1b" strokeWidth="1.5" />
+          </svg>
+        );
+
+      case 'boss_terra':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#14532d" />
+            {/* Caveira Lich */}
+            <path d="M 14 64 L 20 28 Q 32 10 44 28 L 50 64 Z" fill="#1e293b" stroke="#0f172a" strokeWidth="1.5" />
+            <circle cx="32" cy="26" r="12" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="1.5" />
+            <ellipse cx="27" cy="24" rx="3.5" ry="4" fill="#000" />
+            <ellipse cx="37" cy="24" rx="3.5" ry="4" fill="#000" />
+            <circle cx="27" cy="24" r="1" fill="#4ade80" />
+            <circle cx="37" cy="24" r="1" fill="#4ade80" />
+            <rect x="28" y="32" width="8" height="4" fill="#000" />
+            <path d="M 22 14 L 32 8 L 42 14 L 38 18 L 26 18 Z" fill="#eab308" stroke="#a16207" strokeWidth="1" />
+          </svg>
+        );
+
+      case 'boss_fogo':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#7c2d12" />
+            <path d="M 12 64 Q 32 48 52 64" fill="#ea580c" />
+            <circle cx="32" cy="24" r="10" fill="#fbcfe8" stroke="#e11d48" strokeWidth="1.5" />
+            <path d="M 22 14 Q 32 4 42 14 L 40 28 L 24 28 Z" fill="#dc2626" />
+            <ellipse cx="28" cy="22" rx="2" ry="2" fill="#e11d48" />
+            <ellipse cx="36" cy="22" rx="2" ry="2" fill="#e11d48" />
+            {/* Espadas em multiplos bracos */}
+            <line x1="8" y1="28" x2="20" y2="38" stroke="#facc15" strokeWidth="2.5" />
+            <line x1="56" y1="28" x2="44" y2="38" stroke="#facc15" strokeWidth="2.5" />
+            <line x1="6" y1="44" x2="22" y2="46" stroke="#facc15" strokeWidth="2.5" />
+            <line x1="58" y1="44" x2="42" y2="46" stroke="#facc15" strokeWidth="2.5" />
+          </svg>
+        );
+
+      case 'boss_agua':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#0c4a6e" />
+            {/* Kraken */}
+            <circle cx="32" cy="26" r="16" fill="#0284c7" stroke="#0369a1" strokeWidth="1.5" />
+            <ellipse cx="26" cy="24" rx="4" ry="5" fill="#facc15" />
+            <circle cx="26" cy="24" r="2" fill="#000" />
+            <ellipse cx="38" cy="24" rx="4" ry="5" fill="#facc15" />
+            <circle cx="38" cy="24" r="2" fill="#000" />
+            {/* Tentaculos */}
+            <path d="M 12 58 Q 18 36 26 42" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" fill="none" />
+            <path d="M 22 62 Q 28 42 32 42" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" fill="none" />
+            <path d="M 42 62 Q 36 42 32 42" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" fill="none" />
+            <path d="M 52 58 Q 46 36 38 42" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" fill="none" />
+          </svg>
+        );
+
+      case 'boss_ar':
+      case 'boss_chaos':
+        return (
+          <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
+            <rect width="64" height="64" fill="#1e1b4b" />
+            <circle cx="32" cy="32" r="28" fill="#6366f1" opacity="0.3" />
+            <path d="M 20 20 Q 8 6 10 2 Q 18 8 26 14" fill="#eab308" stroke="#a16207" strokeWidth="1.5" />
+            <path d="M 44 20 Q 56 6 54 2 Q 46 8 38 14" fill="#eab308" stroke="#a16207" strokeWidth="1.5" />
+            <path d="M 18 16 Q 32 10 46 16 L 50 36 Q 44 56 32 60 Q 20 56 14 36 Z" fill="#4338ca" stroke="#312e81" strokeWidth="2" />
+            <circle cx="28" cy="32" r="3" fill="#facc15" />
+            <circle cx="36" cy="32" r="3" fill="#facc15" />
+            <circle cx="28" cy="32" r="1.5" fill="#dc2626" />
+            <circle cx="36" cy="32" r="1.5" fill="#dc2626" />
+            <path d="M 26 44 Q 32 50 38 44" stroke="#facc15" strokeWidth="2" fill="none" />
+          </svg>
+        );
+
       case 'slime':
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
@@ -370,6 +502,9 @@ export const EnemyPortrait: React.FC<EnemyPortraitProps> = ({
         );
 
       case 'boss':
+      case 'boss_preludio':
+      case 'boss_desafio':
+      default:
         return (
           <svg viewBox="0 0 64 64" className="w-full h-full" style={{ imageRendering: 'pixelated' }}>
             <rect width="64" height="64" fill="#18181b" />
@@ -388,13 +523,6 @@ export const EnemyPortrait: React.FC<EnemyPortraitProps> = ({
             <polygon points="26,52 28,56 30,52" fill="#fff" />
             <polygon points="34,52 36,56 38,52" fill="#fff" />
           </svg>
-        );
-
-      default:
-        return (
-          <div className="w-full h-full flex items-center justify-center text-3xl bg-slate-900">
-            {emoji}
-          </div>
         );
     }
   };
